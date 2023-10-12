@@ -30,8 +30,12 @@ public class Server {
             String key = exchange.getRequestMethod() + exchange.getRequestURI().getPath();
             CallRequest function = pathToFunction.get(key);
             if (function == null) {
-                // 404
-                System.out.println("error: 404");
+                try {
+                    exchange.sendResponseHeaders(404, 0);
+                    exchange.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 return;
             }
             function.onRequestRecieved(exchange);
