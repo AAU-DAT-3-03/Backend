@@ -10,6 +10,7 @@ public class Main {
             try {
                 exchange.sendResponseHeaders(200, response.length());
                 exchange.getResponseBody().write(response.getBytes());
+                exchange.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
