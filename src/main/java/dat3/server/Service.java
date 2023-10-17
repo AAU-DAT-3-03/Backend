@@ -2,12 +2,13 @@ package dat3.server;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class Service {
     private String name;
     private Map<String, Alarm> currentAlarms;
-    // alt muligt data?
     private Map<String, Alarm> previousAlarms;
+    // alt muligt data?
 
     public Service(String serviceName) {
         this.name = serviceName;
@@ -16,7 +17,9 @@ public class Service {
     }
 
     public void CreateAlarm() {
-
+        String ID = UUID.randomUUID().toString();
+        Alarm newAlarm = new Alarm(ID);
+        currentAlarms.put(ID, newAlarm);
     }
 
     public void RemoveAlarm(String alarmID) {
@@ -29,7 +32,7 @@ public class Service {
 
     }
 
-    public Alarm findAlarms(String alarmID) {
+    public Alarm findAlarm(String alarmID) {
         return currentAlarms.get(alarmID);
     }
 }

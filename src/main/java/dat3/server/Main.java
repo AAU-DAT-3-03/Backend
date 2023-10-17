@@ -26,7 +26,7 @@ public class Main {
 
     public void AcknowledgeAlarm(String serviceName, String alarmID, String workerName) {
         Service service = null; // TODO Find i hashmap/database eller whatever når det bliver implementeret
-        Alarm alarm = service.findAlarms(alarmID);
+        Alarm alarm = service.findAlarm(alarmID);
         Worker worker = null; // TODO Find i hashmap/database eller whatever når det bliver implementeret
         alarm.AcknowledgeAlarm(worker);
     }
@@ -38,7 +38,7 @@ public class Main {
 
     public void ChangeAlarmPriority(String serviceName, String alarmID, int newPriority) {
         Service service = null; // TODO Find i hashmap/database eller whatever når det bliver implementeret
-        Alarm alarm = service.findAlarms(alarmID);
+        Alarm alarm = service.findAlarm(alarmID);
         alarm.UpdatePriority(newPriority);
     }
 }
