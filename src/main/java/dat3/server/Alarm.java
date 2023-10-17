@@ -8,9 +8,11 @@ public class Alarm {
     private Worker acknowledgedBy;
     private Worker[] currentWorkers;
     private Date creationDate;
+    private String alarmID;
 
-    public Alarm() {
+    public Alarm(String alarmName) {
         this.creationDate = new Date();
+        this.alarmID = alarmName;
     }
 
     public void AcknowledgeAlarm(Worker worker) {

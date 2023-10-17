@@ -4,6 +4,7 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
+        // TODO lav et hashmap eller noget over services og workers
         Server server = new Server("localhost", 31415);
         server.addGetRoute("/", exchange -> {
             String response = "Hello from Index!";
@@ -21,5 +22,23 @@ public class Main {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    public void AcknowledgeAlarm(String serviceName, String alarmID, String workerName) {
+        Service service = null; // TODO Find i hashmap/database eller whatever når det bliver implementeret
+        Alarm alarm = service.findAlarms(alarmID);
+        Worker worker = null; // TODO Find i hashmap/database eller whatever når det bliver implementeret
+        alarm.AcknowledgeAlarm(worker);
+    }
+
+    public void ResolveAlarm(String serviceName, String alarmID) {
+        Service service = null; // TODO Find i hashmap/database eller whatever når det bliver implementeret
+        service.RemoveAlarm(alarmID);
+    }
+
+    public void ChangeAlarmPriority(String serviceName, String alarmID, int newPriority) {
+        Service service = null; // TODO Find i hashmap/database eller whatever når det bliver implementeret
+        Alarm alarm = service.findAlarms(alarmID);
+        alarm.UpdatePriority(newPriority);
     }
 }
