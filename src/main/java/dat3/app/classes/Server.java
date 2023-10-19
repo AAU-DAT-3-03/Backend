@@ -63,7 +63,7 @@ public class Server {
     }
 
     @FunctionalInterface
-    interface CallRequest {
+    public interface CallRequest {
         void onRequestRecieved(HttpExchange exchange);
     }
 }
