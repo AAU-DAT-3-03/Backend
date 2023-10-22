@@ -6,7 +6,6 @@ public class Alarm {
     private int priority = 0;
     private boolean acknowledged = false;
     private Worker acknowledgedBy;
-    private Worker[] currentWorkers;
     private Date creationDate;
     private String alarmID;
 
@@ -24,10 +23,8 @@ public class Alarm {
         this.priority = newPriority;
     }
 
-    public void AddWorker() {
-    }
 
-    public void RemoveWorker() {
-
+    public String getID() {
+        return this.alarmID;
     }
 }
