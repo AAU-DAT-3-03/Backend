@@ -49,43 +49,35 @@ public class MongoConnection {
         }
     }
 
-    public InsertOneResult insert(String collectionName, String json) {
-        if (!isConnected()) {
-            return null;
-        }
-        MongoDatabase db = client.getDatabase(dbName);
-        MongoCollection<Document> collection = db.getCollection(collectionName);
+    public InsertOneResult insert(String collectionName, Object object) {
+        MongoCollection<Document> collection;
+        if ((collection = getCollection(collectionName)) == null) return null;
 
-        return collection.insertOne(Document.parse(json));
+        Gson gson = new Gson();
+        return collection.insertOne(Document.parse(gson.toJson(gson)));
     }
 
-    public InsertManyResult insert(String collectionName, String ... jsons) {
-        if (!isConnected()) {
-            return null;
-        }
-        if (jsons.length == 0) {
+    public InsertManyResult insert(String collectionName, List<Object> objects) {
+        MongoCollection<Document> collection;
+        if ((collection = getCollection(collectionName)) == null) return null;
+
+        if (objects.size() == 0) {
             System.out.println("Trying to insert 0.");
             return null;
         }
 
-        
-        MongoDatabase db = client.getDatabase(dbName);
-        MongoCollection<Document> collection = db.getCollection(collectionName);
-
+        Gson gson = new Gson();
         List<Document> docs = new ArrayList<>();
-        for (String json : jsons) {
-            docs.add(Document.parse(json));
+        for (Object object : objects) {
+            docs.add(Document.parse(gson.toJson(object)));
         }
 
         return collection.insertMany(docs);
     }
 
     public <T> List<T> find(String collectionName, Class<? extends T> clazz) {
-        if (!isConnected()) {
-            return null;
-        }
-        MongoDatabase db = client.getDatabase(dbName);
-        MongoCollection<Document> collection = db.getCollection(collectionName);
+        MongoCollection<Document> collection;
+        if ((collection = getCollection(collectionName)) == null) return null;
 
         Gson gson = new Gson();
         List<T> objects = new ArrayList<>();
@@ -100,12 +92,26 @@ public class MongoConnection {
         return objects;
     }
 
-    public <T> List<T> find(String collectionName, Class<? extends T> clazz, EqualityTuple ... equalities) {
-        if (!isConnected()) {
-            return null;
+    public <T> List<T> find(String collectionName, Class<? extends T> clazz, Bson filter) {
+        MongoCollection<Document> collection;
+        if ((collection = getCollection(collectionName)) == null) return null;
+
+        Gson gson = new Gson();
+        List<T> objects = new ArrayList<>();
+
+        for (Document document : collection.find(filter)) {
+            T obj;
+            if ((obj = gson.fromJson(document.toJson(), clazz)) != null) {
+                objects.add(obj);
+            }
         }
-        MongoDatabase db = client.getDatabase(dbName);
-        MongoCollection<Document> collection = db.getCollection(collectionName);
+        
+        return objects;
+    }
+
+    public <T> List<T> find(String collectionName, Class<? extends T> clazz, EqualityTuple ... equalities) {
+        MongoCollection<Document> collection;
+        if ((collection = getCollection(collectionName)) == null) return null;
 
         Gson gson = new Gson();
         List<T> objects = new ArrayList<>();
@@ -123,6 +129,14 @@ public class MongoConnection {
         }
 
         return objects;
+    }
+
+    private MongoCollection<Document> getCollection(String collectionName) {
+        if (!isConnected()) {
+            return null;
+        }
+        MongoDatabase db = client.getDatabase(dbName);
+        return db.getCollection(collectionName);
     }
 
     private boolean isConnected() {
