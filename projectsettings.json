@@ -1,3 +1,6 @@
 {
-    "dbConnectionString":  "mongodb://madsbyriel:walter123@localhost:27017/?authMechanism=SCRAM-SHA-1"
+    "hostname": "10.92.0.231",
+    "port": 80,
+    "dbConnectionString":  "mongodb://madsbyriel:walter123@localhost:27017/?authMechanism=SCRAM-SHA-1",
+    "dbName": "testDB"
 }
