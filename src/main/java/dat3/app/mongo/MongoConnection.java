@@ -1,6 +1,5 @@
 package dat3.app.mongo;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,14 +10,11 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.and;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertManyResult;
-import com.mongodb.client.result.InsertOneResult;
 
 import dat3.app.ProjectSettings;
 
@@ -29,7 +25,7 @@ public class MongoConnection {
 
     private boolean hasTriedToConnect = false;
 
-    public MongoConnection() throws JsonSyntaxException, JsonIOException, FileNotFoundException {
+    public MongoConnection() {
         ProjectSettings settings = ProjectSettings.getProjectSettings();
 
         connectionString = settings != null ? settings.getDbConnectionString() : null;
@@ -47,15 +43,7 @@ public class MongoConnection {
         }
     }
 
-    public InsertOneResult insert(String collectionName, Object object) {
-        MongoCollection<Document> collection;
-        if ((collection = getCollection(collectionName)) == null) return null;
-
-        Gson gson = new Gson();
-        return collection.insertOne(Document.parse(gson.toJson(gson)));
-    }
-
-    public InsertManyResult insert(String collectionName, List<Object> objects) {
+    public InsertManyResult insert(String collectionName, List<? extends Object> objects) {
         MongoCollection<Document> collection;
         if ((collection = getCollection(collectionName)) == null) return null;
 
