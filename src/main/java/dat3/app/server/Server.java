@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ public class Server {
     public Server(String adress, int port) {
         this.adress = adress;
         this.port = port;
+        this.pathToFunction = new HashMap<>();
     }
 
     public void startServer() throws IOException, DBNotFound {
