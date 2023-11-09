@@ -1,6 +1,5 @@
 package dat3.app.mongo;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,8 +10,6 @@ import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.and;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -28,7 +25,7 @@ public class MongoConnection {
 
     private boolean hasTriedToConnect = false;
 
-    public MongoConnection() throws JsonSyntaxException, JsonIOException, FileNotFoundException {
+    public MongoConnection() {
         ProjectSettings settings = ProjectSettings.getProjectSettings();
 
         connectionString = settings != null ? settings.getDbConnectionString() : null;
