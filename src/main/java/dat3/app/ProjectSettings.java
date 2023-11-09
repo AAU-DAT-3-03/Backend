@@ -20,8 +20,7 @@ public class ProjectSettings {
         try {
             return gson.fromJson(new FileReader("projectsettings.json"), ProjectSettings.class);
         } catch (JsonSyntaxException | JsonIOException | FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
+            return new ProjectSettings();
         }
     }
 
