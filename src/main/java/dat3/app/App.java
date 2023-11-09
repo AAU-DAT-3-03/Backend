@@ -6,8 +6,9 @@ import java.util.List;
 
 import com.sun.net.httpserver.HttpExchange;
 
-import dat3.app.classes.Server;
 import dat3.app.mongo.MongoConnection;
+import dat3.app.server.DBNotFound;
+import dat3.app.server.Server;
 
 public class App {
     public static void main(String[] args) {
@@ -17,10 +18,14 @@ public class App {
 
         Server server = new Server(projectSettings.getHostname(), projectSettings.getPort());
         server.addGetRoute("/", App::testIfItWorksIndex);
+        
         try {
             server.startServer();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } catch (DBNotFound dbe) {
+            dbe.printStackTrace();
+            System.out.println("Database wasn't found.");
         }
     }
 
