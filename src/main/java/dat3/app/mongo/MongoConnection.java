@@ -18,7 +18,6 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertManyResult;
-import com.mongodb.client.result.InsertOneResult;
 
 import dat3.app.App;
 
@@ -49,15 +48,7 @@ public class MongoConnection {
         }
     }
 
-    public InsertOneResult insert(String collectionName, Object object) {
-        MongoCollection<Document> collection;
-        if ((collection = getCollection(collectionName)) == null) return null;
-
-        Gson gson = new Gson();
-        return collection.insertOne(Document.parse(gson.toJson(gson)));
-    }
-
-    public InsertManyResult insert(String collectionName, List<Object> objects) {
+    public InsertManyResult insert(String collectionName, List<? extends Object> objects) {
         MongoCollection<Document> collection;
         if ((collection = getCollection(collectionName)) == null) return null;
 
@@ -150,8 +141,6 @@ public class MongoConnection {
         }
         return true;
     }
-
-
 }
 
 class ProjectInfo {
