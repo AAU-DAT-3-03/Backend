@@ -19,7 +19,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertManyResult;
 
-import dat3.app.App;
+import dat3.app.ProjectSettings;
 
 public class MongoConnection {
     private String connectionString;
@@ -29,12 +29,10 @@ public class MongoConnection {
     private boolean hasTriedToConnect = false;
 
     public MongoConnection() throws JsonSyntaxException, JsonIOException, FileNotFoundException {
-        Gson gson = new Gson();
+        ProjectSettings settings = ProjectSettings.getProjectSettings();
 
-        ProjectInfo info = gson.fromJson(App.getProjectSettingsReader(), ProjectInfo.class);
-
-        connectionString = info != null ? info.getDbConnectionString() : null;
-        dbName = info != null ? info.getDbName() : null;
+        connectionString = settings != null ? settings.getDbConnectionString() : null;
+        dbName = settings != null ? settings.getDbName() : null;
     }
 
     public boolean connectToDb() {
@@ -140,18 +138,5 @@ public class MongoConnection {
             return false;
         }
         return true;
-    }
-}
-
-class ProjectInfo {
-    private String dbConnectionString;
-    private String dbName;
-
-    public String getDbName() {
-        return dbName;
-    }
-
-    public String getDbConnectionString() {
-        return dbConnectionString;
     }
 }
