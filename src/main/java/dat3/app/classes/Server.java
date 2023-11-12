@@ -1,54 +1,34 @@
 package dat3.app.classes;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import dat3.app.mongo.MongoConnection;
 
 public class Server {
     private String adress;
     private int port;
-    private MongoConnection connection;
 
     private Map<String, CallRequest> pathToFunction;
 
     public Server(String adress, int port) {
         this.adress = adress;
         this.port = port;
-        pathToFunction = new HashMap<>();
-        try {
-            connection = new MongoConnection();
-            connection.connectToDb();
-            System.out.println("Database connected.");
-        } catch (JsonSyntaxException | JsonIOException | FileNotFoundException e) {
-            connection = null;
-            System.out.println("Database disconnected.");
-        }
+        this.pathToFunction = new HashMap<>();
     }
 
     public void startServer() throws IOException {
         InetAddress adresse = InetAddress.getByName(adress);
         InetSocketAddress socketAdress = new InetSocketAddress(adresse, port);
         HttpServer server = HttpServer.create(socketAdress, 0);
+
         server.start();
         server.createContext("/", exchange -> {
-            if (connection != null) {
-                List<Object> objects = new ArrayList<>();
-                objects.add(new RequestType(exchange));
-                connection.insert("requests", objects);
-            }
-
             String key = exchange.getRequestMethod() + exchange.getRequestURI().getPath();
             CallRequest function = pathToFunction.get(key);
             if (function == null) {
@@ -87,24 +67,5 @@ public class Server {
     @FunctionalInterface
     public interface CallRequest {
         void onRequestRecieved(HttpExchange exchange);
-    }
-}
-
-class RequestType {
-    private String method;
-    private String remoteAddress;
-    private String uri;
-    private String[] headers;
-
-    public RequestType(HttpExchange exchange) {
-        this.method = exchange.getRequestMethod();
-        this.remoteAddress = exchange.getRemoteAddress().getAddress().toString();
-        this.uri = exchange.getRequestURI().toString();
-
-        headers = new String[exchange.getRequestHeaders().keySet().size()];
-        int i = 0;
-        for (String key : exchange.getRequestHeaders().keySet()) {
-            headers[i++] = key + " : " + exchange.getRequestHeaders().getFirst(key);
-        }
     }
 }
