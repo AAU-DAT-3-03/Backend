@@ -15,9 +15,14 @@ import com.sun.net.httpserver.HttpExchange;
 import dat3.app.ProjectSettings;
 
 public abstract class Auth {
+    /**
+     * Authorizes an http exchange by checking the auth token attached against the database.
+     * @param exchange the http exchange that needs to be authorized.
+     * @return a document containing only the '_id' of a user.
+     */
     public static Document auth(HttpExchange exchange) {
         // Get the auth token. If non-existent, not authorized.
-        String tokenName = getAuthTokenOrNull(exchange);
+        String tokenName = getAuthTokenFromCookies(exchange);
         if (tokenName == null) return null;
 
         // Check if there is a token like this
@@ -36,13 +41,14 @@ public abstract class Auth {
             filter.put("name", tokenName);
 
             token = tokenCollection.find(filter).first();
+    
+            // If not found, not authorized.
+            if (token == null) return null;
         } catch (Exception e) {
             // Something went wrong when finding token
             return null;
         }
 
-        // If not found, not authorized.
-        if (token == null) return null;
 
         // Determine if it is expired.
         boolean expired;
@@ -79,6 +85,12 @@ public abstract class Auth {
         return userIdDocument;
     }
 
+    /**
+     * Logs a user in. This is done by reading the body of the http exchange, looking for credentials. If the user 
+     * is successfully logged in, an auth token will be attached to the exchange. 
+     * @param exchange the http exchange in which the log in credentials are.
+     * @return an auth response containing a message and an auth code. Successful is OK.
+     */
     public static AuthResponse login(HttpExchange exchange) {
         // Get connection to database.
         MongoCollection<Document> userCollection;
@@ -187,7 +199,12 @@ public abstract class Auth {
         return new AuthResponse(ResponseCode.OK, "Successfully found and set auth token cookie.");
     }
 
-    private static String getAuthTokenOrNull(HttpExchange exchange) {
+    /**
+     * Gets the auth token name from the cookies sent in the request. If non-existent, returns null.
+     * @param exchange the http exchange.
+     * @return the auth token name, or null if non-existent.
+     */
+    private static String getAuthTokenFromCookies(HttpExchange exchange) {
         List<String> headerWithNameCookie = exchange.getRequestHeaders().get("Cookie");
         if (headerWithNameCookie == null || headerWithNameCookie.size() == 0) return null;
         String cookieString = headerWithNameCookie.get(0);
@@ -201,6 +218,11 @@ public abstract class Auth {
         return null;
     }
 
+    /**
+     * Converts an array of bytes to a hex string.
+     * @param bytes the bytes to convert to a string.
+     * @return the final hex string.
+     */
     private static String bytesToHex(byte[] bytes) {
         BigInteger bigInt = new BigInteger(1, bytes);
         String hexString = bigInt.toString(16);
@@ -214,6 +236,12 @@ public abstract class Auth {
         }
     }
 
+    /**
+     * Connects to the database given by the connection string and database name in project settings, and returns the request collection. 
+     * @param collectionName the name of the collection to return.
+     * @return a collection of documents.
+     * @throws Exception if something goes wrong when connecting. 
+     */
     private static MongoCollection<Document> getCollection(String collectionName) throws Exception {
         ProjectSettings settings = ProjectSettings.getProjectSettings();
         MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
