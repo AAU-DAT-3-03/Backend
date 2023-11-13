@@ -45,6 +45,8 @@ public class Server {
                 return;
             }
             function.onRequestRecieved(exchange);
+
+            exchange.close();
         });
     }
 
