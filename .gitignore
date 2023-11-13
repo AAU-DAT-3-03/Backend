@@ -25,3 +25,5 @@ replay_pid*
 
 # build doesn't need to be in git
 target/
+
+TestJsFunctions.js
