@@ -15,6 +15,8 @@ public class App {
         
         server.addGetRoute("/", Routes::index);
 
+        server.addPostRoute("/register", Routes::registerUser);
+
         try {
             server.startServer();
         } catch (IOException ioe) {

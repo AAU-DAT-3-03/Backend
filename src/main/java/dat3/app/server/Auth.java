@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.InsertOneResult;
 import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.ProjectSettings;
@@ -208,8 +209,10 @@ public abstract class Auth {
         // Set the token and return with a success.
 
         MongoCollection<Document> userCollection;
+        MongoCollection<Document> tokenCollection;
         try {
             userCollection = getCollection("users");
+            tokenCollection = getCollection("tokens");
         } catch (Exception e) {
             e.printStackTrace();
             return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when getting collections from database");
@@ -240,11 +243,45 @@ public abstract class Auth {
         try {
             Document filter = new Document("email", credentials.getEmail());
             Document result = userCollection.find(filter).first();
+            if (result != null) return new AuthResponse(ResponseCode.InvalidCredentials, "Email is taken.");
         } catch (Exception e) {
             e.printStackTrace();
+            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when checking for existing users.");
         }
 
-        return null;
+        // Insert this new user!
+        Object id;
+        try {
+            Document userToInsert = new Document();
+            userToInsert.put("email", credentials.getEmail());
+            userToInsert.put("password", credentials.getPassword());
+            InsertOneResult result = userCollection.insertOne(userToInsert);
+            id = result.getInsertedId();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new AuthResponse(ResponseCode.DatabaseError, "Exception thrown when inserting new user.");
+        }
+
+        // Create an auth token for the new user.
+        try {
+            Document token = new Document();
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            String name = exchange.getRemoteAddress().getAddress().toString() + Long.toString(System.currentTimeMillis());
+            byte[] hash = digest.digest(name.getBytes());
+            name = bytesToHex(hash);
+
+            token.put("name", name);
+            token.put("expiryDate", System.currentTimeMillis() + 60000 * 24 * 365);
+            token.put("userId", id);
+
+            tokenCollection.insertOne(token);
+
+            exchange.getResponseHeaders().set("Set-Cookie", "authToken=" + name);
+            return new AuthResponse(ResponseCode.OK, "Successfully set auth token.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new AuthResponse(ResponseCode.DatabaseError, "Exception was caught when inserting new auth token.");
+        }
     }
 
     /**

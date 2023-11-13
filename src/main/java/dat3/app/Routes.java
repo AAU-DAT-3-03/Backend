@@ -5,7 +5,10 @@ import java.net.http.HttpClient;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import dat3.app.server.Auth;
 import dat3.app.server.Response;
+import dat3.app.server.Auth.AuthResponse;
+import dat3.app.server.Auth.ResponseCode;
 
 public abstract class Routes {
     /**
@@ -37,4 +40,17 @@ public abstract class Routes {
 
     // Rasmus
     // Get: /users?id=*  ->  giv en enkelt eller alle brugere.
+
+    public static void registerUser(HttpExchange exchange) {
+        AuthResponse result = Auth.registerUser(exchange);
+
+        Response response = new Response();
+        response.setMsg(result.getMessage());
+        response.setStatusCode(ResponseCode.OK == result.getCode() ? 0 : 1);
+
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {
+        }
+    }
 }
