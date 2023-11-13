@@ -3,6 +3,8 @@ package dat3.app;
 import java.io.IOException;
 import java.net.http.HttpClient;
 
+import org.bson.Document;
+
 import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.server.Auth;
@@ -47,6 +49,32 @@ public abstract class Routes {
         Response response = new Response();
         response.setMsg(result.getMessage());
         response.setStatusCode(ResponseCode.OK == result.getCode() ? 0 : 1);
+
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {
+        }
+    }
+
+    public static void loginUser(HttpExchange exchange) {
+        AuthResponse result = Auth.login(exchange);
+
+        Response response = new Response();
+        response.setMsg(result.getMessage());
+        response.setStatusCode(ResponseCode.OK == result.getCode() ? 0 : 1);
+
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {
+        }
+    }
+
+    public static void authenticateRequest(HttpExchange exchange) {
+        Document user = Auth.auth(exchange);
+
+        Response response = new Response();
+        response.setMsg(user != null ? user.toJson() : null);
+        response.setStatusCode(user != null ? 0 : 1);
 
         try {
             response.sendResponse(exchange);
