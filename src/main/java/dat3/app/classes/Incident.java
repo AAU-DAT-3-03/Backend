@@ -2,16 +2,16 @@ package dat3.app.classes;
 
 import java.util.Date;
 
-public class Alarm {
+public class Incident {
     private int priority = 0;
     private boolean acknowledged = false;
     private Worker acknowledgedBy;
     private Date creationDate;
-    private String alarmID;
+    private String incidentID;
 
-    public Alarm(String alarmName) {
+    public Incident(String incidentName) {
         this.creationDate = new Date();
-        this.alarmID = alarmName;
+        this.incidentID = incidentName;
     }
 
     public void AcknowledgeAlarm(Worker worker) {
@@ -25,6 +25,6 @@ public class Alarm {
 
 
     public String getID() {
-        return this.alarmID;
+        return this.incidentID;
     }
 }
