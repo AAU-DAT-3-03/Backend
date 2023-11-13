@@ -199,6 +199,54 @@ public abstract class Auth {
         return new AuthResponse(ResponseCode.OK, "Successfully found and set auth token cookie.");
     }
 
+    public static AuthResponse registerUser(HttpExchange exchange) {
+        // Slagplan:
+        // Read user information from the post body. 
+        // Check if a user with that email already exists.
+        // If not, create the user.
+        // Now create a token for the user.
+        // Set the token and return with a success.
+
+        MongoCollection<Document> userCollection;
+        try {
+            userCollection = getCollection("users");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when getting collections from database");
+        }
+
+        Credentials credentials;
+        try {
+            int contentLength = Integer.parseInt(exchange.getRequestHeaders().get("Content-Length").get(0));
+            if (1000 < contentLength) return new AuthResponse(ResponseCode.InvalidBody, "Post body too long.");
+            byte[] buffer = new byte[contentLength];
+            
+            int read;
+            int totalRead = 0;
+            while (totalRead < contentLength) {
+                read = exchange.getRequestBody().read(buffer, totalRead, contentLength - totalRead);
+                totalRead += read;
+            }
+            
+            String body = new String(buffer);
+            credentials = new Gson().fromJson(body, Credentials.class);
+            if (credentials == null) return new AuthResponse(ResponseCode.InvalidBody, "Body couldn't be parsed to credentials.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new AuthResponse(ResponseCode.InvalidBody, "Exception was thrown when reading response json.");
+        }
+
+        // Check if a user exists, and if one does, return with an error.
+        try {
+            Document filter = new Document("email", credentials.getEmail());
+            Document result = userCollection.find(filter).first();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     /**
      * Gets the auth token name from the cookies sent in the request. If non-existent, returns null.
      * @param exchange the http exchange.
@@ -253,6 +301,7 @@ public abstract class Auth {
         DatabaseError,
         InvalidCredentials,
         InvalidBody,
+        UnknownError,
     }
 
     public static class AuthResponse {
