@@ -4,8 +4,9 @@ import java.io.IOException;
 
 import com.sun.net.httpserver.HttpExchange;
 
-import dat3.app.classes.Server;
 import dat3.app.server.Auth;
+import dat3.app.server.DBNotFound;
+import dat3.app.server.Server;
 
 public class App {
     public static void main(String[] args) {
@@ -19,8 +20,11 @@ public class App {
 
         try {
             server.startServer();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } catch (DBNotFound dbe) {
+            dbe.printStackTrace();
+            System.out.println("Database wasn't found.");
         }
     }
 
