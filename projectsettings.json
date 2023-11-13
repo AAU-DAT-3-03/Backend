@@ -1,6 +1,6 @@
 {
-    "hostname": "10.92.0.231",
+    "hostname": "localhost",
     "port": 80,
     "dbConnectionString":  "mongodb://localhost:27017/",
-    "dbName": "testDB"
+    "dbName": "p3"
 }
