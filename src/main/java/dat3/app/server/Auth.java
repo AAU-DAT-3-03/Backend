@@ -55,13 +55,13 @@ public abstract class Auth {
         try {
             Long expiryDate = token.getLong("expiryDate");
             expired = expiryDate < System.currentTimeMillis();
+
+            // If it is expired, not authorized
+            if (expired) return null;
         } catch (Exception e) {
             // Couldn't get expiration date
             return null;
         }
-
-        // If it is expired, not authorized
-        if (expired) return null;
 
         // Now, update the expiration date.
         try {
