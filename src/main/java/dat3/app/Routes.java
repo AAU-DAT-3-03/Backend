@@ -15,7 +15,7 @@ public abstract class Routes {
     public static void index(HttpExchange exchange) {
         Response response = new Response();
 
-        response.setMsg("Hello from index page.");
+        response.setMsg(ProjectSettings.getProjectSettings());
         response.setStatusCode(200);
 
         try {
@@ -25,4 +25,16 @@ public abstract class Routes {
             e.printStackTrace();
         }
     }    
+
+    // STJERNEMARKERING ER MULIGVIS ET ID OG MULIGVIS EN STJERNE. STJERNE ER ALLE BRUGERE.
+
+    // Prio 1
+    // Guldbæk
+    // Get: /incidents?id=*  ->  giver alle incidents med en user inkluderet
+
+    // Byriel
+    // Get: /auth  ->  Giver en user
+
+    // Rasmus
+    // Get: /users?id=*  ->  giv en enkelt eller alle brugere.
 }
