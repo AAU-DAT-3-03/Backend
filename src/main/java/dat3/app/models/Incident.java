@@ -10,37 +10,147 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Incident extends StandardModel<Incident> {
-    private int priority = 0;
-    private boolean acknowledged = false;
-    private ObjectId acknowledgedBy;
-    private Date creationDate;
-    private String _id;
-    private ObjectId[] users;
-
-    private ObjectId[] alarms;
-    private ObjectId[] eventLog;
-
-    public Incident(String incidentName) {
-        this.creationDate = new Date();
-        this._id = incidentName;
+    private Integer priority = null;
+    private Boolean acknowledged = null;
+    private ObjectId acknowledgedBy = null;
+    private Date creationDate = null;
+    private ObjectId _id = null;
+    private List<ObjectId> users = null;
+    private List<ObjectId> alarms = null;
+    private List<ObjectId> eventLog = null;
+    // ---------- Getters & Setters ---------- //
+    public int getPriority() {
+        return priority;
     }
-
-    public void AcknowledgeAlarm() {
-
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
-
-    public void UpdatePriority(int newPriority) {
-        this.priority = newPriority;
+    public Boolean getAcknowledged() {
+        return acknowledged;
     }
-
-
-    public String GetID() {
-        return this._id;
+    public void setAcknowledged(Boolean acknowledged) {
+        this.acknowledged = acknowledged;
     }
-
-    public User GetAcknowledgedBy() {
+    public ObjectId getAcknowledgedBy() {
+        return acknowledgedBy;
+    }
+    public void setAcknowledgedBy(ObjectId _id) {
+        this.acknowledgedBy = _id;
+    }
+    public Date getCreationDate() {
+        return creationDate;
+    }
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+    public ObjectId getId() {
+        return _id;
+    }
+    public void setId(ObjectId _id) {
+        this._id = _id;
+    }
+    public List<ObjectId> getUsers() {
+        return users;
+    }
+    public void setUsers(List<ObjectId> users) {
+        this.users = users;
+    }
+    public List<ObjectId> getAlarms() {
+        return alarms;
+    }
+    public void setAlarms(List<ObjectId> alarms) {
+        this.alarms = alarms;
+    }
+    public List<ObjectId> getEventLog() {
+        return eventLog;
+    }
+    public void setEventLog(List<ObjectId> eventLog) {
+        this.eventLog = eventLog;
+    }
+    // ---------- Builder subclass ---------- //
+    public static class IncidentBuilder {
+        private Incident incident = new Incident();
+        public IncidentBuilder setPriority(int priority) {
+            incident.setPriority(priority);
+            return this;
+        }
+        public IncidentBuilder setAcknowledged(Boolean acknowledged) {
+            incident.setAcknowledged(acknowledged);
+            return this;
+        }
+        public IncidentBuilder setAcknowledgedBy(ObjectId acknowledgedBy) {
+            incident.setAcknowledgedBy(acknowledgedBy);
+            return this;
+        }
+        public IncidentBuilder setCreationDate(Date creationDate) {
+            incident.setCreationDate(creationDate);
+            return this;
+        }
+        public IncidentBuilder setId(ObjectId _id) {
+            incident.setId(_id);
+            return this;
+        }
+        public IncidentBuilder setUsers(List<ObjectId> users) {
+            incident.setUsers(users);
+            return this;
+        }
+        public IncidentBuilder setAlarms(List<ObjectId> alarms) {
+            incident.setAlarms(alarms);
+            return this;
+        }
+        public IncidentBuilder setEventLog(List<ObjectId> eventLog) {
+            incident.setEventLog(eventLog);
+            return this;
+        }
+        public Incident getIncident() {
+            Incident temp = this.incident;
+            this.incident = new Incident();
+            return incident;
+        }
+    }
+    // ---------- Abstract method overrides ---------- //
+    @Override
+    public Document toDocument(){
+        Document document = new Document();
+        if (this.priority != null) document.append("priority", this.priority);
+        if (this.acknowledged != null) document.append("acknowledged", this.acknowledged);
+        if (this.acknowledgedBy != null) document.append("acknowledgedBy", this.acknowledgedBy);
+        if (this.creationDate != null) document.append("creationDate", this.creationDate);
+        if (this._id != null) document.append("_id", this._id);
+        if (this.users != null) document.append("users", this.users);
+        if (this.alarms != null) document.append("alarms", this.alarms);
+        if (this.eventLog!= null) document.append("eventlog", this.eventLog);
+        return document;
+    }
+    @Override
+    public Incident fromDocument(Document document) {
+        Incident incident = new Incident();
+        if (document.containsKey("priority")) incident.priority = document.getInteger("priority");
+        if (document.containsKey("acknowledged")) incident.acknowledged = document.getBoolean("acknowledged");
+        if (document.containsKey("acknowledgedBy")) incident.acknowledgedBy = document.getObjectId("acknowledgedBy");
+        if (document.containsKey("_id")) incident._id = document.getObjectId("_id");
+        if (document.containsKey("users")) incident.users = document.getList("users", ObjectId.class);
+        if (document.containsKey("alarms")) incident.alarms = document.getList("alarms", ObjectId.class);
+        if (document.containsKey("eventLog")) incident.eventLog = document.getList("eventLog", ObjectId.class);
+        return incident;
+    }
+    // ---------- Object Methods ---------- //
+    public Document toDocumentFormatted() {
+        Document document = new Document();
+        if (this.priority != null) document.append("Priority", this.priority);
+        if (this.acknowledged != null) document.append("Acknowledged", this.acknowledged);
+        if (this.acknowledgedBy != null) document.append("AcknowledgedBy", this.GetAcknowledgedBy());
+        if (this.creationDate != null) document.append("Date", this.creationDate);
+        if (this._id != null) document.append("ID", this._id);
+        if (this.users != null) document.append("Users", this.GetUsers());
+        if (this.alarms != null) document.append("Alarms", this.GetAlarms());
+        if (this.eventLog!= null) document.append("Eventlog", this.GetEventLog());
+        return document;
+    }
+    private User GetAcknowledgedBy() {
         ProjectSettings settings = ProjectSettings.getProjectSettings();
         MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
         MongoCollection<Document> userCollection = db.getCollection("user");
@@ -49,8 +159,7 @@ public class Incident extends StandardModel<Incident> {
         Document userDocument = userCollection.find(filter).first();
         return new Gson().fromJson(userDocument.toJson(), User.class);
     }
-
-    public ArrayList<User> GetUsers() {
+    private ArrayList<User> GetUsers() {
         ArrayList<User> userList = new ArrayList<>();
         ProjectSettings settings = ProjectSettings.getProjectSettings();
         MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
@@ -65,8 +174,7 @@ public class Incident extends StandardModel<Incident> {
 
         return userList;
     }
-
-    public ArrayList<Alarm> GetAlarms() {
+    private ArrayList<Alarm> GetAlarms() {
         ArrayList<Alarm> alarmList = new ArrayList<>();
         ProjectSettings settings = ProjectSettings.getProjectSettings();
         MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
@@ -81,8 +189,7 @@ public class Incident extends StandardModel<Incident> {
 
         return alarmList;
     }
-
-    public ArrayList<Event> GetEventLog() {
+    private ArrayList<Event> GetEventLog() {
         ArrayList<Event> eventList = new ArrayList<>();
         ProjectSettings settings = ProjectSettings.getProjectSettings();
         MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
@@ -96,35 +203,5 @@ public class Incident extends StandardModel<Incident> {
         }
 
         return eventList;
-    }
-    @Override
-    public Document toDocument(){
-        Document document = new Document();
-        document.append("Priority", this.priority);
-        document.append("Acknowledged", this.acknowledged);
-        if (this.acknowledgedBy != null) document.append("AcknowledgedBy", this.acknowledged);
-        if (this.creationDate != null) document.append("Date", this.creationDate);
-        if (this._id != null) document.append("ID", this._id);
-        if (this.users != null) document.append("Users", this.users);
-        if (this.alarms != null) document.append("Alarms", this.alarms);
-        if (this.eventLog!= null) document.append("Eventlog", this.eventLog);
-        return document;
-    }
-    @Override
-    public Incident fromDocument(Document document) {
-        return new Incident("dsa");
-    }
-
-    public Document toDocumentFormatted() {
-        Document document = new Document();
-        document.append("Priority", this.priority);
-        document.append("Acknowledged", this.acknowledged);
-        if (this.acknowledgedBy != null) document.append("AcknowledgedBy", this.GetAcknowledgedBy());
-        if (this.creationDate != null) document.append("Date", this.creationDate);
-        if (this._id != null) document.append("ID", this._id);
-        if (this.users != null) document.append("Users", this.GetUsers());
-        if (this.alarms != null) document.append("Alarms", this.GetAlarms());
-        if (this.eventLog!= null) document.append("Eventlog", this.GetEventLog());
-        return document;
     }
 }
