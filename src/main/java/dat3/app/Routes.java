@@ -90,14 +90,17 @@ public abstract class Routes {
                 }
                 return;
             }
-            //TODO update class from db with relevant information
+            ArrayList<Document> documentList = new ArrayList<Document>();
+            for (Incident incident : incidentList) {
+                documentList.add(incident.toDocument());
+            }
 
             // Converts all the incidents into JSON and adds them to the response headers.
-            String incidentListJSON = new Gson().toJson(incidentList);
+            String incidentListJSON = new Gson().toJson(documentList);
             exchange.getResponseHeaders().add("Incidents", incidentListJSON);
         } else {
             // In the case that the incidentID isn't equal to "*", the request is for a singular incident.
-            // Therefore a filter is created, and we only search for incidents with matching incident IDs.
+            // Therefor a filter is created, and we only search for incidents with matching incident IDs.
             // In the case that no incident is found with that specific ID, a response is sent with the error code 404.
             Document incidentDocument;
             try {
@@ -133,10 +136,9 @@ public abstract class Routes {
                 }
                 return;
             }
-            //TODO update class from db with relevant information
 
             // Converts the incident into JSON and adds it to the response headers.
-            String incidentJSON = new Gson().toJson(incident);
+            String incidentJSON = new Gson().toJson(incident.toDocument());
             exchange.getResponseHeaders().add("Incidents", incidentJSON);
         }
         // Finally the response code is set to 200 and the response is sent.
@@ -159,7 +161,7 @@ public abstract class Routes {
 
     // Rasmus
     // Get: /users?id=*  ->  giv en enkelt eller alle brugere.
-    private static MongoCollection<Document> getCollection(String collectionName) throws Exception {
+    public static MongoCollection<Document> getCollection(String collectionName) throws Exception {
         ProjectSettings settings = ProjectSettings.getProjectSettings();
         MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
         return db.getCollection(collectionName);
