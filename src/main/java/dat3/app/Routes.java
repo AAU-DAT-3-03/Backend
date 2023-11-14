@@ -93,7 +93,7 @@ public abstract class Routes {
             }
             ArrayList<Document> documentList = new ArrayList<Document>();
             for (Incident incident : incidentList) {
-                documentList.add(incident.toDocument());
+                documentList.add(incident.ToDocument());
             }
 
             // Converts all the incidents into JSON and adds them to the response headers.
@@ -139,7 +139,7 @@ public abstract class Routes {
             }
 
             // Converts the incident into JSON and adds it to the response headers.
-            String incidentJSON = new Gson().toJson(incident.toDocument());
+            String incidentJSON = new Gson().toJson(incident.ToDocument());
             exchange.getResponseHeaders().add("Incidents", incidentJSON);
         }
         // Finally the response code is set to 200 and the response is sent.

@@ -13,6 +13,10 @@ public class Worker {
         this.employeeID = UUID.randomUUID().toString();
     }
 
+    public String GetName() {
+        return name;
+    }
+
     public void GoOnDuty() {
         this.onDuty = true;
     }

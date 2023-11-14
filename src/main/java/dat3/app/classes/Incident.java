@@ -16,14 +16,15 @@ public class Incident {
     private boolean acknowledged = false;
     private ObjectId acknowledgedBy;
     private Date creationDate;
-    private String _ID;
+    private String _id;
     private ObjectId[] users;
 
     private ObjectId[] alarms;
+    private ObjectId[] eventLog;
 
     public Incident(String incidentName) {
         this.creationDate = new Date();
-        this._ID = incidentName;
+        this._id = incidentName;
     }
 
     public void AcknowledgeAlarm() {
@@ -35,11 +36,11 @@ public class Incident {
     }
 
 
-    public String getID() {
-        return this._ID;
+    public String GetID() {
+        return this._id;
     }
 
-    public Worker getAcknowledgedBy() {
+    public Worker GetAcknowledgedBy() {
         ProjectSettings settings = ProjectSettings.getProjectSettings();
         MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
         MongoCollection<Document> workerCollection = db.getCollection("user");
@@ -49,7 +50,7 @@ public class Incident {
         return new Gson().fromJson(workerDocument.toJson(), Worker.class);
     }
 
-    public ArrayList<Worker> getWorkers() {
+    public ArrayList<Worker> GetWorkers() {
         ArrayList<Worker> workerList = new ArrayList<Worker>();
         ProjectSettings settings = ProjectSettings.getProjectSettings();
         MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
@@ -65,31 +66,48 @@ public class Incident {
         return workerList;
     }
 
-    public ArrayList<Alarm> getAlarms() {
+    public ArrayList<Alarm> GetAlarms() {
         ArrayList<Alarm> alarmList = new ArrayList<Alarm>();
         ProjectSettings settings = ProjectSettings.getProjectSettings();
         MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
-        MongoCollection<Document> workerCollection = db.getCollection("Alarm");
+        MongoCollection<Document> alarmCollection = db.getCollection("Alarm");
 
         for (ObjectId alarmID: this.alarms) {
             Document filter = new Document();
             filter.put("ObjectID", alarmID);
-            Document alarmDocument = workerCollection.find(filter).first();
+            Document alarmDocument = alarmCollection.find(filter).first();
             alarmList.add(new Gson().fromJson(alarmDocument.toJson(), Alarm.class));
         }
 
         return alarmList;
     }
 
-    public Document toDocument(){
+    public ArrayList<Event> GetEventLog() {
+        ArrayList<Event> eventList = new ArrayList<Event>();
+        ProjectSettings settings = ProjectSettings.getProjectSettings();
+        MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
+        MongoCollection<Document> eventCollection = db.getCollection("event");
+
+        for (ObjectId eventID: this.eventLog) {
+            Document filter = new Document();
+            filter.put("ObjectID", eventID);
+            Document eventDocument = eventCollection.find(filter).first();
+            eventList.add(new Gson().fromJson(eventDocument.toJson(), Event.class));
+        }
+
+        return eventList;
+    }
+
+    public Document ToDocument(){
         Document document = new Document();
         document.append("Priority", this.priority);
         document.append("Acknowledged", this.acknowledged);
-        document.append("AcknowledgedBy", this.getAcknowledgedBy());
-        document.append("Date", this.creationDate);
-        document.append("ID", this._ID);
-        document.append("Users", this.getWorkers());
-        document.append("Alarms", this.getAlarms());
+        if (this.acknowledgedBy != null) document.append("AcknowledgedBy", this.GetAcknowledgedBy());
+        if (this.creationDate != null) document.append("Date", this.creationDate);
+        if (this._id != null) document.append("ID", this._id);
+        if (this.users != null) document.append("Users", this.GetWorkers());
+        if (this.alarms != null) document.append("Alarms", this.GetAlarms());
+        if (this.eventLog!= null) document.append("Eventlog", this.GetEventLog());
         return document;
     }
 }
