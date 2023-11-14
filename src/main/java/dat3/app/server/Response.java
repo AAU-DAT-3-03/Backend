@@ -34,7 +34,7 @@ public class Response {
     public void sendResponse(HttpExchange connection) throws IOException {
         String json = new Gson().toJson(this);
         byte[] bytes = json.getBytes();
-        connection.sendResponseHeaders(statusCode, bytes.length);
+        connection.sendResponseHeaders(200, bytes.length);
         connection.getResponseBody().write(bytes);
     }
 }
