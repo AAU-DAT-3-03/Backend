@@ -10,6 +10,84 @@ public class User extends StandardModel<User> {
     private Boolean onCall = null;
     private Boolean onDuty = null;
 
+    // ---------- Getters & Setters ---------- //
+    public ObjectId getId() {
+        return _id;
+    }
+
+    public void setId(ObjectId _id) {
+        this._id = _id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Boolean getOnCall() {
+        return onCall;
+    }
+
+    public void setOnCall(Boolean onCall) {
+        this.onCall = onCall;
+    }
+
+    public Boolean getOnDuty() {
+        return onDuty;
+    }
+
+    public void setOnDuty(Boolean onDuty) {
+        this.onDuty = onDuty;
+    }
+
+    // ---------- Builder subclass ---------- //
+    public static class UserBuilder {
+        private User user = new User();
+
+        public UserBuilder setId(ObjectId _id) {
+            user.setId(_id);
+            return this;
+        }
+
+        public UserBuilder setEmail(String email) {
+            user.setEmail(email);
+            return this;
+        }
+
+        public UserBuilder setName(String name) {
+            user.setName(name);
+            return this;
+        }
+
+        public UserBuilder setOnCall(Boolean onCall) {
+            user.setOnCall(onCall);
+            return this;
+        }
+
+        public UserBuilder setOnDuty(Boolean onDuty) {
+            user.setOnDuty(onDuty);
+            return this;
+        }
+
+        public User getUser() {
+            User temp = this.user;
+            this.user = new User();
+            return temp;            
+        }
+    }
+
+    // ---------- Abstract method overrides ---------- //
     @Override
     public Document toDocument() {
         Document document = new Document();
