@@ -1,11 +1,16 @@
 package dat3.app.models;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.UpdateResult;
+import com.sun.net.httpserver.HttpExchange;
 
 public class AuthToken extends StandardModel<AuthToken> {
     private ObjectId _id = null;
@@ -107,11 +112,35 @@ public class AuthToken extends StandardModel<AuthToken> {
         return System.currentTimeMillis() + 1314000000;  // One year.
     }
 
+    public static String createUniqueName(HttpExchange exchange) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        String name = exchange.getRemoteAddress().getAddress().toString() + Long.toString(System.currentTimeMillis());
+        byte[] hash = digest.digest(name.getBytes());
+        return bytesToHex(hash);
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        BigInteger bigInt = new BigInteger(1, bytes);
+        String hexString = bigInt.toString(16);
+        
+        // Ensure that the hex string has leading zeros
+        int paddingLength = (bytes.length * 2) - hexString.length();
+        if (paddingLength > 0) {
+            return "0".repeat(paddingLength) + hexString;
+        } else {
+            return hexString;
+        }
+    }
+
     // ---------- Object Methods ---------- //
     public UpdateResult updateToken(MongoCollection<Document> collection, ClientSession session) throws Exception {
         AuthTokenBuilder builder = new AuthTokenBuilder();
         AuthToken filter = builder.setId(this._id).getToken();
         AuthToken values = builder.setExpiryDate(AuthToken.getNewExpirationDate()).getToken();
         return values.updateOne(collection, session, filter);
+    }
+
+    public boolean isExpired() {
+        return expiryDate < System.currentTimeMillis();
     }
 }
