@@ -1,7 +1,6 @@
 package dat3.app;
 
 import java.io.IOException;
-import java.net.http.HttpClient;
 import java.util.ArrayList;
 import com.google.gson.Gson;
 import com.mongodb.client.FindIterable;
@@ -9,7 +8,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.sun.net.httpserver.HttpExchange;
-import dat3.app.classes.Incident;
+import dat3.app.models.Incident;
 import org.bson.Document;
 import dat3.app.server.Auth;
 import dat3.app.server.Response;
@@ -93,7 +92,7 @@ public abstract class Routes {
             }
             ArrayList<Document> documentList = new ArrayList<Document>();
             for (Incident incident : incidentList) {
-                documentList.add(incident.toDocument());
+                documentList.add(incident.toDocumentFormatted());
             }
 
             // Converts all the incidents into JSON and adds them to the response headers.
@@ -139,7 +138,7 @@ public abstract class Routes {
             }
 
             // Converts the incident into JSON and adds it to the response headers.
-            String incidentJSON = new Gson().toJson(incident.toDocument());
+            String incidentJSON = new Gson().toJson(incident.toDocumentFormatted());
             exchange.getResponseHeaders().add("Incidents", incidentJSON);
         }
         // Finally the response code is set to 200 and the response is sent.
