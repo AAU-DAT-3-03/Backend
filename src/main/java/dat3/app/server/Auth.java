@@ -1,7 +1,5 @@
 package dat3.app.server;
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
 import java.util.List;
 
 import org.bson.Document;
@@ -12,7 +10,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.InsertOneResult;
 import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.ProjectSettings;
@@ -266,36 +263,6 @@ public abstract class Auth {
             }
         }
         return null;
-    }
-
-    /**
-     * Converts an array of bytes to a hex string.
-     * @param bytes the bytes to convert to a string.
-     * @return the final hex string.
-     */
-    private static String bytesToHex(byte[] bytes) {
-        BigInteger bigInt = new BigInteger(1, bytes);
-        String hexString = bigInt.toString(16);
-        
-        // Ensure that the hex string has leading zeros
-        int paddingLength = (bytes.length * 2) - hexString.length();
-        if (paddingLength > 0) {
-            return "0".repeat(paddingLength) + hexString;
-        } else {
-            return hexString;
-        }
-    }
-
-    /**
-     * Connects to the database given by the connection string and database name in project settings, and returns the request collection. 
-     * @param collectionName the name of the collection to return.
-     * @return a collection of documents.
-     * @throws Exception if something goes wrong when connecting. 
-     */
-    private static MongoCollection<Document> getCollection(String collectionName) throws Exception {
-        ProjectSettings settings = ProjectSettings.getProjectSettings();
-        MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
-        return db.getCollection(collectionName);
     }
 
     public static enum ResponseCode {
