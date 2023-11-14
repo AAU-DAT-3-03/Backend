@@ -129,7 +129,7 @@ public class AuthToken extends Model<AuthToken> {
     }
 
     @Override
-    public MongoIterable<AuthToken> findMany(MongoCollection<Document> collection, ClientSession session) {
+    public MongoIterable<AuthToken> findMany(MongoCollection<Document> collection, ClientSession session) throws Exception {
         Document filter = this.toDocument();
         FindIterable<Document> result = collection.find(session, filter);
         MongoIterable<AuthToken> mapped = result.map((Document doc) -> {
