@@ -15,6 +15,9 @@ public class App {
         
         server.addGetRoute("/", Routes::index);
         server.addGetRoute("/incidents", Routes::getIncidents);
+        server.addGetRoute("/auth", Routes::authenticateRequest);
+        server.addPostRoute("/register", Routes::registerUser);
+        server.addPostRoute("/login", Routes::loginUser);
 
         try {
             server.startServer();

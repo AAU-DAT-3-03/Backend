@@ -3,17 +3,18 @@ package dat3.app;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.util.ArrayList;
-
 import com.google.gson.Gson;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.sun.net.httpserver.HttpExchange;
-
 import dat3.app.classes.Incident;
-import dat3.app.server.Response;
 import org.bson.Document;
+import dat3.app.server.Auth;
+import dat3.app.server.Response;
+import dat3.app.server.Auth.AuthResponse;
+import dat3.app.server.Auth.ResponseCode;
 
 public abstract class Routes {
     /**
@@ -165,5 +166,44 @@ public abstract class Routes {
         ProjectSettings settings = ProjectSettings.getProjectSettings();
         MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
         return db.getCollection(collectionName);
+    }
+
+    public static void registerUser(HttpExchange exchange) {
+        AuthResponse result = Auth.registerUser(exchange);
+
+        Response response = new Response();
+        response.setMsg(result.getMessage());
+        response.setStatusCode(ResponseCode.OK == result.getCode() ? 0 : 1);
+
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {
+        }
+    }
+
+    public static void loginUser(HttpExchange exchange) {
+        AuthResponse result = Auth.login(exchange);
+
+        Response response = new Response();
+        response.setMsg(result.getMessage());
+        response.setStatusCode(ResponseCode.OK == result.getCode() ? 0 : 1);
+
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {
+        }
+    }
+
+    public static void authenticateRequest(HttpExchange exchange) {
+        Document user = Auth.auth(exchange);
+
+        Response response = new Response();
+        response.setMsg(user != null ? user.toJson() : null);
+        response.setStatusCode(user != null ? 0 : 1);
+
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {
+        }
     }
 }

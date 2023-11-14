@@ -7,12 +7,17 @@ import java.util.List;
 import org.bson.Document;
 
 import com.google.gson.Gson;
+import com.mongodb.client.ClientSession;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.InsertOneResult;
 import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.ProjectSettings;
+import dat3.app.models.AuthToken;
+import dat3.app.models.AuthToken.AuthTokenBuilder;
 
 public abstract class Auth {
     /**
@@ -21,68 +26,54 @@ public abstract class Auth {
      * @return a document containing only the '_id' of a user.
      */
     public static Document auth(HttpExchange exchange) {
+        // First get the collections.
+        MongoCollection<Document> tokenCollection;
+        ClientSession session;
+        try {
+            ProjectSettings settings = ProjectSettings.getProjectSettings();
+            MongoClient client = MongoClients.create(settings.getDbConnectionString());
+            MongoDatabase db = client.getDatabase(settings.getDbName());
+
+            tokenCollection = db.getCollection("tokens");
+            session = client.startSession();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Couldn't get collections.");
+            return null;
+        }
+
         // Get the auth token. If non-existent, not authorized.
         String tokenName = getAuthTokenFromCookies(exchange);
         if (tokenName == null) return null;
 
-        // Check if there is a token like this
-        MongoCollection<Document> tokenCollection;
-        try {
-            tokenCollection = getCollection("tokens");
-        } catch (Exception e) {
-            // Error connecting to database
-            return null;
-        }
-
         // Check if the token exists.
-        Document token;
+        AuthToken token = new AuthTokenBuilder().setName(tokenName).getToken();
         try {
-            Document filter = new Document();
-            filter.put("name", tokenName);
-
-            token = tokenCollection.find(filter).first();
-    
-            // If not found, not authorized.
+            token = token.findOne(tokenCollection, session);
             if (token == null) return null;
         } catch (Exception e) {
-            // Something went wrong when finding token
             return null;
         }
 
-
         // Determine if it is expired.
-        boolean expired;
         try {
-            Long expiryDate = token.getLong("expiryDate");
-            expired = expiryDate < System.currentTimeMillis();
-
-            // If it is expired, not authorized
-            if (expired) return null;
+            if (token.getExpiryDate() < System.currentTimeMillis()) return null;
         } catch (Exception e) {
-            // Couldn't get expiration date
+            e.printStackTrace();
             return null;
         }
 
         // Now, update the expiration date.
         try {
-            Document filter = new Document();
-            filter.put("_id", token.getObjectId("_id"));
-
-            Document valuesToUpdate = new Document();
-            valuesToUpdate.put("expiryDate", System.currentTimeMillis() + 60000 * 24 * 365);
-            
-            Document update = new Document();
-            update.put("$set", valuesToUpdate);
-
-            tokenCollection.updateOne(filter, update);
+            token.updateToken(tokenCollection, session);
         } catch (Exception e) {
-            // Something went wrong when updating token, but we kinda don't care too much.
+            e.printStackTrace();
+            System.out.println("Something went wrong when updating auth token.");
         }
 
-        // Updated the auth token.
-        Document userIdDocument = new Document();
-        userIdDocument.put("userId", token.getObjectId("userId"));
-        return userIdDocument;
+        // Return the user id. 
+        session.close();
+        return new Document("_id", token.getUserId());
     }
 
     /**
@@ -208,8 +199,10 @@ public abstract class Auth {
         // Set the token and return with a success.
 
         MongoCollection<Document> userCollection;
+        MongoCollection<Document> tokenCollection;
         try {
             userCollection = getCollection("users");
+            tokenCollection = getCollection("tokens");
         } catch (Exception e) {
             e.printStackTrace();
             return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when getting collections from database");
@@ -240,11 +233,45 @@ public abstract class Auth {
         try {
             Document filter = new Document("email", credentials.getEmail());
             Document result = userCollection.find(filter).first();
+            if (result != null) return new AuthResponse(ResponseCode.InvalidCredentials, "Email is taken.");
         } catch (Exception e) {
             e.printStackTrace();
+            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when checking for existing users.");
         }
 
-        return null;
+        // Insert this new user!
+        Object id;
+        try {
+            Document userToInsert = new Document();
+            userToInsert.put("email", credentials.getEmail());
+            userToInsert.put("password", credentials.getPassword());
+            InsertOneResult result = userCollection.insertOne(userToInsert);
+            id = result.getInsertedId();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new AuthResponse(ResponseCode.DatabaseError, "Exception thrown when inserting new user.");
+        }
+
+        // Create an auth token for the new user.
+        try {
+            Document token = new Document();
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            String name = exchange.getRemoteAddress().getAddress().toString() + Long.toString(System.currentTimeMillis());
+            byte[] hash = digest.digest(name.getBytes());
+            name = bytesToHex(hash);
+
+            token.put("name", name);
+            token.put("expiryDate", System.currentTimeMillis() + 60000 * 24 * 365);
+            token.put("userId", id);
+
+            tokenCollection.insertOne(token);
+
+            exchange.getResponseHeaders().set("Set-Cookie", "authToken=" + name);
+            return new AuthResponse(ResponseCode.OK, "Successfully set auth token.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new AuthResponse(ResponseCode.DatabaseError, "Exception was caught when inserting new auth token.");
+        }
     }
 
     /**
