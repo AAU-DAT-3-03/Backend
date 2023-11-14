@@ -91,7 +91,7 @@ public class Company extends Model<Company> {
     }
 
     @Override
-    public MongoIterable<Company> findMany(MongoCollection<Document> collection, ClientSession session) {
+    public MongoIterable<Company> findMany(MongoCollection<Document> collection, ClientSession session) throws Exception {
         FindIterable<Document> findResult = collection.find(session, this.toDocument());
         return findResult.map((Document doc) -> {
             try {
@@ -109,7 +109,7 @@ public class Company extends Model<Company> {
     }
 
     @Override
-    public UpdateResult updateOne(MongoCollection<Document> collection, ClientSession session, Company filter) {
+    public UpdateResult updateOne(MongoCollection<Document> collection, ClientSession session, Company filter) throws Exception {
         Document setOperation = new Document("$set", this.toDocument());
         return collection.updateOne(session, filter.toDocument(), setOperation);
     }
@@ -121,7 +121,7 @@ public class Company extends Model<Company> {
     }
 
     @Override
-    public UpdateResult updateMany(MongoCollection<Document> collection, ClientSession session, Company filter) {
+    public UpdateResult updateMany(MongoCollection<Document> collection, ClientSession session, Company filter) throws Exception {
         Document setOperation = new Document("$set", this.toDocument());
         return collection.updateMany(session, filter.toDocument(), setOperation);
     }
