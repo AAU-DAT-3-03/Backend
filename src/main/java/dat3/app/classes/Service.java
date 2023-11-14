@@ -6,8 +6,8 @@ import java.util.UUID;
 
 public class Service {
     private String name;
-    private Map<String, Alarm> currentAlarms;
-    private Map<String, Alarm> previousAlarms;
+    private Map<String, Incident> currentAlarms;
+    private Map<String, Incident> previousAlarms;
     private Map<String, Case> currentCases;
     private Map<String, Case> previousCases;
     // alt muligt data?
@@ -22,14 +22,14 @@ public class Service {
 
     public void CreateAlarm() {
         String ID = UUID.randomUUID().toString();
-        Alarm newAlarm = new Alarm(ID);
-        currentAlarms.put(ID, newAlarm);
+        Incident newIncident = new Incident(ID);
+        currentAlarms.put(ID, newIncident);
     }
 
     public void RemoveAlarm(String alarmID) {
-        Alarm alarm = currentAlarms.get(alarmID);
+        Incident incident = currentAlarms.get(alarmID);
         currentAlarms.remove(alarmID);
-        previousAlarms.put(alarmID, alarm);
+        previousAlarms.put(alarmID, incident);
     }
 
     public void CreateCase() {
@@ -48,7 +48,7 @@ public class Service {
 
     }
 
-    public Alarm findAlarm(String alarmID) {
+    public Incident findAlarm(String alarmID) {
         return currentAlarms.get(alarmID);
     }
 }

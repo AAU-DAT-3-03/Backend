@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class Case {
     private String caseID;
-    private Map<String, Alarm> alarms;
+    private Map<String, Incident> alarms;
     private Map<String, Worker> currentWorkers;
     private Date creationDate;
 
@@ -17,12 +17,12 @@ public class Case {
         this.currentWorkers = new HashMap<>();
     }
 
-    public void AddAlarm(Alarm newAlarm) {
-        this.alarms.put(newAlarm.getID(), newAlarm);
+    public void AddAlarm(Incident newIncident) {
+        this.alarms.put(newIncident.getID(), newIncident);
     }
 
-    public void removeAlarm(Alarm removedAlarm) {
-        this.alarms.remove(removedAlarm.getID());
+    public void removeAlarm(Incident removedIncident) {
+        this.alarms.remove(removedIncident.getID());
     }
 
     public void AddWorker(Worker worker) {
