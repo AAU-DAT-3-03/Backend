@@ -1,7 +1,6 @@
 package dat3.app.routes.users;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.Document;
@@ -14,7 +13,6 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
-import dat3.app.models.StandardModel;
 import dat3.app.models.User;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.server.Auth;
@@ -46,7 +44,7 @@ public abstract class UserRoutes {
                     return;
                 }
 
-                List<Document> users = iterableToDocs(filter.findMany(userCollection, session));
+                List<Document> users = MongoUtility.iterableToDocs(filter.findMany(userCollection, session));
                 Response response = new Response();
                 response.setMsg(new Document("users", users).toJson());
                 response.sendResponse(exchange);
@@ -166,14 +164,6 @@ public abstract class UserRoutes {
         }
     }
 
-    private static <T extends StandardModel<T>> List<Document> iterableToDocs(Iterable<T> iterable) {
-        List<Document> list = new ArrayList<>();
-        for (T t : iterable) {
-            list.add(t.toDocument());
-        }
-        return list;
-    }
-
     private static User parseQueryString(HttpExchange exchange) {
         try {
             Document document = new Document();
@@ -189,7 +179,6 @@ public abstract class UserRoutes {
 
                 document.put(pair[0], pair[1]);
             }
-            System.out.println(document);
             return new User().fromDocument(document);
         } catch (Exception e) {
             return null;

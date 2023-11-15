@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.bson.Document;
 
-import com.google.gson.Gson;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -14,6 +13,7 @@ import dat3.app.models.AuthToken;
 import dat3.app.models.User;
 import dat3.app.models.AuthToken.AuthTokenBuilder;
 import dat3.app.models.User.UserBuilder;
+import dat3.app.utility.ExchangeUtility;
 import dat3.app.utility.MongoUtility;
 
 public abstract class Auth {
@@ -66,7 +66,7 @@ public abstract class Auth {
 
                 Credentials credentials;
                 try {
-                    credentials = parseJsonBody(exchange, 1000, Credentials.class);
+                    credentials = ExchangeUtility.parseJsonBody(exchange, 1000, Credentials.class);
                     if (credentials == null) throw new Exception("Credentials were null.");
                 } catch (Exception e) {
                     return new AuthResponse(ResponseCode.InvalidBody, "Body couldn't be read.");
@@ -125,7 +125,7 @@ public abstract class Auth {
 
                 Credentials credentials;
                 try {
-                    credentials = parseJsonBody(exchange, 1000, Credentials.class);
+                    credentials = ExchangeUtility.parseJsonBody(exchange, 1000, Credentials.class);
                     if (credentials == null) throw new Exception("Credentials were null");
                 } catch (Exception e) {
                     return new AuthResponse(ResponseCode.InvalidBody, "Body couldn't be read.");
@@ -168,22 +168,6 @@ public abstract class Auth {
             e.printStackTrace();
             return new AuthResponse(ResponseCode.DatabaseError, "Something went wrong with database connection");
         }
-    }
-
-    private static <T> T parseJsonBody(HttpExchange exchange, int maxSize, Class<T> type) throws Exception {
-        int contentLength = Integer.parseInt(exchange.getRequestHeaders().get("Content-Length").get(0));
-        if (maxSize < contentLength) throw new Exception("Content length is bigger than allowed size.");
-
-        byte[] buffer = new byte[contentLength];
-        int read;
-        int totalRead = 0;
-        while (totalRead < contentLength) {
-            read = exchange.getRequestBody().read(buffer, totalRead, contentLength - totalRead);
-            totalRead += read;
-        }
-
-        String bodyJson = new String(buffer);
-        return new Gson().fromJson(bodyJson, type);
     }
 
     /**
