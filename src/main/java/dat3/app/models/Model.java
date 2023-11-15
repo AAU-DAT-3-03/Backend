@@ -9,7 +9,7 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 
-abstract class Model <T> {
+public abstract class Model <T> {
     // Insertion operation
     public abstract InsertOneResult insertOne(MongoCollection<Document> collection, ClientSession session) throws Exception;
 

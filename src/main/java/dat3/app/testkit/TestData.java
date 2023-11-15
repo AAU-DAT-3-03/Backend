@@ -329,7 +329,7 @@ public class TestData {
         for (int i = 0; i < firstPartIncident.length; i++) {
             for (int j = 0; j < secondPartIncident.length; j++) {
                 for (int k = 0; k < thirdPartIncident.length; k++) {
-                    incidentNames.add(firstPartNumber[i] + " " + secondPartNumber[j] + " " + thirdPartNumber[k]);
+                    incidentNames.add(firstPartIncident[i] + " " + secondPartIncident[j] + " " + thirdPartIncident[k]);
                 }
             }
         }

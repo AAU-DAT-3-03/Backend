@@ -1,20 +1,20 @@
 package dat3.app.utility;
 
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoIterable;
 
 import dat3.app.ProjectSettings;
-import dat3.app.models.Incident;
+import dat3.app.models.Model;
 import dat3.app.models.User;
 import dat3.app.models.Incident.IncidentBuilder;
 import dat3.app.models.StandardModel;
@@ -31,6 +31,7 @@ public abstract class MongoUtility {
         db.drop(session);
         UserBuilder userBuilder = new UserBuilder();
         MongoCollection<Document> userCollection = getCollection(client, "users");
+        MongoCollection<Document> incidentCollection = getCollection(client, "incidents");
     
         for (User user : TestData.personalizedUsers()) {
             user.insertOne(userCollection, session);
@@ -41,22 +42,25 @@ public abstract class MongoUtility {
 
 
         {
-            List<Incident> incidents = new ArrayList<>();
+            List<User> users = iterableToList(userBuilder.getUser().findMany(userCollection, session));
+            Iterator<String> headers = TestData.randomIncidentnames().iterator();
             IncidentBuilder incidentBuilder = new IncidentBuilder();
             for (int i = 0; i < 150; i++) {
+                List<ObjectId> userIds = new ArrayList<>();
+                for (int j = 0; j < TestData.randomIntExcl(10); j++) {
+                    userIds.add(users.get(TestData.randomIntExcl(users.size())).getId());
+                }
                 boolean acknowledged = TestData.randomBoolean();
-                incidents.add(incidentBuilder
-                    .setAcknowledged(acknowledged)
-                    .setAcknowledgedBy(null)
+                ObjectId acknowledgedBy = null;
+                if (acknowledged) acknowledgedBy = users.get(TestData.randomIntExcl(users.size())).getId();
+                incidentBuilder
+                    .setAcknowledgedBy(acknowledgedBy)
                     .setAlarms(null)
-                    .setCreationDate(new Date())
+                    .setCreationDate(System.currentTimeMillis())
+                    .setHeader(headers.hasNext() ? headers.next() : null)
                     .setPriority(TestData.randomIntExcl(4) + 1)
-                    .setUsers(null)
-                    .getIncident());
-            }
-
-            for (User user : userBuilder.getUser().findMany(userCollection, session)) {
-
+                    .setUsers(userIds)
+                    .getIncident().insertOne(incidentCollection, session);
             }
         }
 
@@ -75,6 +79,22 @@ public abstract class MongoUtility {
 
     public static MongoDatabase getDatabase(MongoClient client) {
         return client.getDatabase(settings.getDbName());
+    }
+
+    public static <T> List<T> iterableToList(Iterable<T> iterable) {
+        List<T> list = new ArrayList<>();
+        for (T item : iterable) {
+            list.add(item);
+        }
+        return list;
+    }
+
+    public static <T extends Model<T>> List<Document> modelsToDocs(List<T> models) {
+        List<Document> docs = new ArrayList<>(models.size());
+        for (T model : models) {
+            docs.add(model.toDocument());
+        }
+        return docs;
     }
 
     public static <T extends StandardModel<T>> List<Document> iterableToDocs(Iterable<T> iterable) {
