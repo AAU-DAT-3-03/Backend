@@ -118,6 +118,69 @@ public class TestData {
         "Moore",
         "Taylor",
     };
+
+    private static String[] firstPartNumber = new String[] {
+        "12 3",
+        "45 6",
+        "78 9",
+        "23 4",
+        "56 7",
+        "89 0",
+        "34 5",
+        "67 8",
+        "90 1",
+        "45 6",
+    };
+
+    private static String[] secondPartNumber = new String[] {
+        "1 23 ",
+        "2 34 ",
+        "3 45 ",
+        "4 56 ",
+        "5 67 ",
+        "6 78 ",
+        "7 89 ",
+        "8 90 ",
+        "9 01 ",
+        "0 12 ",
+    };
+
+    private static String[] thirdPartNumber = new String[] {
+        "34",
+        "45",
+        "56",
+        "67",
+        "78",
+        "89",
+        "90",
+        "01",
+        "12",
+        "23",
+    };
+
+    public static List<User> personalizedUsers() {
+        String[] names = new String[] {
+            "mads.byriel",
+            "mads.guldbæk",
+            "rasmus.pedersen",
+            "sandra.rosenbeck",
+            "mikkel.helsing",
+            "oliver.nielsen",
+        };
+        List<User> users = new ArrayList<>(6);
+        UserBuilder builder = new UserBuilder();
+        for (String name : names) {
+            users.add(builder
+                .setName(name)
+                .setEmail(name + "@gmail.com")
+                .setPassword(name + "123")
+                .setPhoneNumber("505-842-5662")
+                .setOnCall(randomBoolean())
+                .setOnDuty(randomBoolean())
+                .getUser());
+        }
+        return users;
+    }
     
     public static List<User> randomValidUsers() {
         return shuffleList(unshuffledValidUsers(), 10);
@@ -132,7 +195,11 @@ public class TestData {
     }
 
     public static boolean randomBoolean() {
-        return random.nextInt(4) == 0;
+        return random.nextInt(2) == 0;
+    }
+
+    public static List<String> randomValidPhoneNumbers() {
+        return shuffleList(unshuffledValidPhoneNumbers(), 10);
     }
 
     public static <T> List<T> shuffleList(List<T> list, int randomness) {
@@ -148,11 +215,8 @@ public class TestData {
         return list;
     }
 
-    
-
     public static List<String> unshuffledValidEmails() {
         List<String> validEmails = new ArrayList<>(firstPartEmail.length * secondPartEmail.length * thirdPartEmail.length);
-
         for (int i = 0; i < firstPartEmail.length; i++) {
             for (int j = 0; j < secondPartEmail.length; j++) {
                 for (int k = 0; k < thirdPartEmail.length; k++) {
@@ -181,20 +245,37 @@ public class TestData {
         UserBuilder builder = new UserBuilder();
         List<User> users = new ArrayList<>();
 
-        Iterator<String> namesIterator = randomValidNames().iterator();
+        Iterator<String> namesIterator = unshuffledValidNames().iterator();
+        Iterator<String> phoneNumbers = unshuffledValidPhoneNumbers().iterator();
 
-        while (namesIterator.hasNext()) {
+        while (namesIterator.hasNext() && phoneNumbers.hasNext()) {
             String name = namesIterator.next();
+            String number = phoneNumbers.next();
             String email = createEmailFromName(name);
             users.add(builder
                 .setEmail(email)
                 .setName(name)
+                .setPassword(email.split("@")[0] + "123")
+                .setPhoneNumber(number)
                 .setOnCall(randomBoolean())
                 .setOnDuty(randomBoolean())
                 .getUser());
         }
 
         return users;
+    }
+
+    public static List<String> unshuffledValidPhoneNumbers() {
+        List<String> validPhoneNumbers = new ArrayList<>(firstPartNumber.length * secondPartNumber.length * thirdPartNumber.length);
+        for (int i = 0; i < firstPartNumber.length; i++) {
+            for (int j = 0; j < secondPartNumber.length; j++) {
+                for (int k = 0; k < thirdPartNumber.length; k++) {
+                    validPhoneNumbers.add(firstPartNumber[i] + secondPartNumber[j] + thirdPartNumber[k]);
+                }
+            }
+        }
+
+        return validPhoneNumbers;
     }
 
     private static String createEmailFromName(String name) {
@@ -207,7 +288,7 @@ public class TestData {
         }
         finalFirstPart += "@";
 
-        return finalFirstPart + randomSecondPartEmail() + randomThirdPartEmail();
+        return finalFirstPart + randomSecondPartEmail() + "." + randomThirdPartEmail();
     }
 
     private static String randomSecondPartEmail() {
