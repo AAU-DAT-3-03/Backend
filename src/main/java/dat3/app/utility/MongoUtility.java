@@ -17,6 +17,7 @@ import dat3.app.ProjectSettings;
 import dat3.app.models.Incident;
 import dat3.app.models.User;
 import dat3.app.models.Incident.IncidentBuilder;
+import dat3.app.models.StandardModel;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.testkit.TestData;
 
@@ -74,5 +75,13 @@ public abstract class MongoUtility {
 
     public static MongoDatabase getDatabase(MongoClient client) {
         return client.getDatabase(settings.getDbName());
+    }
+
+    public static <T extends StandardModel<T>> List<Document> iterableToDocs(Iterable<T> iterable) {
+        List<Document> list = new ArrayList<>();
+        for (T t : iterable) {
+            list.add(t.toDocument());
+        }
+        return list;
     }
 }
