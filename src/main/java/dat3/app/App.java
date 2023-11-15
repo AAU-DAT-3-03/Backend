@@ -34,10 +34,14 @@ public class App {
         server.addGetRoute("/", Routes::index);
         server.addGetRoute("/incidents", Routes::getIncidents);
         server.addGetRoute("/auth", Routes::authenticateRequest);
-        server.addGetRoute("/users", UserRoutes::getUser);
 
         server.addPostRoute("/register", Routes::registerUser);
         server.addPostRoute("/login", Routes::loginUser);
+
+        // Users
+        server.addGetRoute("/users", UserRoutes::getUser);
+        server.addPutRoute("/users", UserRoutes::updateUser);
+        server.addDeleteRoute("/users", UserRoutes::deleteUser);
 
         try {
             server.startServer();
