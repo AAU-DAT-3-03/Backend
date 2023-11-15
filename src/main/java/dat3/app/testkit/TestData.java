@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import dat3.app.models.Incident;
 import dat3.app.models.User;
 import dat3.app.models.User.UserBuilder;
 
@@ -158,6 +159,43 @@ public class TestData {
         "23",
     };
 
+    private static String[] firstPartIncident = new String[] {
+        "Guldbæk",
+        "Byriel",
+        "Sandra",
+        "Mikkel",
+        "Oliver",
+        "Rasmus",
+        "Eva",
+        "A computer",
+    };
+
+    private static String[] secondPartIncident = new String[] {
+        "gracefully",
+        "ominously",
+        "elegantly",
+        "swiftly",
+        "vividly",
+        "respectfully",
+        "relentlessly",
+        "violently",
+        "mysteriously",
+        "horrendously",
+    };
+
+    private static String[] thirdPartIncident = new String[] {
+        "sharted",
+        "fell off a cliff",
+        "spun",
+        "just died",
+        "kissed a tree at 90mph",
+        "chased",
+        "crashed",
+        "rescued",
+        "twinkled",
+        "settled",
+    };
+
     public static List<User> personalizedUsers() {
         String[] names = new String[] {
             "mads.byriel",
@@ -181,9 +219,17 @@ public class TestData {
         }
         return users;
     }
+
+    public static int randomIntExcl(int bound) {
+        return random.nextInt(bound);
+    }
     
     public static List<User> randomValidUsers() {
         return shuffleList(unshuffledValidUsers(), 10);
+    }
+
+    public static List<String> randomIncidentnames() {
+        return shuffleList(unshuffledIncidentNames(), 10);
     }
 
     public static List<String> randomValidEmails() {
@@ -276,6 +322,19 @@ public class TestData {
         }
 
         return validPhoneNumbers;
+    }
+
+    public static List<String> unshuffledIncidentNames() {
+        List<String> incidentNames = new ArrayList<>(firstPartIncident.length * secondPartIncident.length * thirdPartIncident.length);
+        for (int i = 0; i < firstPartIncident.length; i++) {
+            for (int j = 0; j < secondPartIncident.length; j++) {
+                for (int k = 0; k < thirdPartIncident.length; k++) {
+                    incidentNames.add(firstPartNumber[i] + " " + secondPartNumber[j] + " " + thirdPartNumber[k]);
+                }
+            }
+        }
+
+        return incidentNames;
     }
 
     private static String createEmailFromName(String name) {
