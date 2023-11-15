@@ -13,7 +13,32 @@ Default locale: da_DK, platform encoding: Cp1252
 OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"
 ```
 
-
-
 Backend can then be built with `./build` to clean the current build, create new build and copy dependencies into project directories.
 Then it can be run with `./start` to execute class dat3.app.App with necessary .jar files.
+
+<h1>Endpoints!</h1>
+```
+// ------------------------
+Endpoint:
+/users
+
+GET:
+Each field of a user will act as an equality filter, meaning you can find all users with the name "mads" by doing:
+/users?name=mads
+All responses will be a list of users, e.g.
+{
+    "statusCode":{integer},
+    "users": [],
+}
+
+DELETE:
+This endpoint does not accept anything but an equality filter on the id. Therefore, to delete a specific user, do:
+/users?id={id}
+
+PUT:
+This endpoint does not accept anything but an equality filter on the id. However, all other specified fields will be updated to that specified value. E.g.
+/users?id={id}&name=Carly Rae Jepsen
+will update the specific resource to the new name 'Carly Rae Jepsen'.
+// ------------------------
+
+```

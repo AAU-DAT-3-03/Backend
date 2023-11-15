@@ -65,8 +65,8 @@ public class Server {
         pathToFunction.put(get, function);
     }
 
-    public void addUpdateRoute(String route, CallRequest function) {
-        String get = "UPDATE" + route;
+    public void addPutRoute(String route, CallRequest function) {
+        String get = "PUT" + route;
         pathToFunction.put(get, function);
     }
 
