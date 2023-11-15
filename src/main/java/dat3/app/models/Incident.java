@@ -9,18 +9,18 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class Incident extends StandardModel<Incident> {
     private Integer priority = null;
-    private Boolean acknowledged = null;
+    private String header = null;
     private ObjectId acknowledgedBy = null;
-    private Date creationDate = null;
+    private Long creationDate = null;
     private ObjectId _id = null;
     private List<ObjectId> users = null;
     private List<ObjectId> alarms = null;
     private List<ObjectId> eventLog = null;
+
     // ---------- Getters & Setters ---------- //
     public int getPriority() {
         return priority;
@@ -28,11 +28,11 @@ public class Incident extends StandardModel<Incident> {
     public void setPriority(int priority) {
         this.priority = priority;
     }
-    public Boolean getAcknowledged() {
-        return acknowledged;
+    public String getHeader() {
+        return header;
     }
-    public void setAcknowledged(Boolean acknowledged) {
-        this.acknowledged = acknowledged;
+    public void setHeader(String header) {
+        this.header = header;
     }
     public ObjectId getAcknowledgedBy() {
         return acknowledgedBy;
@@ -40,10 +40,10 @@ public class Incident extends StandardModel<Incident> {
     public void setAcknowledgedBy(ObjectId _id) {
         this.acknowledgedBy = _id;
     }
-    public Date getCreationDate() {
+    public Long getCreationDate() {
         return creationDate;
     }
-    public void setCreationDate(Date creationDate) {
+    public void setCreationDate(Long creationDate) {
         this.creationDate = creationDate;
     }
     public ObjectId getId() {
@@ -77,15 +77,15 @@ public class Incident extends StandardModel<Incident> {
             incident.setPriority(priority);
             return this;
         }
-        public IncidentBuilder setAcknowledged(Boolean acknowledged) {
-            incident.setAcknowledged(acknowledged);
+        public IncidentBuilder setHeader(String header) {
+            incident.setHeader(header);
             return this;
         }
         public IncidentBuilder setAcknowledgedBy(ObjectId acknowledgedBy) {
             incident.setAcknowledgedBy(acknowledgedBy);
             return this;
         }
-        public IncidentBuilder setCreationDate(Date creationDate) {
+        public IncidentBuilder setCreationDate(Long creationDate) {
             incident.setCreationDate(creationDate);
             return this;
         }
@@ -108,7 +108,7 @@ public class Incident extends StandardModel<Incident> {
         public Incident getIncident() {
             Incident temp = this.incident;
             this.incident = new Incident();
-            return incident;
+            return temp;
         }
     }
     // ---------- Abstract method overrides ---------- //
@@ -116,7 +116,7 @@ public class Incident extends StandardModel<Incident> {
     public Document toDocument(){
         Document document = new Document();
         if (this.priority != null) document.append("priority", this.priority);
-        if (this.acknowledged != null) document.append("acknowledged", this.acknowledged);
+        if (this.header != null) document.append("header", this.header);
         if (this.acknowledgedBy != null) document.append("acknowledgedBy", this.acknowledgedBy);
         if (this.creationDate != null) document.append("creationDate", this.creationDate);
         if (this._id != null) document.append("_id", this._id);
@@ -129,8 +129,9 @@ public class Incident extends StandardModel<Incident> {
     public Incident fromDocument(Document document) {
         Incident incident = new Incident();
         if (document.containsKey("priority")) incident.priority = document.getInteger("priority");
-        if (document.containsKey("acknowledged")) incident.acknowledged = document.getBoolean("acknowledged");
+        if (document.containsKey("header")) incident.header = document.getString("header");
         if (document.containsKey("acknowledgedBy")) incident.acknowledgedBy = document.getObjectId("acknowledgedBy");
+        if (document.containsKey("creationDate")) incident.creationDate = document.getLong("creationDate");
         if (document.containsKey("_id")) incident._id = document.getObjectId("_id");
         if (document.containsKey("users")) incident.users = document.getList("users", ObjectId.class);
         if (document.containsKey("alarms")) incident.alarms = document.getList("alarms", ObjectId.class);
@@ -141,7 +142,6 @@ public class Incident extends StandardModel<Incident> {
     public Document toDocumentFormatted() {
         Document document = new Document();
         if (this.priority != null) document.append("Priority", this.priority);
-        if (this.acknowledged != null) document.append("Acknowledged", this.acknowledged);
         if (this.acknowledgedBy != null) document.append("AcknowledgedBy", this.GetAcknowledgedBy());
         if (this.creationDate != null) document.append("Date", this.creationDate);
         if (this._id != null) document.append("ID", this._id);
