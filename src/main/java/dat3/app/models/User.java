@@ -8,6 +8,7 @@ public class User extends StandardModel<User> {
     private String email = null;
     private String password = null;
     private String name = null;
+    private String phoneNumber = null;
     private Boolean onCall = null;
     private Boolean onDuty = null;
 
@@ -42,6 +43,14 @@ public class User extends StandardModel<User> {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public Boolean getOnCall() {
@@ -94,6 +103,11 @@ public class User extends StandardModel<User> {
             return this;
         }
 
+        public UserBuilder setPhoneNumber(String phoneNumber) {
+            user.setPhoneNumber(phoneNumber);
+            return this;
+        }
+
         public User getUser() {
             User temp = this.user;
             this.user = new User();
@@ -109,6 +123,7 @@ public class User extends StandardModel<User> {
         if (this.email != null) document.put("email", this.email);
         if (this.password != null) document.put("password", this.password);
         if (this.name != null) document.put("name", this.name);
+        if (this.phoneNumber != null) document.put("phoneNumber", this.phoneNumber);
         if (this.onCall != null) document.put("onCall", this.onCall);
         if (this.onDuty != null) document.put("onDuty", this.onDuty);
         return document;
@@ -121,6 +136,7 @@ public class User extends StandardModel<User> {
         if (document.containsKey("email")) user.email = document.getString("email");
         if (document.containsKey("password")) user.password = document.getString("password");
         if (document.containsKey("name")) user.name = document.getString("name");
+        if (document.containsKey("phoneNumber")) user.phoneNumber = document.getString("phoneNumber");
         if (document.containsKey("onCall")) user.onCall = document.getBoolean("onCall");
         if (document.containsKey("onDuty")) user.onDuty = document.getBoolean("onDuty");
         return user;
