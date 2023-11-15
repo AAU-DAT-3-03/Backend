@@ -15,26 +15,19 @@ import dat3.app.routes.users.UserRoutes;
 import dat3.app.server.DBNotFound;
 import dat3.app.server.Server;
 import dat3.app.testkit.TestData;
+import dat3.app.utility.MongoUtility;
 
 public class App {
     public static void main(String[] args) {
+        try {
+            MongoUtility.wipeDatabaseWithMock();
+        } catch (Exception e) {
+            System.out.println("Exception caught when wiping and repopulating database");
+            return;
+        }
+
         ProjectSettings projectSettings = ProjectSettings.getProjectSettings();
         if (projectSettings == null) return;
-
-        MongoClient client = MongoClients.create(projectSettings.getDbConnectionString());
-        MongoDatabase db = client.getDatabase(projectSettings.getDbName());
-        MongoCollection<Document> userCollection = db.getCollection("users");
-        ClientSession session = client.startSession();
-        
-        db.drop(session);
-
-        for (User user : TestData.randomValidUsers()) {
-            try {
-                user.insertOne(userCollection, session);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
 
         Server server = new Server(projectSettings.getHostname(), projectSettings.getPort());
         
