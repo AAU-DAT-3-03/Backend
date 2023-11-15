@@ -1,5 +1,9 @@
 package dat3.app.utility;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.bson.Document;
 
 import com.mongodb.client.ClientSession;
@@ -7,9 +11,13 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
 
 import dat3.app.ProjectSettings;
+import dat3.app.models.Incident;
 import dat3.app.models.User;
+import dat3.app.models.Incident.IncidentBuilder;
+import dat3.app.models.User.UserBuilder;
 import dat3.app.testkit.TestData;
 
 public abstract class MongoUtility {
@@ -20,14 +28,37 @@ public abstract class MongoUtility {
         ClientSession session = client.startSession();
         MongoDatabase db = getDatabase(client);
         db.drop(session);
-        
+        UserBuilder userBuilder = new UserBuilder();
         MongoCollection<Document> userCollection = getCollection(client, "users");
+    
         for (User user : TestData.personalizedUsers()) {
             user.insertOne(userCollection, session);
         }
         for (User user : TestData.randomValidUsers()) {
             user.insertOne(userCollection, session);
         }
+
+
+        {
+            List<Incident> incidents = new ArrayList<>();
+            IncidentBuilder incidentBuilder = new IncidentBuilder();
+            for (int i = 0; i < 150; i++) {
+                boolean acknowledged = TestData.randomBoolean();
+                incidents.add(incidentBuilder
+                    .setAcknowledged(acknowledged)
+                    .setAcknowledgedBy(null)
+                    .setAlarms(null)
+                    .setCreationDate(new Date())
+                    .setPriority(TestData.randomIntExcl(4) + 1)
+                    .setUsers(null)
+                    .getIncident());
+            }
+
+            for (User user : userBuilder.getUser().findMany(userCollection, session)) {
+
+            }
+        }
+
 
         session.close();
         client.close();
