@@ -6,6 +6,8 @@ import com.google.gson.Gson;
 import com.mongodb.client.*;
 import com.sun.net.httpserver.HttpExchange;
 import dat3.app.models.Incident;
+import dat3.app.models.User;
+
 import org.bson.Document;
 import dat3.app.server.Auth;
 import dat3.app.server.Response;
@@ -134,10 +136,10 @@ public abstract class Routes {
     }
 
     public static void authenticateRequest(HttpExchange exchange) {
-        Document user = Auth.auth(exchange);
+        User user = Auth.auth(exchange);
 
         Response response = new Response();
-        response.setMsg(user != null ? user.toJson() : null);
+        response.setMsg(user != null ? user.toDocument().toJson() : null);
         response.setStatusCode(user != null ? 0 : 1);
 
         try {

@@ -28,6 +28,9 @@ public abstract class MongoUtility {
         for (User user : TestData.randomValidUsers()) {
             user.insertOne(userCollection, session);
         }
+
+        session.close();
+        client.close();
     }
 
     public static MongoClient getClient() {

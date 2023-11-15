@@ -7,16 +7,14 @@ import org.bson.Document;
 import com.google.gson.Gson;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.sun.net.httpserver.HttpExchange;
 
-import dat3.app.ProjectSettings;
 import dat3.app.models.AuthToken;
 import dat3.app.models.User;
 import dat3.app.models.AuthToken.AuthTokenBuilder;
 import dat3.app.models.User.UserBuilder;
+import dat3.app.utility.MongoUtility;
 
 public abstract class Auth {
     /**
@@ -24,51 +22,30 @@ public abstract class Auth {
      * @param exchange the http exchange that needs to be authorized.
      * @return a document containing only the '_id' of a user.
      */
-    public static Document auth(HttpExchange exchange) {
-        MongoCollection<Document> userCollection;
-        MongoCollection<Document> tokenCollection;
-        ClientSession session;
-        UserBuilder userBuilder = new UserBuilder();
-        AuthTokenBuilder tokenBuilder = new AuthTokenBuilder();
+    public static User auth(HttpExchange exchange) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
+                MongoCollection<Document> tokenCollection = MongoUtility.getCollection(client, "tokens");
+                String tokenName = getAuthTokenFromCookies(exchange);
+                if (tokenName == null) return null;
 
-        try {
-            ProjectSettings settings =  ProjectSettings.getProjectSettings();
-            MongoClient client = MongoClients.create(settings.getDbConnectionString());
-            MongoDatabase db = client.getDatabase(settings.getDbName());
+                UserBuilder userBuilder = new UserBuilder();
+                AuthTokenBuilder tokenBuilder = new AuthTokenBuilder();
 
-            userCollection = db.getCollection("users");
-            tokenCollection = db.getCollection("tokens");
-            session = client.startSession();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        String tokenName = getAuthTokenFromCookies(exchange);
-        if (tokenName == null) return null;
-
-        AuthToken token;
-        try {
-            token = tokenBuilder
-                .setName(tokenName).getToken().findOne(tokenCollection, session);
-            if (token == null || token.isExpired()) {
-                exchange.getResponseHeaders().add("Set-Cookie", "authToken=placeholder; Max-Age=0");
+                AuthToken token = tokenBuilder.setName(tokenName).getToken().findOne(tokenCollection, session);
+                if (token == null) return null;
+                if (token.isExpired()) {
+                    exchange.getResponseHeaders().add("Set-Cookie", "authToken=nothing; Max-Age:0");
+                    return null;
+                }
+                
+                tokenBuilder.setExpiryDate(AuthToken.getNewExpirationDate()).getToken().updateMany(tokenCollection, session, token);
+                return userBuilder.setId(token.getUserId()).getUser().findOne(userCollection, session);
+            } catch (Exception e) {
+                e.printStackTrace();
                 return null;
             }
-            tokenBuilder.setExpiryDate(AuthToken.getNewExpirationDate()).getToken().updateOne(tokenCollection, session, tokenBuilder.setId(token.getId()).getToken());
-            token = tokenBuilder.setId(token.getId()).getToken().findOne(tokenCollection, session);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        User user;
-        try {
-            user = userBuilder.setId(token.getUserId()).getUser().findOne(userCollection, session);
-            if (user == null) {
-                tokenBuilder.setUserId(token.getUserId()).getToken().deleteMany(tokenCollection, session);
-            }
-            return user.toDocument();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -82,156 +59,118 @@ public abstract class Auth {
      * @return an auth response containing a message and an auth code. Successful is OK.
      */
     public static AuthResponse login(HttpExchange exchange) {
-        MongoCollection<Document> userCollection;
-        MongoCollection<Document> tokenCollection;
-        ClientSession session;
-        UserBuilder userBuilder = new UserBuilder();
-        AuthTokenBuilder tokenBuilder = new AuthTokenBuilder();
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
+                MongoCollection<Document> tokenCollection = MongoUtility.getCollection(client, "tokens");
 
-        try {
-            ProjectSettings settings =  ProjectSettings.getProjectSettings();
-            MongoClient client = MongoClients.create(settings.getDbConnectionString());
-            MongoDatabase db = client.getDatabase(settings.getDbName());
+                Credentials credentials;
+                try {
+                    credentials = parseJsonBody(exchange, 1000, Credentials.class);
+                    if (credentials == null) throw new Exception("Credentials were null.");
+                } catch (Exception e) {
+                    return new AuthResponse(ResponseCode.InvalidBody, "Body couldn't be read.");
+                }
 
-            userCollection = db.getCollection("users");
-            tokenCollection = db.getCollection("tokens");
-            session = client.startSession();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when getting collections from database");
-        }
+                UserBuilder userBuilder = new UserBuilder();
+                AuthTokenBuilder tokenBuilder = new AuthTokenBuilder();
 
-        Credentials credentials;
-        try {
-            credentials = new Gson().fromJson(readBody(exchange, 1000), Credentials.class);
-            if (credentials == null) return new AuthResponse(ResponseCode.InvalidCredentials, "Body couldn't be parsed to credentials.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new AuthResponse(ResponseCode.InvalidBody, "Exception was thrown when reading body.");
-        }
+                User user = userBuilder
+                    .setEmail(credentials.getEmail())
+                    .setPassword(credentials.getPassword())
+                    .getUser().findOne(userCollection, session);
+                if (user == null) return new AuthResponse(ResponseCode.InvalidCredentials, "No user with those credentials exists");
+                
+                AuthToken token = tokenBuilder.setUserId(user.getId()).getToken().findOne(tokenCollection, session);
+                if (token != null) {
+                    AuthToken updateValues;
+                    if (token.isExpired()) {
+                        updateValues = tokenBuilder
+                            .setExpiryDate(AuthToken.getNewExpirationDate())
+                            .setName(AuthToken.createUniqueName(exchange))
+                            .getToken();
+                    } else {
+                        updateValues = tokenBuilder
+                            .setExpiryDate(AuthToken.getNewExpirationDate())
+                            .getToken();
+                    }
+                    updateValues.updateOne(tokenCollection, session, token);
+                    token = tokenBuilder.setId(token.getId()).getToken().findOne(tokenCollection, session);
+                } else {
+                    token = tokenBuilder
+                        .setExpiryDate(AuthToken.getNewExpirationDate())
+                        .setName(AuthToken.createUniqueName(exchange))
+                        .setUserId(user.getId())
+                        .getToken();
+                    token.insertOne(tokenCollection, session);
+                }
 
-        User user;
-        try {
-            user = userBuilder
-                .setEmail(credentials.getEmail())
-                .setPassword(credentials.getPassword())
-                .getUser().findOne(userCollection, session);
-            if (user == null) return new AuthResponse(ResponseCode.InvalidCredentials, "No user with those credentials exist.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when finding user by credentials.");
-        }
-
-        AuthToken token;
-        try {
-            token = tokenBuilder
-                .setUserId(user.getId())
-                .getToken().findOne(tokenCollection, session);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when searching for available tokens.");
-        }
-
-        try {
-            if (token == null) {
-                token = tokenBuilder
-                    .setExpiryDate(AuthToken.getNewExpirationDate())
-                    .setName(AuthToken.createUniqueName(exchange))
-                    .setUserId(user.getId())
-                    .getToken();
-                token.insertOne(tokenCollection, session);
-            } else {
-                tokenBuilder.setExpiryDate(AuthToken.getNewExpirationDate()).getToken()
-                    .updateOne(tokenCollection, session, tokenBuilder.setId(token.getId()).getToken());
+                exchange.getResponseHeaders().add("Set-Cookie", "authToken=" + token.getName() + "; Max-Age=" + token.getExpiryDate());
+                return new AuthResponse(ResponseCode.OK, "Successfully logged user in.");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new AuthResponse(ResponseCode.DatabaseError, "Something went wrong with database connection");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when updating a users token.");
+            return new AuthResponse(ResponseCode.DatabaseError, "Something went wrong with database connection");
         }
-
-        exchange.getResponseHeaders().add("Set-Cookie", "authToken=" + token.getName());
-        return new AuthResponse(ResponseCode.OK, "Successfully logged user in.");
     }
 
     public static AuthResponse registerUser(HttpExchange exchange) {
-        MongoCollection<Document> userCollection;
-        MongoCollection<Document> tokenCollection;
-        ClientSession session;
-        UserBuilder userBuilder = new UserBuilder();
-        AuthTokenBuilder tokenBuilder = new AuthTokenBuilder();
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
+                MongoCollection<Document> tokenCollection = MongoUtility.getCollection(client, "tokens");
 
-        try {
-            ProjectSettings settings =  ProjectSettings.getProjectSettings();
-            MongoClient client = MongoClients.create(settings.getDbConnectionString());
-            MongoDatabase db = client.getDatabase(settings.getDbName());
+                Credentials credentials;
+                try {
+                    credentials = parseJsonBody(exchange, 1000, Credentials.class);
+                    if (credentials == null) throw new Exception("Credentials were null");
+                } catch (Exception e) {
+                    return new AuthResponse(ResponseCode.InvalidBody, "Body couldn't be read.");
+                }
 
-            userCollection = db.getCollection("users");
-            tokenCollection = db.getCollection("tokens");
-            session = client.startSession();
+                UserBuilder userBuilder = new UserBuilder();
+                AuthTokenBuilder tokenBuilder = new AuthTokenBuilder();
+
+                User user = userBuilder
+                    .setEmail(credentials.getEmail())
+                    .getUser().findOne(userCollection, session);
+
+                if (user != null) return new AuthResponse(ResponseCode.InvalidCredentials, "User with this email already exists.");
+                
+                user = userBuilder
+                    .setEmail(credentials.getEmail())
+                    .setPassword(credentials.getPassword())
+                    .setName(credentials.getEmail())
+                    .setOnCall(false)
+                    .setOnDuty(false)
+                    .setPhoneNumber("00 00 00 00")
+                    .getUser();
+                user.insertOne(userCollection, session);
+                user = userBuilder.setEmail(credentials.getEmail()).getUser().findOne(userCollection, session);
+
+                AuthToken token = tokenBuilder
+                    .setName(AuthToken.createUniqueName(exchange))
+                    .setUserId(user.getId())
+                    .setExpiryDate(AuthToken.getNewExpirationDate())
+                    .getToken();
+                token.insertOne(tokenCollection, session);
+
+                exchange.getResponseHeaders().add("Set-Cookie", "authToken=" + token.getName() + "; Max-Age=" + token.getExpiryDate());
+                return new AuthResponse(ResponseCode.OK, "Successfully registered user.");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new AuthResponse(ResponseCode.DatabaseError, "Something went wrong with database connection");
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when getting collections from database");
+            return new AuthResponse(ResponseCode.DatabaseError, "Something went wrong with database connection");
         }
-
-
-        Credentials credentials;
-        try {
-            credentials = new Gson().fromJson(readBody(exchange, 1000), Credentials.class);
-            if (credentials == null) return new AuthResponse(ResponseCode.InvalidBody, "Body too big");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new AuthResponse(ResponseCode.InvalidBody, "Exception was thrown when reading response json.");
-        }
-
-        try {
-            User user = userBuilder.setEmail(credentials.getEmail()).getUser().findOne(userCollection, session);
-            if (user != null) new AuthResponse(ResponseCode.InvalidCredentials, "User with that email already exists.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when searching for user.");
-        }
-
-        User user = userBuilder
-            .setEmail(credentials.getEmail())
-            .setPassword(credentials.getPassword())
-            .setName("placeholder")
-            .setOnCall(false)
-            .setOnDuty(false)
-            .getUser();
-
-        try {
-            user.insertOne(userCollection, session);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when inserting new user.");
-        }
-
-        try {
-            user = user.findOne(userCollection, session);
-            if (user == null) return new AuthResponse(ResponseCode.DatabaseError, "User somehow managed to be null despite insertion one moment ago.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when immediately retrieving inserted user.");
-        }
-
-        AuthToken token;
-        try {
-            token = tokenBuilder
-                .setExpiryDate(AuthToken.getNewExpirationDate())
-                .setName(AuthToken.createUniqueName(exchange))
-                .setUserId(user.getId())
-                .getToken();
-            token.insertOne(tokenCollection, session);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new AuthResponse(ResponseCode.DatabaseError, "Exception was thrown when inserting new AuthToken.");
-        }
-
-        exchange.getResponseHeaders().add("Set-Cookie", "authToken=" + token.getName());
-        return new AuthResponse(ResponseCode.OK, "Succesfully created user.");
     }
 
-    private static String readBody(HttpExchange exchange, int maxSize) throws Exception {
+    private static <T> T parseJsonBody(HttpExchange exchange, int maxSize, Class<T> type) throws Exception {
         int contentLength = Integer.parseInt(exchange.getRequestHeaders().get("Content-Length").get(0));
         if (maxSize < contentLength) throw new Exception("Content length is bigger than allowed size.");
 
@@ -243,7 +182,8 @@ public abstract class Auth {
             totalRead += read;
         }
 
-        return new String(buffer);
+        String bodyJson = new String(buffer);
+        return new Gson().fromJson(bodyJson, type);
     }
 
     /**
