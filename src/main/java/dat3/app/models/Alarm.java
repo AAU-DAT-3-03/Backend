@@ -4,17 +4,17 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class Alarm extends StandardModel<Alarm> {
-    private String _id = null;
+    private String id = null;
     private String name = null;
     private String serviceId = null;
 
     // ---------- Getters & Setters ---------- //
     public String getId() {
-        return _id;
+        return id;
     }
 
     public void setId(String _id) {
-        this._id = _id;
+        this.id = _id;
     }
 
     public String getName() {
@@ -63,7 +63,7 @@ public class Alarm extends StandardModel<Alarm> {
     @Override
     public Document toDocument() {
         Document document = new Document();
-        if (this._id != null) document.put("_id", new ObjectId(this._id));
+        if (this.id != null) document.put("_id", new ObjectId(this.id));
         if (this.name != null) document.put("name", this.name);
         if (this.serviceId != null) document.put("serviceId", new ObjectId(this.serviceId));
         return document;
@@ -72,7 +72,7 @@ public class Alarm extends StandardModel<Alarm> {
     @Override
     public Alarm fromDocument(Document document) {
         Alarm alarm = new Alarm();
-        if (document.containsKey("_id")) alarm._id = document.getObjectId("_id").toHexString();
+        if (document.containsKey("_id")) alarm.id = document.getObjectId("_id").toHexString();
         if (document.containsKey("name")) alarm.name = document.getString("name");
         if (document.containsKey("serviceId")) alarm.serviceId = document.getObjectId("serviceId").toHexString();
         return alarm;

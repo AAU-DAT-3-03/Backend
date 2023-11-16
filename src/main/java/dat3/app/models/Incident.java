@@ -11,7 +11,7 @@ public class Incident extends StandardModel<Incident> {
     private String header = null;
     private String acknowledgedBy = null;
     private Long creationDate = null;
-    private String _id = null;
+    private String id = null;
     private List<String> users = null;
     private List<String> alarms = null;
     private List<String> eventLog = null;
@@ -42,10 +42,10 @@ public class Incident extends StandardModel<Incident> {
         this.creationDate = creationDate;
     }
     public String getId() {
-        return _id;
+        return id;
     }
-    public void setId(String _id) {
-        this._id = _id;
+    public void setId(String id) {
+        this.id = id;
     }
     public List<String> getUsers() {
         return users;
@@ -84,8 +84,8 @@ public class Incident extends StandardModel<Incident> {
             incident.setCreationDate(creationDate);
             return this;
         }
-        public IncidentBuilder setId(String _id) {
-            incident.setId(_id);
+        public IncidentBuilder setId(String id) {
+            incident.setId(id);
             return this;
         }
         public IncidentBuilder setUsers(List<String> users) {
@@ -114,7 +114,7 @@ public class Incident extends StandardModel<Incident> {
         if (this.header != null) document.append("header", this.header);
         if (this.acknowledgedBy != null) document.append("acknowledgedBy", new ObjectId(this.acknowledgedBy));
         if (this.creationDate != null) document.append("creationDate", this.creationDate);
-        if (this._id != null) document.append("_id", new ObjectId(this._id));
+        if (this.id != null) document.append("_id", new ObjectId(this.id));
 
         if (this.users != null) {
             List<ObjectId> ids = new ArrayList<>();
@@ -147,7 +147,7 @@ public class Incident extends StandardModel<Incident> {
         if (document.containsKey("header")) incident.header = document.getString("header");
         if (document.containsKey("acknowledgedBy")) incident.acknowledgedBy = document.getObjectId("acknowledgedBy").toHexString();
         if (document.containsKey("creationDate")) incident.creationDate = document.getLong("creationDate");
-        if (document.containsKey("_id")) incident._id = document.getObjectId("_id").toHexString();
+        if (document.containsKey("_id")) incident.id = document.getObjectId("_id").toHexString();
 
         if (document.containsKey("users")) {
             incident.users = new ArrayList<>();
