@@ -67,7 +67,7 @@ public abstract class Routes {
         // If the incidentID is equal to a "*" then the request is for all incidents.
         IncidentBuilder incidentBuilder = new IncidentBuilder();
         MongoIterable<Incident> incidentList;
-        Incident query = incidentID.equals("*") ? incidentBuilder.getIncident() : incidentBuilder.setId(new ObjectId(incidentID)).getIncident();
+        Incident query = incidentID.equals("*") ? incidentBuilder.getIncident() : incidentBuilder.setId(new ObjectId(incidentID).toHexString()).getIncident();
         try {
             incidentList = query.findMany(collection, session);
         } catch(Exception e) {
@@ -84,7 +84,7 @@ public abstract class Routes {
         }
         ArrayList<Document> documentList = new ArrayList<>();
         for (Incident incident : incidentList) {
-            documentList.add(incident.toDocumentFormatted());
+            // documentList.add(incident.toDocumentFormatted());
         }
         // Converts all the incidents into JSON and adds them to the response headers.
         String incidentListJSON = new Document("incidents", documentList).toJson();

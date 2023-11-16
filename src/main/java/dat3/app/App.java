@@ -1,16 +1,20 @@
 package dat3.app;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.bson.Document;
 
+import com.google.gson.Gson;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
+import dat3.app.models.Incident;
 import dat3.app.models.User;
+import dat3.app.routes.incidents.IncidentRoutes;
 import dat3.app.routes.users.UserRoutes;
 import dat3.app.server.DBNotFound;
 import dat3.app.server.Server;
@@ -25,18 +29,21 @@ public class App {
             System.out.println("Exception caught when wiping and repopulating database");
             return;
         }
-
+        
         ProjectSettings projectSettings = ProjectSettings.getProjectSettings();
         if (projectSettings == null) return;
 
         Server server = new Server(projectSettings.getHostname(), projectSettings.getPort());
         
         server.addGetRoute("/", Routes::index);
-        server.addGetRoute("/incidents", Routes::getIncidents);
+        // server.addGetRoute("/incidents", Routes::getIncidents);
         server.addGetRoute("/auth", Routes::authenticateRequest);
 
         server.addPostRoute("/register", Routes::registerUser);
         server.addPostRoute("/login", Routes::loginUser);
+
+        // Incidents
+        server.addGetRoute("/incidents", IncidentRoutes::getIncident);
 
         // Users
         server.addGetRoute("/users", UserRoutes::getUser);
