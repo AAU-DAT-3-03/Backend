@@ -139,7 +139,7 @@ public abstract class Routes {
         User user = Auth.auth(exchange);
 
         Response response = new Response();
-        response.setMsg(user != null ? user.toDocument().toJson() : null);
+        response.setMsg(user);
         response.setStatusCode(user != null ? 0 : 1);
 
         try {

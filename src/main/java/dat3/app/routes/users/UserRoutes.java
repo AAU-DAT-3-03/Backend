@@ -39,9 +39,13 @@ public abstract class UserRoutes {
                     return;
                 }
 
-                List<Document> users = MongoUtility.iterableToDocs(filter.findMany(userCollection, session));
+                List<User> users = MongoUtility.iterableToList(filter.findMany(userCollection, session));
+                users.forEach((User user) -> {
+                    user.setPassword(null);
+                });
                 Response response = new Response();
-                response.setMsg(new Document("users", users).toJson());
+                response.setStatusCode(0);
+                response.setMsg(users);
                 response.sendResponse(exchange);
             } catch (Exception e) {
                 throw e;
@@ -67,7 +71,7 @@ public abstract class UserRoutes {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
                 
-                User filter = parseQueryString(exchange);
+                User filter = ExchangeUtility.parseJsonBody(exchange, 1000, User.class);
                 if (filter == null || filter.getId() == null) {
                     Response response = new Response();
                     response.setMsg("Must delete users by id.");
@@ -112,7 +116,7 @@ public abstract class UserRoutes {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
                 
-                User updateValues = parseQueryString(exchange);
+                User updateValues = ExchangeUtility.parseJsonBody(exchange, 1000, User.class);
                 if (updateValues == null || updateValues.getId() == null) {
                     Response response = new Response();
                     response.setMsg("Must update users by id.");
