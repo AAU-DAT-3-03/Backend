@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
