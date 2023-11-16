@@ -6,7 +6,6 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import com.google.gson.Gson;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -19,12 +18,18 @@ import dat3.app.models.Incident;
 import dat3.app.models.User;
 import dat3.app.models.Incident.IncidentBuilder;
 import dat3.app.models.User.UserBuilder;
+import dat3.app.server.Auth;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
 import dat3.app.utility.MongoUtility;
 
 public class IncidentRoutes {
     public static void getIncident(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
@@ -63,6 +68,11 @@ public class IncidentRoutes {
     }
 
     public static void deleteIncident(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
@@ -107,6 +117,11 @@ public class IncidentRoutes {
     }
 
     public static void putIncident(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
@@ -151,6 +166,11 @@ public class IncidentRoutes {
     }
 
     public static void postIncident(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
