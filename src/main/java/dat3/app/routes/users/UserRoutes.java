@@ -1,6 +1,5 @@
 package dat3.app.routes.users;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.bson.Document;
@@ -17,17 +16,13 @@ import dat3.app.models.User;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.server.Auth;
 import dat3.app.server.Response;
+import dat3.app.utility.ExchangeUtility;
 import dat3.app.utility.MongoUtility;
 
 public abstract class UserRoutes {
     public static void getUser(HttpExchange exchange) {
         if (Auth.auth(exchange) == null) {
-            Response response = new Response();
-            response.setMsg("Not authorized");
-            response.setStatusCode(-1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e) {}
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
 
@@ -64,12 +59,7 @@ public abstract class UserRoutes {
 
     public static void deleteUser(HttpExchange exchange) {
         if (Auth.auth(exchange) == null) {
-            Response response = new Response();
-            response.setMsg("Not authorized");
-            response.setStatusCode(-1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e) {}
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
 
@@ -114,12 +104,7 @@ public abstract class UserRoutes {
 
     public static void updateUser(HttpExchange exchange) {
         if (Auth.auth(exchange) == null) {
-            Response response = new Response();
-            response.setMsg("Not authorized");
-            response.setStatusCode(-1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e) {}
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
 
