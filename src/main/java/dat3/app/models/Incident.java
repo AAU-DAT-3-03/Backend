@@ -17,10 +17,10 @@ public class Incident extends StandardModel<Incident> {
     private List<String> eventLog = null;
 
     // ---------- Getters & Setters ---------- //
-    public int getPriority() {
+    public Integer getPriority() {
         return priority;
     }
-    public void setPriority(int priority) {
+    public void setPriority(Integer priority) {
         this.priority = priority;
     }
     public String getHeader() {
@@ -68,7 +68,7 @@ public class Incident extends StandardModel<Incident> {
     // ---------- Builder subclass ---------- //
     public static class IncidentBuilder {
         private Incident incident = new Incident();
-        public IncidentBuilder setPriority(int priority) {
+        public IncidentBuilder setPriority(Integer priority) {
             incident.setPriority(priority);
             return this;
         }
