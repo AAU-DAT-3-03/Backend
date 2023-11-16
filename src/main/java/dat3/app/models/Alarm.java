@@ -4,16 +4,16 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class Alarm extends StandardModel<Alarm> {
-    private ObjectId _id = null;
+    private String _id = null;
     private String name = null;
-    private ObjectId serviceId = null;
+    private String serviceId = null;
 
     // ---------- Getters & Setters ---------- //
-    public ObjectId getId() {
+    public String getId() {
         return _id;
     }
 
-    public void setId(ObjectId _id) {
+    public void setId(String _id) {
         this._id = _id;
     }
 
@@ -25,11 +25,11 @@ public class Alarm extends StandardModel<Alarm> {
         this.name = name;
     }
 
-    public ObjectId getServiceId() {
+    public String getServiceId() {
         return serviceId;
     }
 
-    public void setServiceId(ObjectId serviceId) {
+    public void setServiceId(String serviceId) {
         this.serviceId = serviceId;
     }
 
@@ -37,7 +37,7 @@ public class Alarm extends StandardModel<Alarm> {
     public static class AlarmBuilder  {
         private Alarm alarm = new Alarm();
 
-        public AlarmBuilder setId(ObjectId id) {
+        public AlarmBuilder setId(String id) {
             alarm.setId(id);
             return this;
         }
@@ -47,7 +47,7 @@ public class Alarm extends StandardModel<Alarm> {
             return this;
         }
 
-        public AlarmBuilder setServiceId(ObjectId serviceId) {
+        public AlarmBuilder setServiceId(String serviceId) {
             alarm.setServiceId(serviceId);
             return this;
         }
@@ -63,18 +63,18 @@ public class Alarm extends StandardModel<Alarm> {
     @Override
     public Document toDocument() {
         Document document = new Document();
-        if (this._id != null) document.put("_id", this._id);
+        if (this._id != null) document.put("_id", new ObjectId(this._id));
         if (this.name != null) document.put("name", this.name);
-        if (this.serviceId != null) document.put("serviceId", this.serviceId);
+        if (this.serviceId != null) document.put("serviceId", new ObjectId(this.serviceId));
         return document;
     }
 
     @Override
     public Alarm fromDocument(Document document) {
         Alarm alarm = new Alarm();
-        if (document.containsKey("_id")) alarm._id = document.getObjectId("_id");
+        if (document.containsKey("_id")) alarm._id = document.getObjectId("_id").toHexString();
         if (document.containsKey("name")) alarm.name = document.getString("name");
-        if (document.containsKey("serviceId")) alarm.serviceId = document.getObjectId("serviceId");
+        if (document.containsKey("serviceId")) alarm.serviceId = document.getObjectId("serviceId").toHexString();
         return alarm;
     }
 

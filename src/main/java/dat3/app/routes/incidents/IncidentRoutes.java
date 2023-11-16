@@ -118,14 +118,14 @@ class IncidentPublic {
 
             IncidentPublic incidentPublic = new IncidentPublic();
             incidentPublic._id = incident.getId();
-            incidentPublic.acknowledgedBy = builder.setId(new ObjectId(incident.getAcknowledgedBy())).getUser().findOne(userCollection, session);
+            incidentPublic.acknowledgedBy = builder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session);
             incidentPublic.creationDate = incident.getCreationDate();
             incidentPublic.header = incident.getHeader();
             incidentPublic.priority = incident.getPriority();
             incidentPublic.users = new ArrayList<>();
 
             for (String hex : incident.getUsers()) {
-                User user = builder.setId(new ObjectId(hex)).getUser().findOne(userCollection, session);
+                User user = builder.setId(hex).getUser().findOne(userCollection, session);
                 if (user == null) continue;
                 incidentPublic.users.add(user);
             }

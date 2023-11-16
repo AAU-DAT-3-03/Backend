@@ -48,12 +48,12 @@ public abstract class MongoUtility {
             for (int i = 0; i < 150; i++) {
                 List<String> userIds = new ArrayList<>();
                 for (int j = 0; j < TestData.randomIntExcl(10); j++) {
-                    userIds.add(users.get(TestData.randomIntExcl(users.size())).getId().toHexString());
+                    userIds.add(users.get(TestData.randomIntExcl(users.size())).getId());
                 }
 
                 boolean acknowledged = TestData.randomBoolean();
                 String acknowledgedBy = null;
-                if (acknowledged) acknowledgedBy = users.get(TestData.randomIntExcl(users.size())).getId().toHexString();
+                if (acknowledged) acknowledgedBy = users.get(TestData.randomIntExcl(users.size())).getId();
                 incidentBuilder
                     .setAcknowledgedBy(acknowledgedBy)
                     .setAlarms(null)
