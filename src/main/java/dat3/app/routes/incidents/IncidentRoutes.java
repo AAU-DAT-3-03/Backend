@@ -263,7 +263,7 @@ class IncidentPublic {
     private String header = null;
     private User acknowledgedBy = null;
     private Long creationDate = null;
-    private String _id = null;
+    private String id = null;
     private List<User> users = null;
 
     public Integer getPriority() {
@@ -282,8 +282,8 @@ class IncidentPublic {
         return creationDate;
     }
 
-    public String get_id() {
-        return _id;
+    public String getId() {
+        return id;
     }
 
     public List<User> getUsers() {
@@ -295,7 +295,7 @@ class IncidentPublic {
             UserBuilder builder = new UserBuilder();
 
             IncidentPublic incidentPublic = new IncidentPublic();
-            incidentPublic._id = incident.getId();
+            incidentPublic.id = incident.getId();
             try {
                 incidentPublic.acknowledgedBy = builder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session);
                 incidentPublic.acknowledgedBy.setPassword(null);

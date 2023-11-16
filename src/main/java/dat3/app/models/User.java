@@ -4,7 +4,7 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class User extends StandardModel<User> {
-    private String _id = null;
+    private String id = null;
     private String email = null;
     private String password = null;
     private String name = null;
@@ -14,11 +14,11 @@ public class User extends StandardModel<User> {
 
     // ---------- Getters & Setters ---------- //
     public String getId() {
-        return _id;
+        return id;
     }
 
     public void setId(String _id) {
-        this._id = _id;
+        this.id = _id;
     }
 
     public String getEmail() {
@@ -119,7 +119,7 @@ public class User extends StandardModel<User> {
     @Override
     public Document toDocument() {
         Document document = new Document();
-        if (this._id != null) document.put("_id", new ObjectId(this._id));
+        if (this.id != null) document.put("_id", new ObjectId(this.id));
         if (this.email != null) document.put("email", this.email);
         if (this.password != null) document.put("password", this.password);
         if (this.name != null) document.put("name", this.name);
@@ -132,7 +132,7 @@ public class User extends StandardModel<User> {
     @Override
     public User fromDocument(Document document) {
         User user = new User();
-        if (document.containsKey("_id")) user._id = document.getObjectId("_id").toHexString();
+        if (document.containsKey("_id")) user.id = document.getObjectId("_id").toHexString();
         if (document.containsKey("email")) user.email = document.getString("email");
         if (document.containsKey("password")) user.password = document.getString("password");
         if (document.containsKey("name")) user.name = document.getString("name");
