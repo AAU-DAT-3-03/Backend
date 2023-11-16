@@ -6,15 +6,21 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import com.google.gson.Gson;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.models.Incident;
 import dat3.app.models.User;
+import dat3.app.models.Incident.IncidentBuilder;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.server.Response;
+import dat3.app.utility.ExchangeUtility;
 import dat3.app.utility.MongoUtility;
 
 public class IncidentRoutes {
@@ -56,6 +62,135 @@ public class IncidentRoutes {
         }
     }
 
+    public static void deleteIncident(HttpExchange exchange) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
+                Response response = new Response();
+                IncidentBuilder builder = new IncidentBuilder();
+
+                Incident filter = ExchangeUtility.parseJsonBody(exchange, 1000, Incident.class);
+                if (filter != null && filter.getId() == null) filter = null;
+                else if (filter != null && filter.getId() == "*") filter = null;
+                filter = builder.setId(filter.getId()).getIncident(); 
+
+                if (filter == null) {
+                    response.setMsg("Couldn't parse query string.");
+                    response.setStatusCode(1);
+                    response.sendResponse(exchange);
+                    return;
+                }
+
+                DeleteResult result = filter.deleteOne(incidentCollection, session);
+
+                if (result.getDeletedCount() > 0) {
+                    response.setMsg("Successfully deleted incident.");
+                    response.setStatusCode(0);
+                    response.sendResponse(exchange);
+                } else {
+                    response.setMsg("Deleted 0 incidents.");
+                    response.setStatusCode(1);
+                    response.sendResponse(exchange);
+                }
+            } catch (Exception e) {
+                throw e;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Response response = new Response();
+            response.setMsg("Something went wrong.");
+            response.setStatusCode(1);
+            try {
+                response.sendResponse(exchange);
+            } catch (Exception e1) {}
+        }
+    }
+
+    public static void putIncident(HttpExchange exchange) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
+                Response response = new Response();
+                IncidentBuilder builder = new IncidentBuilder();
+
+                Incident valuesToUpdate = ExchangeUtility.parseJsonBody(exchange, 1000, Incident.class);
+                if (valuesToUpdate != null && valuesToUpdate.getId() == null) valuesToUpdate = null;
+                else if (valuesToUpdate != null && valuesToUpdate.getId() == "*") valuesToUpdate = null;
+
+                if (valuesToUpdate == null) {
+                    response.setMsg("Couldn't parse query string.");
+                    response.setStatusCode(1);
+                    response.sendResponse(exchange);
+                    return;
+                }
+
+                Incident filter = builder.setId(valuesToUpdate.getId()).getIncident();
+                UpdateResult result = valuesToUpdate.updateOne(incidentCollection, session, filter);
+
+                if (result.getModifiedCount() > 0) {
+                    response.setMsg("Successfully modified incident.");
+                    response.setStatusCode(0);
+                    response.sendResponse(exchange);
+                } else {
+                    response.setMsg("Modified 0 incidents.");
+                    response.setStatusCode(1);
+                    response.sendResponse(exchange);
+                }
+            } catch (Exception e) {
+                throw e;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Response response = new Response();
+            response.setMsg("Something went wrong.");
+            response.setStatusCode(1);
+            try {
+                response.sendResponse(exchange);
+            } catch (Exception e1) {}
+        }
+    }
+
+    public static void postIncident(HttpExchange exchange) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
+                Response response = new Response();
+
+                Incident incidentToInsert = ExchangeUtility.parseJsonBody(exchange, 1000, Incident.class);
+                if (incidentToInsert != null && incidentToInsert.getId() != null) incidentToInsert = null;
+
+                if (incidentToInsert == null) {
+                    response.setMsg("Couldn't parse query string.");
+                    response.setStatusCode(1);
+                    response.sendResponse(exchange);
+                    return;
+                }
+
+                InsertOneResult result = incidentToInsert.insertOne(incidentCollection, session);
+
+                if (result.wasAcknowledged()) {
+                    response.setMsg(result.getInsertedId().asObjectId().getValue().toHexString());
+                    response.setStatusCode(0);
+                    response.sendResponse(exchange);
+                } else {
+                    response.setMsg("Created 0 incidents.");
+                    response.setStatusCode(1);
+                    response.sendResponse(exchange);
+                }
+            } catch (Exception e) {
+                throw e;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Response response = new Response();
+            response.setMsg("Something went wrong.");
+            response.setStatusCode(1);
+            try {
+                response.sendResponse(exchange);
+            } catch (Exception e1) {}
+        }
+    }
+
     private static Incident parseQueryString(HttpExchange exchange) {
         try {
             boolean isEmpty = true;
@@ -72,21 +207,18 @@ public class IncidentRoutes {
 
                 if (pair[0].equals("header")) {
                     document.put("header", pair[1]);
-                    
                     isEmpty = false;
                     continue;
                 }
 
                 if (pair[0].equals("acknowledgedBy")) {
-                    document.put("acknowledgedBy", pair[1]);
-                    
+                    document.put("acknowledgedBy", new ObjectId(pair[1]));
                     isEmpty = false;
                     continue;
                 }
 
                 if (pair[0].equals("creationDate")) {
                     document.put("creationDate", Long.parseLong(pair[1]));
-                    
                     isEmpty = false;
                     continue;
                 }
@@ -100,8 +232,6 @@ public class IncidentRoutes {
             }
             
             if (isEmpty) return null;
-            System.out.println(document);
-            System.out.println(new Incident().fromDocument(document));
             return new Incident().fromDocument(document);
         } catch (Exception e) {
             return null;
@@ -146,8 +276,12 @@ class IncidentPublic {
 
             IncidentPublic incidentPublic = new IncidentPublic();
             incidentPublic._id = incident.getId();
-            incidentPublic.acknowledgedBy = builder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session);
-            incidentPublic.acknowledgedBy.setPassword(null);
+            try {
+                incidentPublic.acknowledgedBy = builder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session);
+                incidentPublic.acknowledgedBy.setPassword(null);
+            } catch (Exception e) {
+                incidentPublic.acknowledgedBy = null;
+            }
             incidentPublic.creationDate = incident.getCreationDate();
             incidentPublic.header = incident.getHeader();
             incidentPublic.priority = incident.getPriority();
@@ -162,6 +296,7 @@ class IncidentPublic {
 
             return incidentPublic;
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
 

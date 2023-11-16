@@ -44,6 +44,9 @@ public class App {
 
         // Incidents
         server.addGetRoute("/incidents", IncidentRoutes::getIncident);
+        server.addDeleteRoute("/incidents", IncidentRoutes::deleteIncident);
+        server.addPutRoute("/incidents", IncidentRoutes::putIncident);
+        server.addPostRoute("/incidents", IncidentRoutes::postIncident);
 
         // Users
         server.addGetRoute("/users", UserRoutes::getUser);
