@@ -4,15 +4,15 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class Company extends StandardModel<Company> {
-    private ObjectId _id = null;
+    private String _id = null;
     private String name = null;
 
     // ---------- Getters & Setters ---------- //
-    public ObjectId getId() {
+    public String getId() {
         return _id;
     }
 
-    public void setId(ObjectId _id) {
+    public void setId(String _id) {
         this._id = _id;
     }
 
@@ -33,7 +33,7 @@ public class Company extends StandardModel<Company> {
             return this;
         }
 
-        public CompanyBuilder setId(ObjectId id) {
+        public CompanyBuilder setId(String id) {
             company.setId(id);
             return this;
         }
@@ -49,7 +49,7 @@ public class Company extends StandardModel<Company> {
     @Override
     public Document toDocument() {
         Document document = new Document();
-        if (this._id != null) document.put("_id", this._id);
+        if (this._id != null) document.put("_id", new ObjectId(this._id));
         if (this.name != null) document.put("name", this.name);
         return document;
     }
@@ -57,7 +57,7 @@ public class Company extends StandardModel<Company> {
     @Override
     public Company fromDocument(Document document) {
         Company company = new Company();
-        if (document.containsKey("_id")) company._id = document.getObjectId("_id");
+        if (document.containsKey("_id")) company._id = document.getObjectId("_id").toHexString();
         if (document.containsKey("name")) company.name = document.getString("name");
         return company;
     }    

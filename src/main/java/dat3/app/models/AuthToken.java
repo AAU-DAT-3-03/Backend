@@ -13,17 +13,17 @@ import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
 public class AuthToken extends StandardModel<AuthToken> {
-    private ObjectId _id = null;
+    private String _id = null;
     private String name = null;
     private Long expiryDate = null;
-    private ObjectId userId = null;
+    private String userId = null;
 
     // ---------- Getters & Setters ---------- //
-    public ObjectId getId() {
+    public String getId() {
         return _id;
     }
 
-    public void setId(ObjectId _id) {
+    public void setId(String _id) {
         this._id = _id;
     }
 
@@ -43,11 +43,11 @@ public class AuthToken extends StandardModel<AuthToken> {
         this.expiryDate = expiryDate;
     }
 
-    public ObjectId getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(ObjectId userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 
@@ -59,7 +59,7 @@ public class AuthToken extends StandardModel<AuthToken> {
             this.token = new AuthToken();
         }
 
-        public AuthTokenBuilder setId(ObjectId _id) {
+        public AuthTokenBuilder setId(String _id) {
             token._id = _id;
             return this;
         }
@@ -74,7 +74,7 @@ public class AuthToken extends StandardModel<AuthToken> {
             return this;
         }
 
-        public AuthTokenBuilder setUserId(ObjectId userId) {
+        public AuthTokenBuilder setUserId(String userId) {
             token.userId = userId;
             return this;
         }
@@ -90,21 +90,21 @@ public class AuthToken extends StandardModel<AuthToken> {
     @Override
     public Document toDocument() {
         Document document = new Document();
-        if (this._id != null) document.put("_id", this._id);
+        if (this._id != null) document.put("_id", new ObjectId(this._id));
         if (this.expiryDate != null) document.put("expiryDate", this.expiryDate);
         if (this.name != null) document.put("name", this.name);
-        if (this.userId != null) document.put("userId", this.userId);
+        if (this.userId != null) document.put("userId", new ObjectId(this.userId));
         return document;        
     }
 
     @Override
     public AuthToken fromDocument(Document document) {
-        AuthTokenBuilder builder = new AuthTokenBuilder();
-        if (document.containsKey("_id")) builder.setId(document.getObjectId("_id"));
-        if (document.containsKey("expiryDate")) builder.setExpiryDate(document.getLong("expiryDate"));
-        if (document.containsKey("userId")) builder.setUserId(document.getObjectId("userId"));
-        if (document.containsKey("name")) builder.setName(document.getString("name"));
-        return builder.getToken();
+        AuthToken token = new AuthToken();
+        if (document.containsKey("_id")) token._id = document.getObjectId("_id").toHexString();
+        if (document.containsKey("expiryDate")) token.expiryDate = document.getLong("expiryDate");
+        if (document.containsKey("userId")) token.userId = document.getObjectId("userId").toHexString();
+        if (document.containsKey("name")) token.name = document.getString("name");
+        return token;
     }
 
     // ---------- Static Methods ---------- //

@@ -4,16 +4,16 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class Service extends StandardModel<Service> {
-    private ObjectId _id = null;
+    private String _id = null;
     private String name = null;
-    private ObjectId companyId = null;
+    private String companyId = null;
 
     // ---------- Getters & Setters ---------- //
-    public ObjectId getId() {
+    public String getId() {
         return _id;
     }
 
-    public void setId(ObjectId _id) {
+    public void setId(String _id) {
         this._id = _id;
     }
 
@@ -25,11 +25,11 @@ public class Service extends StandardModel<Service> {
         this.name = name;
     }
 
-    public ObjectId getCompanyId() {
+    public String getCompanyId() {
         return companyId;
     }
 
-    public void setCompanyId(ObjectId companyId) {
+    public void setCompanyId(String companyId) {
         this.companyId = companyId;
     }
 
@@ -37,7 +37,7 @@ public class Service extends StandardModel<Service> {
     public static class ServiceBuilder  {
         private Service service = new Service();
 
-        public ServiceBuilder setId(ObjectId id) {
+        public ServiceBuilder setId(String id) {
             service.setId(id);
             return this;
         }
@@ -47,7 +47,7 @@ public class Service extends StandardModel<Service> {
             return this;
         }
 
-        public ServiceBuilder setCompanyId(ObjectId companyId) {
+        public ServiceBuilder setCompanyId(String companyId) {
             service.setCompanyId(companyId);
             return this;
         }
@@ -63,18 +63,18 @@ public class Service extends StandardModel<Service> {
     @Override
     public Document toDocument() {
         Document document = new Document();
-        if (this._id != null) document.put("_id", this._id);
+        if (this._id != null) document.put("_id", new ObjectId(this._id));
         if (this.name != null) document.put("name", this.name);
-        if (this.companyId != null) document.put("companyId", this.companyId);
+        if (this.companyId != null) document.put("companyId", new ObjectId(this.companyId));
         return document;
     }
 
     @Override
     public Service fromDocument(Document document) {
         Service service = new Service();
-        if (document.containsKey("_id")) service._id = document.getObjectId("_id");
+        if (document.containsKey("_id")) service._id = document.getObjectId("_id").toHexString();
         if (document.containsKey("name")) service.name = document.getString("name");
-        if (document.containsKey("companyId")) service.companyId = document.getObjectId("companyId");
+        if (document.containsKey("companyId")) service.companyId = document.getObjectId("companyId").toHexString();
         return service;
     }
 

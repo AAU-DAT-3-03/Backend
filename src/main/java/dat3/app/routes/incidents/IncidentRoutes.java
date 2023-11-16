@@ -19,7 +19,6 @@ import dat3.app.utility.MongoUtility;
 
 public class IncidentRoutes {
     public static void getIncident(HttpExchange exchange) {
-        
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
@@ -65,6 +64,33 @@ public class IncidentRoutes {
             for (String string : pairs) {
                 String[] pair = string.split("=");
 
+                if (pair[0].equals("priority")) {
+                    document.put("priority", Integer.parseInt(pair[1]));
+                    isEmpty = false;
+                    continue;
+                }
+
+                if (pair[0].equals("header")) {
+                    document.put("header", pair[1]);
+                    
+                    isEmpty = false;
+                    continue;
+                }
+
+                if (pair[0].equals("acknowledgedBy")) {
+                    document.put("acknowledgedBy", pair[1]);
+                    
+                    isEmpty = false;
+                    continue;
+                }
+
+                if (pair[0].equals("creationDate")) {
+                    document.put("creationDate", Long.parseLong(pair[1]));
+                    
+                    isEmpty = false;
+                    continue;
+                }
+
                 if (pair[0].equals("id")) {
                     if (pair[1].equals("*")) return new Incident();
                     document.put("_id", new ObjectId(pair[1]));
@@ -74,6 +100,8 @@ public class IncidentRoutes {
             }
             
             if (isEmpty) return null;
+            System.out.println(document);
+            System.out.println(new Incident().fromDocument(document));
             return new Incident().fromDocument(document);
         } catch (Exception e) {
             return null;
@@ -118,15 +146,17 @@ class IncidentPublic {
 
             IncidentPublic incidentPublic = new IncidentPublic();
             incidentPublic._id = incident.getId();
-            incidentPublic.acknowledgedBy = builder.setId(new ObjectId(incident.getAcknowledgedBy())).getUser().findOne(userCollection, session);
+            incidentPublic.acknowledgedBy = builder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session);
+            incidentPublic.acknowledgedBy.setPassword(null);
             incidentPublic.creationDate = incident.getCreationDate();
             incidentPublic.header = incident.getHeader();
             incidentPublic.priority = incident.getPriority();
             incidentPublic.users = new ArrayList<>();
 
             for (String hex : incident.getUsers()) {
-                User user = builder.setId(new ObjectId(hex)).getUser().findOne(userCollection, session);
+                User user = builder.setId(hex).getUser().findOne(userCollection, session);
                 if (user == null) continue;
+                user.setPassword(null);
                 incidentPublic.users.add(user);
             }
 
