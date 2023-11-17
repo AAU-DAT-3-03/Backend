@@ -8,6 +8,7 @@ import java.util.List;
 
 public class Incident extends StandardModel<Incident> {
     private Integer priority = null;
+    private Boolean resolved = null;
     private String header = null;
     private String acknowledgedBy = null;
     private Long creationDate = null;
@@ -22,6 +23,12 @@ public class Incident extends StandardModel<Incident> {
     }
     public void setPriority(Integer priority) {
         this.priority = priority;
+    }
+    public Boolean getResolved() {
+        return resolved;
+    }
+    public void setResolved(Boolean resolved) {
+        this.resolved = resolved;
     }
     public String getHeader() {
         return header;
@@ -72,6 +79,10 @@ public class Incident extends StandardModel<Incident> {
             incident.setPriority(priority);
             return this;
         }
+        public IncidentBuilder setResolved(Boolean resolved) {
+            incident.setResolved(resolved);
+            return this;
+        }
         public IncidentBuilder setHeader(String header) {
             incident.setHeader(header);
             return this;
@@ -111,6 +122,7 @@ public class Incident extends StandardModel<Incident> {
     public Document toDocument(){
         Document document = new Document();
         if (this.priority != null) document.append("priority", this.priority);
+        if (this.resolved != null) document.append("resolved", this.resolved);
         if (this.header != null) document.append("header", this.header);
         if (this.acknowledgedBy != null) document.append("acknowledgedBy", new ObjectId(this.acknowledgedBy));
         if (this.creationDate != null) document.append("creationDate", this.creationDate);
@@ -144,6 +156,7 @@ public class Incident extends StandardModel<Incident> {
     public Incident fromDocument(Document document) {
         Incident incident = new Incident();
         if (document.containsKey("priority")) incident.priority = document.getInteger("priority");
+        if (document.containsKey("resolved")) incident.resolved = document.getBoolean("resolved");
         if (document.containsKey("header")) incident.header = document.getString("header");
         if (document.containsKey("acknowledgedBy")) incident.acknowledgedBy = document.getObjectId("acknowledgedBy").toHexString();
         if (document.containsKey("creationDate")) incident.creationDate = document.getLong("creationDate");

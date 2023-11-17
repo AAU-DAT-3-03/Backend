@@ -36,7 +36,11 @@ public class IncidentRoutes {
                 MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
                 Response response = new Response();
 
-                Incident filter = parseQueryString(exchange);
+                Document docFilter = parseQueryString(exchange);
+                try {
+                    if (docFilter.getString("_id").equals("*")) docFilter.remove("_id");
+                } catch (Exception e) {}
+                Incident filter = new Incident().fromDocument(docFilter);
                 if (filter == null) {
                     response.setMsg("Couldn't parse query string.");
                     response.setStatusCode(1);
@@ -44,7 +48,9 @@ public class IncidentRoutes {
                     return;
                 }
 
+                System.out.println(filter.toDocument());
                 List<Incident> incidents = MongoUtility.iterableToList(filter.findMany(incidentCollection, session));
+                incidents = filterByPeriod(incidents, docFilter);
                 List<IncidentPublic> toSend = new ArrayList<>();
                 incidents.forEach((Incident incident) -> {
                     toSend.add(IncidentPublic.fromIncident(userCollection, session, incident));
@@ -211,7 +217,44 @@ public class IncidentRoutes {
         }
     }
 
-    private static Incident parseQueryString(HttpExchange exchange) {
+    private static List<Incident> filterByPeriod(List<Incident> incidents, Document docFilter) {
+        List<Incident> parsedIncidents = new ArrayList<>();
+        Long end = docFilter.getLong("end");
+        Long start = docFilter.getLong("start");
+
+        if (docFilter.containsKey("start") && !docFilter.containsKey("end")) {
+            if (start == null) return incidents;
+            
+            for (Incident incident : incidents) {
+                if (start < incident.getCreationDate()) {
+                    parsedIncidents.add(incident);
+                }
+            }
+            return parsedIncidents;
+        } else if (!docFilter.containsKey("start") && docFilter.containsKey("end")) {
+            if (end == null) return incidents;
+            
+            for (Incident incident : incidents) {
+                if (incident.getCreationDate() < end) {
+                    parsedIncidents.add(incident);
+                }
+            }
+            return parsedIncidents;
+        } else if (docFilter.containsKey("start") && docFilter.containsKey("end")) {
+            if (start == null || end == null) return incidents;
+
+            for (Incident incident : incidents) {
+                if (start < incident.getCreationDate() && incident.getCreationDate() < end) {
+                    parsedIncidents.add(incident);
+                }
+            }
+            return parsedIncidents;
+        }
+        
+        return incidents;
+    }
+
+    private static Document parseQueryString(HttpExchange exchange) {
         try {
             boolean isEmpty = true;
             Document document = new Document();
@@ -244,27 +287,51 @@ public class IncidentRoutes {
                 }
 
                 if (pair[0].equals("id")) {
-                    if (pair[1].equals("*")) return new Incident();
+                    if (pair[1].equals("*")) {
+                        document.put("_id", "*");
+                        isEmpty = false;
+                        continue;
+                    };
                     document.put("_id", new ObjectId(pair[1]));
                     isEmpty = false;
                     continue;
                 }
+
+                if (pair[0].equals("start")) {
+                    document.put("start", Long.parseLong(pair[1]));
+                    isEmpty = false;
+                    continue;
+                }
+
+                if (pair[0].equals("end")) {
+                    document.put("end", Long.parseLong(pair[1]));
+                    isEmpty = false;
+                    continue;
+                }
+
+                System.out.println(pair[0] + "====" + pair[1]);
             }
             
             if (isEmpty) return null;
-            return new Incident().fromDocument(document);
+            return document;
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
 }
 class IncidentPublic {
     private Integer priority = null;
+    private Boolean resolved = null;
     private String header = null;
     private User acknowledgedBy = null;
     private Long creationDate = null;
     private String id = null;
     private List<User> users = null;
+
+    public Boolean getResolved() {
+        return resolved;
+    }
 
     public Integer getPriority() {
         return priority;
@@ -305,6 +372,7 @@ class IncidentPublic {
             incidentPublic.creationDate = incident.getCreationDate();
             incidentPublic.header = incident.getHeader();
             incidentPublic.priority = incident.getPriority();
+            incidentPublic.resolved = incident.getResolved();
             incidentPublic.users = new ArrayList<>();
 
             for (String hex : incident.getUsers()) {
