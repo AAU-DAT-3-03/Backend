@@ -17,7 +17,39 @@ Backend can then be built with `./build` to clean the current build, create new
 build and copy dependencies into project directories. Then it can be run with `./start`
  to execute class dat3.app.App with necessary .jar files.
 
+## Users & Logins
+### Quick script for logging in:
+```
+let credentials = {
+    email: {email},
+    password: {password}
+}
+fetch("http://localhost/login", {method: "POST", body: JSON.stringify(credentials)})
+```
+### User email and logins:
+```
+email: "mads.byriel@gmail.com"
+password: "mads.byriel123"
+
+email: "mads.guldbæk@gmail.com"
+password: "mads.guldbæk123"
+
+email: "rasmus.pedersen@gmail.com"
+password: "rasmus.pedersen123"
+
+email: "sandra.rosenbeck@gmail.com"
+password: "sandra.rosenbeck123"
+
+email: "mikkel.helsing@gmail.com"
+password: "mikkel.helsing123"
+
+email: "oliver.nielsen@gmail.com"
+password: "oliver.nielsen123"
+```
+
+
 ## Endpoints!
+
 ### `/users`
 ```
 GET:
