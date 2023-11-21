@@ -1,16 +1,42 @@
 package dat3.app.testkit;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import dat3.app.models.Company;
 import dat3.app.models.Incident;
 import dat3.app.models.User;
+import dat3.app.models.Company.CompanyBuilder;
 import dat3.app.models.User.UserBuilder;
 
 public class TestData {
     private static Random random = new Random(System.currentTimeMillis());
+
+    private static String[] companyNames = new String[] {
+        "Quantum Innovations Co.",
+        "Nebula Dynamics Solutions",
+        "SynthoCraft Technologies",
+        "ElectroPulse Innovations",
+        "Zenith Nexus Enterprises",
+        "Virtuoso Visionaries Ltd.",
+        "LuminaSphere Innovations",
+        "TechVortex Innovations",
+        "NovaFusion Systems",
+        "EchoSynergy Solutions",
+        "Aetheric Nexus Technologies",
+        "Pinnacle Pulse Innovations",
+        "QuasarQuest Dynamics",
+        "Ethereal Edge Solutions",
+        "CipherSprint Innovations",
+        "QuantumQuotient Ventures",
+        "Solaris Spark Industries",
+        "NebulaNova Innovations",
+        "Vertex Visionary Systems",
+        "Astral Axis Technologies",
+    };
 
     private static String[] firstPartEmail = new String[] {
         "john.doe",
@@ -244,6 +270,10 @@ public class TestData {
         return random.nextInt(2) == 0;
     }
 
+    public static List<Company> randomCompanies() {
+        return shuffleList(unshuffledCompanies(), 10);
+    }
+
     public static List<String> randomValidPhoneNumbers() {
         return shuffleList(unshuffledValidPhoneNumbers(), 10);
     }
@@ -259,6 +289,16 @@ public class TestData {
         }
 
         return list;
+    }
+
+    public static List<Company> unshuffledCompanies() {
+        List<Company> companies = new ArrayList<>();
+        CompanyBuilder builder = new CompanyBuilder();
+        for (String string : companyNames) {
+            builder.setName(string);
+            companies.add(builder.getCompany());
+        }
+        return companies;
     }
 
     public static List<String> unshuffledValidEmails() {
