@@ -7,7 +7,6 @@ public class Event extends StandardModel<Event>{
     private Long date;
     private String userId;
     private String message;
-    private String affectedObjectType;
     private String affectedObjectId;
     public Long getDate() {
         return this.date;
@@ -27,19 +26,13 @@ public class Event extends StandardModel<Event>{
     public void setMessage(String message) {
         this.message = message;
     }
-    public String getAffectedObjectType() {
-        return this.affectedObjectType;
-    }
-    public void setAffectedObjectType(String affectedObjectType) {
-        this.affectedObjectType = affectedObjectType;
-    }
     public String getAffectedObjectId() {
         return this.affectedObjectId;
     }
     public void setAffectedObjectId(String affectedObjectId) {
         this.affectedObjectId = affectedObjectId;
     }
-    public static class EventBuilder {
+    public static class EventBuilder{
         private Event event = new Event();
         public EventBuilder setDate(Long date) {
             event.setDate(date);
@@ -51,10 +44,6 @@ public class Event extends StandardModel<Event>{
         }
         public EventBuilder setMessage(String message) {
             event.setMessage(message);
-            return this;
-        }
-        public EventBuilder setAffectedObjectType(String affectedObjectType) {
-            event.affectedObjectType = affectedObjectType;
             return this;
         }
         public EventBuilder setAffectedObjectId(String affectedObjectId) {
@@ -74,7 +63,6 @@ public class Event extends StandardModel<Event>{
         if (this.date != null) document.append("date", this.date);
         if (this.userId != null) document.append("userId", new ObjectId(this.userId));
         if (this.message != null) document.append("message", this.message);
-        if (this.affectedObjectType != null) document.append("affectedObjectType", this.affectedObjectType);
         if (this.affectedObjectId != null) document.append("affectedObjectId", new ObjectId(this.affectedObjectId));
         return document;
     }
@@ -84,7 +72,6 @@ public class Event extends StandardModel<Event>{
         if (document.containsKey("date")) event.date = document.getLong("date");
         if (document.containsKey("userId")) event.userId = document.getObjectId("userId").toHexString();
         if (document.containsKey("message")) event.message = document.getString("message");
-        if (document.containsKey("affectedObjectType")) event.affectedObjectType = document.getString("affectedObjectType");
         if (document.containsKey("affectedObjectId")) event.affectedObjectId = document.getObjectId("affectedObjectId").toHexString();
         return event;
     }

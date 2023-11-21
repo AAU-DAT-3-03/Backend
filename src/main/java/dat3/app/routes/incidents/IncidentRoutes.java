@@ -1,8 +1,11 @@
 package dat3.app.routes.incidents;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import dat3.app.models.Event;
+import dat3.app.models.Event.EventBuilder;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -317,6 +320,44 @@ public class IncidentRoutes {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    /**
+     *
+     * @param incidentId a string containing the id of the incident which events need to be fetched
+     * @return a list containing all the events corresponding to the input filter.
+     */
+    private static List<Event> fetchEvents(String incidentId) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> eventCollection = MongoUtility.getCollection(client, "events");
+                EventBuilder eventbuilder = new EventBuilder();
+                eventbuilder.setAffectedObjectId(incidentId);
+                Event filter = eventbuilder.getEvent();
+                List<Event> events =  MongoUtility.iterableToList(filter.findMany(eventCollection, session));
+                session.close();
+                return events;
+            } catch(Exception e) {
+            }
+        } catch(Exception e) {
+        }
+        return null;
+    }
+    private static void createEvent(String userId, String message, String affectedIncidentId) {
+        EventBuilder eventbuilder = new EventBuilder();
+        eventbuilder.setUserId(userId);
+        eventbuilder.setMessage(message);
+        eventbuilder.setAffectedObjectId(affectedIncidentId);
+        eventbuilder.setDate(new Date().getTime());
+        Event event = eventbuilder.getEvent();
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> eventCollection = MongoUtility.getCollection(client, "events");
+                // Indsæt event i DB
+            } catch(Exception e) {
+            }
+        } catch(Exception e) {
         }
     }
 }
