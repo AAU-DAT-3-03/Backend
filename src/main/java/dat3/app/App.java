@@ -16,6 +16,7 @@ import dat3.app.models.Incident;
 import dat3.app.models.User;
 import dat3.app.routes.companies.CompanyRoutes;
 import dat3.app.routes.incidents.IncidentRoutes;
+import dat3.app.routes.services.ServiceRoutes;
 import dat3.app.routes.users.UserRoutes;
 import dat3.app.server.DBNotFound;
 import dat3.app.server.Server;
@@ -49,7 +50,11 @@ public class App {
         server.addDeleteRoute("/companies", CompanyRoutes::deleteCompanies);
         server.addPostRoute("/companies", CompanyRoutes::postCompanies);
 
-
+        // Services
+        server.addGetRoute("/services", ServiceRoutes::getService);
+        server.addDeleteRoute("/services", ServiceRoutes::deleteService);
+        server.addPutRoute("/services", ServiceRoutes::putService);
+        server.addPostRoute("/services", ServiceRoutes::postService);
 
         // Incidents
         server.addGetRoute("/incidents", IncidentRoutes::getIncident);
