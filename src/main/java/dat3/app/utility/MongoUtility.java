@@ -13,6 +13,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 import dat3.app.ProjectSettings;
+import dat3.app.models.Company;
 import dat3.app.models.Model;
 import dat3.app.models.User;
 import dat3.app.models.Incident.IncidentBuilder;
@@ -31,7 +32,11 @@ public abstract class MongoUtility {
         UserBuilder userBuilder = new UserBuilder();
         MongoCollection<Document> userCollection = getCollection(client, "users");
         MongoCollection<Document> incidentCollection = getCollection(client, "incidents");
-    
+        MongoCollection<Document> companyCollection = getCollection(client, "companies");
+
+        for (Company company : TestData.randomCompanies()) {
+            company.insertOne(companyCollection, session);
+        }
         for (User user : TestData.personalizedUsers()) {
             user.insertOne(userCollection, session);
         }
