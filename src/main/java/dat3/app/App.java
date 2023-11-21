@@ -14,6 +14,7 @@ import com.mongodb.client.MongoDatabase;
 
 import dat3.app.models.Incident;
 import dat3.app.models.User;
+import dat3.app.routes.companies.CompanyRoutes;
 import dat3.app.routes.incidents.IncidentRoutes;
 import dat3.app.routes.users.UserRoutes;
 import dat3.app.server.DBNotFound;
@@ -42,6 +43,14 @@ public class App {
         server.addPostRoute("/register", Routes::registerUser);
         server.addPostRoute("/login", Routes::loginUser);
 
+        // Company
+        server.addGetRoute("/companies", CompanyRoutes::getCompanies);
+        server.addPutRoute("/companies", CompanyRoutes::putCompanies);
+        server.addDeleteRoute("/companies", CompanyRoutes::deleteCompanies);
+        server.addPostRoute("/companies", CompanyRoutes::postCompanies);
+
+
+
         // Incidents
         server.addGetRoute("/incidents", IncidentRoutes::getIncident);
         server.addDeleteRoute("/incidents", IncidentRoutes::deleteIncident);
@@ -52,6 +61,7 @@ public class App {
         server.addGetRoute("/users", UserRoutes::getUser);
         server.addPutRoute("/users", UserRoutes::updateUser);
         server.addDeleteRoute("/users", UserRoutes::deleteUser);
+        
 
         try {
             server.startServer();
