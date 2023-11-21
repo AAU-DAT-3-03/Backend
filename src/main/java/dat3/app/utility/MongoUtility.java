@@ -15,6 +15,7 @@ import com.mongodb.client.MongoDatabase;
 import dat3.app.ProjectSettings;
 import dat3.app.models.Company;
 import dat3.app.models.Model;
+import dat3.app.models.Service;
 import dat3.app.models.User;
 import dat3.app.models.Incident.IncidentBuilder;
 import dat3.app.models.StandardModel;
@@ -33,10 +34,17 @@ public abstract class MongoUtility {
         MongoCollection<Document> userCollection = getCollection(client, "users");
         MongoCollection<Document> incidentCollection = getCollection(client, "incidents");
         MongoCollection<Document> companyCollection = getCollection(client, "companies");
+        MongoCollection<Document> servicesCollection = getCollection(client, "services");
 
         for (Company company : TestData.randomCompanies()) {
             company.insertOne(companyCollection, session);
         }
+        List<Company> companies = MongoUtility.iterableToList(new Company().findMany(companyCollection, session));
+        for (Service service : TestData.randomServices()) {
+            service.setCompanyId(companies.get(TestData.randomIntExcl(companies.size())).getId());
+            service.insertOne(servicesCollection, session);
+        }
+
         for (User user : TestData.personalizedUsers()) {
             user.insertOne(userCollection, session);
         }

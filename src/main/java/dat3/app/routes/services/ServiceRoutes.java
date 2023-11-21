@@ -1,4 +1,4 @@
-package dat3.app.routes.companies;
+package dat3.app.routes.services;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,146 +14,88 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
-import dat3.app.models.Company;
-import dat3.app.models.Company.CompanyBuilder;
+import dat3.app.models.Service;
 import dat3.app.models.Service.ServiceBuilder;
-import dat3.app.server.Auth;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
 import dat3.app.utility.MongoUtility;
 
-public abstract class CompanyRoutes {
-    public static void getCompanies(HttpExchange exchange) {
-        if (Auth.auth(exchange) == null) {
-            ExchangeUtility.sendUnauthorizedResponse(exchange);
-            return;
-        }
+public abstract class ServiceRoutes {
+    public static void getService(HttpExchange exchange) {
 
-        Document parsedURI = parseQueryString(exchange);
-        if (parsedURI == null) {
+        Document document = parseQueryString(exchange);
+        if (document == null) {
             Response response = new Response();
+            response.setMsg("Invalid query string.");
             response.setStatusCode(1);
-            response.setMsg("Invalid query string");
             try {
                 response.sendResponse(exchange);
             } catch (IOException e) {}
             return;
         }
-
-        Company filter = new Company().fromDocument(parsedURI);
-
+        Service service = new Service().fromDocument(document);
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
-                MongoCollection<Document> companyCollection = MongoUtility.getCollection(client, "companies");
-                List<Company> companies = MongoUtility.iterableToList(filter.findMany(companyCollection, session));
-                Response response = new Response();
-                response.setStatusCode(0);
-                response.setMsg(companies);
-                try {
-                    response.sendResponse(exchange);
-                } catch (IOException e1) {}
-                return;
-            }
-        } catch (Exception e) {
-            Response response = new Response();
-            response.setStatusCode(1);
-            response.setMsg("Something went wrong.");
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e1) {}
-            return;
-        }
-    }
-
-    public static void putCompanies(HttpExchange exchange) {
-        if (Auth.auth(exchange) == null) {
-            ExchangeUtility.sendUnauthorizedResponse(exchange);
-            return;
-        }
-
-        try (MongoClient client = MongoUtility.getClient()) {
-            try (ClientSession session = client.startSession()) {
-                Company company = ExchangeUtility.parseJsonBody(exchange, 1000, Company.class);
-                if (company.getName() == null || company.getId() == null) {
-                    Response response = new Response();
-                    response.setStatusCode(1);
-                    response.setMsg("Invalid company object.");
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                }
-                CompanyBuilder builder = new CompanyBuilder();
-                MongoCollection<Document> companyCollection = MongoUtility.getCollection(client, "companies");
-                UpdateResult result = company.updateMany(companyCollection, session, builder.setId(company.getId()).getCompany());
-
-                if (result.getModifiedCount() > 0) {
-                    Response response = new Response();
-                    response.setStatusCode(0);
-                    response.setMsg("Updated the company.");
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                } else {
-                    Response response = new Response();
-                    response.setStatusCode(1);
-                    response.setMsg("Updated 0 companies.");
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                }
-            }
-        } catch (Exception e) {
-            Response response = new Response();
-            response.setStatusCode(1);
-            response.setMsg("Something went wrong.");
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e1) {}
-            return;
-        }
-    }
-
-    public static void deleteCompanies(HttpExchange exchange) {
-        if (Auth.auth(exchange) == null) {
-            ExchangeUtility.sendUnauthorizedResponse(exchange);
-            return;
-        }
-
-        try (MongoClient client = MongoUtility.getClient()) {
-            try (ClientSession session = client.startSession()) {
-                Company company = ExchangeUtility.parseJsonBody(exchange, 1000, Company.class);
-                if (company.getId() == null) {
-                    Response response = new Response();
-                    response.setStatusCode(1);
-                    response.setMsg("Invalid company object.");
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                }
-                CompanyBuilder builder = new CompanyBuilder();
-                ServiceBuilder serviceBuilder = new ServiceBuilder();
-                MongoCollection<Document> companyCollection = MongoUtility.getCollection(client, "companies");
                 MongoCollection<Document> serviceCollection = MongoUtility.getCollection(client, "services");
+                List<Service> services = MongoUtility.iterableToList(service.findMany(serviceCollection, session));
+                
+                Response response = new Response();
+                response.setMsg(services);
+                response.setStatusCode(0);
+                response.sendResponse(exchange);
+            }
+        } catch (Exception e) {
+            Response response = new Response();
+            response.setMsg("Something went wrong.");
+            response.setStatusCode(1);
+            try {
+                response.sendResponse(exchange);
+            } catch (IOException e1) {}
+            return;
+        }
+    }
 
-                serviceBuilder.setCompanyId(company.getId()).getService().deleteMany(serviceCollection, session);
-                DeleteResult result = builder.setId(company.getId()).getCompany().deleteOne(companyCollection, session);
+    public static void deleteService(HttpExchange exchange) {
+        Service service;
+        try {
+            service = ExchangeUtility.parseJsonBody(exchange, 1000, Service.class);
+        } catch (Exception e) {
+            Response response = new Response();
+            response.setMsg("Couldn't parse json body.");
+            response.setStatusCode(1);
+            try {
+                response.sendResponse(exchange);
+            } catch (IOException e1) {}
+            return;
+        }
+
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> serviceCollection = MongoUtility.getCollection(client, "services");
+                if (service.getId() == null) {
+                    Response response = new Response();
+                    response.setMsg("Invalid body data. Body needs an id.");
+                    response.setStatusCode(1);
+                    try {
+                        response.sendResponse(exchange);
+                    } catch (IOException e1) {}
+                    return;
+                }
+
+                DeleteResult result = service.deleteOne(serviceCollection, session);
 
                 if (result.getDeletedCount() > 0) {
                     Response response = new Response();
+                    response.setMsg("Deleted service.");
                     response.setStatusCode(0);
-                    response.setMsg("Deleted the company.");
                     try {
                         response.sendResponse(exchange);
                     } catch (IOException e1) {}
                     return;
                 } else {
                     Response response = new Response();
+                    response.setMsg("Deleted 0 services.");
                     response.setStatusCode(1);
-                    response.setMsg("Deleted 0 companies.");
                     try {
                         response.sendResponse(exchange);
                     } catch (IOException e1) {}
@@ -162,8 +104,8 @@ public abstract class CompanyRoutes {
             }
         } catch (Exception e) {
             Response response = new Response();
-            response.setStatusCode(1);
             response.setMsg("Something went wrong.");
+            response.setStatusCode(1);
             try {
                 response.sendResponse(exchange);
             } catch (IOException e1) {}
@@ -171,40 +113,48 @@ public abstract class CompanyRoutes {
         }
     }
 
-    public static void postCompanies(HttpExchange exchange) {
-        if (Auth.auth(exchange) == null) {
-            ExchangeUtility.sendUnauthorizedResponse(exchange);
+    public static void putService(HttpExchange exchange) {
+        Service service;
+        try {
+            service = ExchangeUtility.parseJsonBody(exchange, 1000, Service.class);
+        } catch (Exception e) {
+            Response response = new Response();
+            response.setMsg("Couldn't parse json body.");
+            response.setStatusCode(1);
+            try {
+                response.sendResponse(exchange);
+            } catch (IOException e1) {}
             return;
         }
-        
+
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
-                Company company = ExchangeUtility.parseJsonBody(exchange, 1000, Company.class);
-                if (company.getId() != null || company.getName() == null) {
+                MongoCollection<Document> serviceCollection = MongoUtility.getCollection(client, "services");
+                if (service.getId() == null) {
                     Response response = new Response();
+                    response.setMsg("Invalid body data, an id must be specified.");
                     response.setStatusCode(1);
-                    response.setMsg("Invalid company object.");
                     try {
                         response.sendResponse(exchange);
                     } catch (IOException e1) {}
                     return;
                 }
-                
-                MongoCollection<Document> companyCollection = MongoUtility.getCollection(client, "companies");
-                InsertOneResult result = company.insertOne(companyCollection, session);
 
-                if (result.wasAcknowledged()) {
+                ServiceBuilder builder = new ServiceBuilder();
+                UpdateResult result = service.updateOne(serviceCollection, session, builder.setId(service.getId()).getService());
+
+                if (result.getModifiedCount() > 0) {
                     Response response = new Response();
+                    response.setMsg("Modified service.");
                     response.setStatusCode(0);
-                    response.setMsg("Inserted the company.");
                     try {
                         response.sendResponse(exchange);
                     } catch (IOException e1) {}
                     return;
                 } else {
                     Response response = new Response();
+                    response.setMsg("Modified 0 services.");
                     response.setStatusCode(1);
-                    response.setMsg("Company was not inserted.");
                     try {
                         response.sendResponse(exchange);
                     } catch (IOException e1) {}
@@ -213,8 +163,66 @@ public abstract class CompanyRoutes {
             }
         } catch (Exception e) {
             Response response = new Response();
-            response.setStatusCode(1);
             response.setMsg("Something went wrong.");
+            response.setStatusCode(1);
+            try {
+                response.sendResponse(exchange);
+            } catch (IOException e1) {}
+            return;
+        }
+    }
+
+    public static void postService(HttpExchange exchange) {
+        Service service;
+        try {
+            service = ExchangeUtility.parseJsonBody(exchange, 1000, Service.class);
+        } catch (Exception e) {
+            Response response = new Response();
+            response.setMsg("Couldn't parse json body.");
+            response.setStatusCode(1);
+            try {
+                response.sendResponse(exchange);
+            } catch (IOException e1) {}
+            return;
+        }
+
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> serviceCollection = MongoUtility.getCollection(client, "services");
+                if (service.getId() != null) {
+                    Response response = new Response();
+                    response.setMsg("Invalid body data, an id cannot be specified at creation.");
+                    response.setStatusCode(1);
+                    try {
+                        response.sendResponse(exchange);
+                    } catch (IOException e1) {}
+                    return;
+                }
+
+                InsertOneResult result = service.insertOne(serviceCollection, session);
+
+                if (result.wasAcknowledged()) {
+                    Response response = new Response();
+                    response.setMsg("Created service.");
+                    response.setStatusCode(0);
+                    try {
+                        response.sendResponse(exchange);
+                    } catch (IOException e1) {}
+                    return;
+                } else {
+                    Response response = new Response();
+                    response.setMsg("Created 0 services.");
+                    response.setStatusCode(1);
+                    try {
+                        response.sendResponse(exchange);
+                    } catch (IOException e1) {}
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            Response response = new Response();
+            response.setMsg("Something went wrong.");
+            response.setStatusCode(1);
             try {
                 response.sendResponse(exchange);
             } catch (IOException e1) {}
@@ -237,6 +245,11 @@ public abstract class CompanyRoutes {
 
                 if (pair[0].equals("name")) {
                     document.put("name", pair[1]);
+                    continue;
+                }
+
+                if (pair[0].equals("companyId")) {
+                    document.put("companyId", new ObjectId(pair[1]));
                     continue;
                 }
 

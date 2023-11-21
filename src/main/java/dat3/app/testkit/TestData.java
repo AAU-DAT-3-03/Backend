@@ -8,8 +8,10 @@ import java.util.Random;
 
 import dat3.app.models.Company;
 import dat3.app.models.Incident;
+import dat3.app.models.Service;
 import dat3.app.models.User;
 import dat3.app.models.Company.CompanyBuilder;
+import dat3.app.models.Service.ServiceBuilder;
 import dat3.app.models.User.UserBuilder;
 
 public class TestData {
@@ -36,6 +38,54 @@ public class TestData {
         "NebulaNova Innovations",
         "Vertex Visionary Systems",
         "Astral Axis Technologies",
+    };
+
+    private static String[] serviceNames = new String[] {
+        "Uber",
+        "Lyft",
+        "Didi Chuxing",
+        "DoorDash",
+        "Grubhub",
+        "Uber Eats",
+        "Netflix",
+        "Hulu",
+        "Amazon Prime Video",
+        "Peloton",
+        "MyFitnessPal",
+        "Headspace",
+        "Upwork",
+        "Fiverr",
+        "Freelancer",
+        "Coursera",
+        "Udemy",
+        "Khan Academy",
+        "Facebook",
+        "Instagram",
+        "Twitter",
+        "PayPal",
+        "Venmo",
+        "Cash App",
+        "TaskRabbit",
+        "Handy",
+        "Thumbtack",
+        "Airbnb",
+        "Booking.com",
+        "Expedia",
+        "Birchbox",
+        "Blue Apron",
+        "Stitch Fix",
+        "Google Translate",
+        "Microsoft Translator",
+        "Babbel",
+        "Zoom",
+        "Microsoft Teams",
+        "Google Meet",
+        "The New York Times",
+        "The Washington Post",
+        "Spotify",
+        "Postmates",
+        "Instacart",
+        "Shipt",
     };
 
     private static String[] firstPartEmail = new String[] {
@@ -278,6 +328,10 @@ public class TestData {
         return shuffleList(unshuffledValidPhoneNumbers(), 10);
     }
 
+    public static List<Service> randomServices() {
+        return shuffleList(unshuffledServices(), 10);
+    }
+
     public static <T> List<T> shuffleList(List<T> list, int randomness) {
         for (int i = 0; i < randomness * list.size(); i++) {
             int randInt1 = random.nextInt(list.size());
@@ -312,6 +366,15 @@ public class TestData {
         }
 
         return validEmails;
+    }
+
+    public static List<Service> unshuffledServices() {
+        ServiceBuilder builder = new ServiceBuilder();
+        List<Service> services = new ArrayList<>();
+        for (String serviceName : serviceNames) {
+            services.add(builder.setName(serviceName).getService());
+        }
+        return services;
     }
 
     public static List<String> unshuffledValidNames() {
