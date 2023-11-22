@@ -330,6 +330,10 @@ class IncidentPublic {
     private List<User> calls = null;
     private String incidentNote = null;
 
+    public String getIncidentNote() {
+        return incidentNote;
+    }
+
     public List<User> getCalls() {
         return calls;
     }
