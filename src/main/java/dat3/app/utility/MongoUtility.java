@@ -53,28 +53,27 @@ public abstract class MongoUtility {
         }
 
 
-        {
-            List<User> users = iterableToList(userBuilder.getUser().findMany(userCollection, session));
-            Iterator<String> headers = TestData.randomIncidentnames().iterator();
-            IncidentBuilder incidentBuilder = new IncidentBuilder();
-            for (int i = 0; i < 150; i++) {
-                List<String> userIds = new ArrayList<>();
-                for (int j = 0; j < TestData.randomIntExcl(10); j++) {
-                    userIds.add(users.get(TestData.randomIntExcl(users.size())).getId());
-                }
-
-                boolean acknowledged = TestData.randomBoolean();
-                String acknowledgedBy = null;
-                if (acknowledged) acknowledgedBy = users.get(TestData.randomIntExcl(users.size())).getId();
-                incidentBuilder
-                    .setAcknowledgedBy(acknowledgedBy)
-                    .setAlarms(null)
-                    .setCreationDate(System.currentTimeMillis())
-                    .setHeader(headers.hasNext() ? headers.next() : null)
-                    .setPriority(TestData.randomIntExcl(4) + 1)
-                    .setUsers(userIds)
-                    .getIncident().insertOne(incidentCollection, session);
+        List<User> users = iterableToList(userBuilder.getUser().findMany(userCollection, session));
+        Iterator<String> headers = TestData.randomIncidentnames().iterator();
+        IncidentBuilder incidentBuilder = new IncidentBuilder();
+        for (int i = 0; i < 150; i++) {
+            List<String> userIds = new ArrayList<>();
+            
+            for (int j = 0; j < TestData.randomIntExcl(10); j++) {
+                userIds.add(users.get(TestData.randomIntExcl(users.size())).getId());
             }
+
+            String acknowledgedBy = null;
+            if (TestData.randomBoolean()) acknowledgedBy = users.get(TestData.randomIntExcl(users.size())).getId();
+            incidentBuilder
+                .setAcknowledgedBy(acknowledgedBy)
+                .setAlarms(null)
+                .setCreationDate(System.currentTimeMillis())
+                .setHeader(headers.hasNext() ? headers.next() : null)
+                .setPriority(TestData.randomIntExcl(4) + 1)
+                .setResolved(TestData.randomIntExcl(4) == 0)
+                .setUsers(userIds)
+                .getIncident().insertOne(incidentCollection, session);
         }
 
 
