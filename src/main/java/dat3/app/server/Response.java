@@ -32,6 +32,7 @@ public class Response {
     }
 
     public void sendResponse(HttpExchange connection) throws IOException {
+        connection.getResponseHeaders().add("Content-Type", "application/json");
         String json = new Gson().toJson(this);
         byte[] bytes = json.getBytes();
         connection.sendResponseHeaders(200, bytes.length);

@@ -372,11 +372,9 @@ class IncidentPublic {
 
             IncidentPublic incidentPublic = new IncidentPublic();
             incidentPublic.id = incident.getId();
-            try {
+            if (incident.getAcknowledgedBy() != null)  {
                 incidentPublic.acknowledgedBy = builder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session);
                 incidentPublic.acknowledgedBy.setPassword(null);
-            } catch (Exception e) {
-                incidentPublic.acknowledgedBy = null;
             }
             incidentPublic.creationDate = incident.getCreationDate();
             incidentPublic.header = incident.getHeader();

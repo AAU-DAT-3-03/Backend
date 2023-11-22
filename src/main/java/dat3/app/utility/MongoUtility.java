@@ -58,16 +58,16 @@ public abstract class MongoUtility {
         IncidentBuilder incidentBuilder = new IncidentBuilder();
         for (int i = 0; i < 150; i++) {
             List<String> userIds = new ArrayList<>();
-            List<String> calls = new  ArrayList<>();
+            List<String> calls = new ArrayList<>();
+            String acknowledgedBy = null;
 
             for (int j = 0; j < TestData.randomIntExcl(10); j++) {
                 User userToAdd = users.get(TestData.randomIntExcl(users.size()));
+                if (j == 0) acknowledgedBy = userToAdd.getId();
                 userIds.add(userToAdd.getId());
                 if (TestData.randomBoolean()) calls.add(userToAdd.getId());
             }
 
-            String acknowledgedBy = null;
-            if (userIds.size() > 0) acknowledgedBy = users.get(TestData.randomIntExcl(users.size())).getId();
             incidentBuilder
                 .setAcknowledgedBy(acknowledgedBy)
                 .setAlarms(null)
