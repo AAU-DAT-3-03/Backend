@@ -94,21 +94,6 @@ public class TestData {
         "alex.jones",
         "lisa.miller",
         "mark.wilson",
-        "sarah.jones",
-        "mike.smith",
-        "emily.wilson",
-        "chris.martin",
-        "laura.brown",
-        "daniel.carter",
-        "olivia.jenkins",
-        "brian.roberts",
-        "mia.anderson",
-        "jacob.evans",
-        "sophia.perez",
-        "liam.thompson",
-        "abigail.morris",
-        "ethan.russell",
-        "ava.hall",
     };
 
     private static String[] secondPartEmail = new String[] {
@@ -116,22 +101,7 @@ public class TestData {
         "tech_solutions",
         "global_enterprises",
         "stellar_innovations",
-        "alpha_industries",
-        "digital_solutions",
-        "quantum_technologies",
-        "united_services",
-        "synergy_systems",
-        "global_innovators",
-        "dynamic_enterprises",
-        "fusion_solutions",
-        "stellar_consulting",
-        "prime_group",
-        "agile_innovations",
-        "apex_corp",
-        "matrix_technologies",
-        "nexus_solutions",
-        "pioneer_systems",
-        "horizon_innovations",
+        "alpha_industries"
     };
 
     private static String[] thirdPartEmail = new String[] {
@@ -139,22 +109,7 @@ public class TestData {
         "net",
         "org",
         "co",
-        "io",
-        "biz",
-        "info",
-        "us",
-        "co.uk",
-        "tech",
-        "edu",
-        "gov",
-        "mobi",
-        "pro",
-        "name",
-        "tv",
-        "travel",
-        "blog",
-        "app",
-        "shop",
+        "io"
     };
 
     private static String[] firstPartName = new String[] {
@@ -162,12 +117,7 @@ public class TestData {
         "Ethan",
         "Olivia",
         "Mason",
-        "Ava",
-        "Logan",
-        "Sophia",
-        "Jackson",
-        "Isabella",
-        "Liam",
+        "Ava"
     };
 
     private static String[] secondPartName = new String[] {
@@ -175,12 +125,7 @@ public class TestData {
         "Grace",
         "Alexander",
         "Rose",
-        "Benjamin",
-        "Emma",
-        "Carter",
-        "Ava",
-        "Henry",
-        "Lily",
+        "Benjamin"
     };
 
     private static String[] thirdPartName = new String[] {
@@ -188,12 +133,7 @@ public class TestData {
         "Johnson",
         "Williams",
         "Jones",
-        "Brown",
-        "Davis",
-        "Miller",
-        "Wilson",
-        "Moore",
-        "Taylor",
+        "Brown"
     };
 
     private static String[] firstPartNumber = new String[] {
@@ -201,12 +141,7 @@ public class TestData {
         "45 6",
         "78 9",
         "23 4",
-        "56 7",
-        "89 0",
-        "34 5",
-        "67 8",
-        "90 1",
-        "45 6",
+        "56 7"
     };
 
     private static String[] secondPartNumber = new String[] {
@@ -214,12 +149,7 @@ public class TestData {
         "2 34 ",
         "3 45 ",
         "4 56 ",
-        "5 67 ",
-        "6 78 ",
-        "7 89 ",
-        "8 90 ",
-        "9 01 ",
-        "0 12 ",
+        "5 67 "
     };
 
     private static String[] thirdPartNumber = new String[] {
@@ -227,12 +157,7 @@ public class TestData {
         "45",
         "56",
         "67",
-        "78",
-        "89",
-        "90",
-        "01",
-        "12",
-        "23",
+        "78"
     };
 
     private static String[] firstPartIncident = new String[] {
