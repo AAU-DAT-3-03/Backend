@@ -67,15 +67,16 @@ public abstract class MongoUtility {
             }
 
             String acknowledgedBy = null;
-            if (TestData.randomBoolean()) acknowledgedBy = users.get(TestData.randomIntExcl(users.size())).getId();
+            if (userIds.size() > 0) acknowledgedBy = users.get(TestData.randomIntExcl(users.size())).getId();
             incidentBuilder
                 .setAcknowledgedBy(acknowledgedBy)
                 .setAlarms(null)
                 .setCalls(calls)
                 .setCreationDate(System.currentTimeMillis())
                 .setHeader(headers.hasNext() ? headers.next() : null)
+                .setIncidentNote(acknowledgedBy != null ? "Data" : null)
                 .setPriority(TestData.randomIntExcl(4) + 1)
-                .setResolved(TestData.randomIntExcl(4) == 0)
+                .setResolved(acknowledgedBy != null ? TestData.randomIntExcl(3) == 0 : false)
                 .setUsers(userIds)
                 .getIncident().insertOne(incidentCollection, session);
         }

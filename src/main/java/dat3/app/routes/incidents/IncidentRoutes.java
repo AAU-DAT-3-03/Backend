@@ -328,6 +328,7 @@ class IncidentPublic {
     private String id = null;
     private List<User> users = null;
     private List<User> calls = null;
+    private String incidentNote = null;
 
     public List<User> getCalls() {
         return calls;
@@ -377,6 +378,7 @@ class IncidentPublic {
             incidentPublic.header = incident.getHeader();
             incidentPublic.priority = incident.getPriority();
             incidentPublic.resolved = incident.getResolved();
+            incidentPublic.incidentNote = incident.getIncidentNote();
 
             incidentPublic.users = new ArrayList<>();
             for (String hex : incident.getUsers()) {
