@@ -48,7 +48,6 @@ public class IncidentRoutes {
                     return;
                 }
 
-                System.out.println(filter.toDocument());
                 List<Incident> incidents = MongoUtility.iterableToList(filter.findMany(incidentCollection, session));
                 incidents = filterByPeriod(incidents, docFilter);
                 List<IncidentPublic> toSend = new ArrayList<>();
@@ -309,7 +308,7 @@ public class IncidentRoutes {
                     continue;
                 }
 
-                System.out.println(pair[0] + "====" + pair[1]);
+                return null;
             }
             
             if (isEmpty) return null;
@@ -328,6 +327,11 @@ class IncidentPublic {
     private Long creationDate = null;
     private String id = null;
     private List<User> users = null;
+    private List<User> calls = null;
+
+    public List<User> getCalls() {
+        return calls;
+    }
 
     public Boolean getResolved() {
         return resolved;
@@ -373,13 +377,21 @@ class IncidentPublic {
             incidentPublic.header = incident.getHeader();
             incidentPublic.priority = incident.getPriority();
             incidentPublic.resolved = incident.getResolved();
-            incidentPublic.users = new ArrayList<>();
 
+            incidentPublic.users = new ArrayList<>();
             for (String hex : incident.getUsers()) {
                 User user = builder.setId(hex).getUser().findOne(userCollection, session);
                 if (user == null) continue;
                 user.setPassword(null);
                 incidentPublic.users.add(user);
+            }
+
+            incidentPublic.calls = new ArrayList<>();
+            for (String hex : incident.getCalls()) {
+                User user = builder.setId(hex).getUser().findOne(userCollection, session);
+                if (user == null) continue;
+                user.setPassword(null);
+                incidentPublic.calls.add(user);
             }
 
             return incidentPublic;

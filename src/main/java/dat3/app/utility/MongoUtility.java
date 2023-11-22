@@ -58,9 +58,12 @@ public abstract class MongoUtility {
         IncidentBuilder incidentBuilder = new IncidentBuilder();
         for (int i = 0; i < 150; i++) {
             List<String> userIds = new ArrayList<>();
-            
+            List<String> calls = new  ArrayList<>();
+
             for (int j = 0; j < TestData.randomIntExcl(10); j++) {
-                userIds.add(users.get(TestData.randomIntExcl(users.size())).getId());
+                User userToAdd = users.get(TestData.randomIntExcl(users.size()));
+                userIds.add(userToAdd.getId());
+                if (TestData.randomBoolean()) calls.add(userToAdd.getId());
             }
 
             String acknowledgedBy = null;
@@ -68,6 +71,7 @@ public abstract class MongoUtility {
             incidentBuilder
                 .setAcknowledgedBy(acknowledgedBy)
                 .setAlarms(null)
+                .setCalls(calls)
                 .setCreationDate(System.currentTimeMillis())
                 .setHeader(headers.hasNext() ? headers.next() : null)
                 .setPriority(TestData.randomIntExcl(4) + 1)
@@ -75,7 +79,6 @@ public abstract class MongoUtility {
                 .setUsers(userIds)
                 .getIncident().insertOne(incidentCollection, session);
         }
-
 
         session.close();
         client.close();

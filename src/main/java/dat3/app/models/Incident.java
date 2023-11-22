@@ -15,8 +15,7 @@ public class Incident extends StandardModel<Incident> {
     private String id = null;
     private List<String> users = null;
     private List<String> alarms = null;
-    private List<String> eventLog = null;
-
+    private List<String> calls = null;
     // ---------- Getters & Setters ---------- //
     public Integer getPriority() {
         return priority;
@@ -66,12 +65,13 @@ public class Incident extends StandardModel<Incident> {
     public void setAlarms(List<String> alarms) {
         this.alarms = alarms;
     }
-    public List<String> getEventLog() {
-        return eventLog;
+    public List<String> getCalls() {
+        return calls;
     }
-    public void setEventLog(List<String> eventLog) {
-        this.eventLog = eventLog;
+    public void setCalls(List<String> calls) {
+        this.calls = calls;
     }
+
     // ---------- Builder subclass ---------- //
     public static class IncidentBuilder {
         private Incident incident = new Incident();
@@ -107,8 +107,8 @@ public class Incident extends StandardModel<Incident> {
             incident.setAlarms(alarms);
             return this;
         }
-        public IncidentBuilder setEventLog(List<String> eventLog) {
-            incident.setEventLog(eventLog);
+        public IncidentBuilder setCalls(List<String> calls) {
+            incident.setCalls(calls);
             return this;
         }
         public Incident getIncident() {
@@ -142,12 +142,12 @@ public class Incident extends StandardModel<Incident> {
             });
             document.append("alarms", ids);
         }
-        if (this.eventLog!= null) {
+        if (this.calls != null) {
             List<ObjectId> ids = new ArrayList<>();
-            this.eventLog.forEach((String hexString) -> {
+            this.calls.forEach((String hexString) -> {
                 ids.add(new ObjectId(hexString));
             });
-            document.append("eventLog", ids);
+            document.append("calls", ids);
         }
 
         return document;
@@ -174,10 +174,10 @@ public class Incident extends StandardModel<Incident> {
                 incident.alarms.add(id.toHexString());
             });;
         }
-        if (document.containsKey("eventLog")) {
-            incident.eventLog = new ArrayList<>();
-            document.getList("eventLog", ObjectId.class).forEach((ObjectId id) -> {
-                incident.eventLog.add(id.toHexString());
+        if (document.containsKey("calls")) {
+            incident.calls = new ArrayList<>();
+            document.getList("calls", ObjectId.class).forEach((ObjectId id) -> {
+                incident.calls.add(id.toHexString());
             });
         }
         
