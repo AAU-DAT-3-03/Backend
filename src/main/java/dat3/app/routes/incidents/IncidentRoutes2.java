@@ -1,4 +1,4 @@
-package dat3.app.routes.companies;
+package dat3.app.routes.incidents;
 
 import java.io.IOException;
 import java.util.List;
@@ -11,39 +11,45 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
-import dat3.app.models.Company;
+import dat3.app.models.Incident;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
 
-public abstract class ComRoutes {
-    public static void getCompanies(HttpExchange exchange) {
-        Company filter = parseQueryString(exchange);
+public abstract class IncidentRoutes2 {
+    public static void get(HttpExchange exchange) {
+        Document documentFilter = parseQueryString(exchange);
+        Incident filter = new Incident().fromDocument(documentFilter);
         if (filter == null) {
-            invalidQueryResponse(exchange);
+            ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
-        List<Company> result = ExchangeUtility.defaultGetOperation(filter, "companies");
+        List<Incident> result = ExchangeUtility.defaultGetOperation(filter, "incidents");
         if (result == null) {
-            queryErrorResponse(exchange);
+            ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
+
+        // add start and end filtering.
 
         Response response = new Response();
         response.setMsg(result);
         response.setStatusCode(0);
+        try {
+            response.sendResponse(exchange);
+        } catch (Exception e) {}
     }
 
-    public static void deleteCompanies(HttpExchange exchange) {
-        Company filter = parseQueryString(exchange);
-        if (filter == null) {
-            invalidQueryResponse(exchange);
+    public static void delete(HttpExchange exchange) {
+        Incident filter = parseBody(exchange);
+        if (filter == null || filter.getId() == null) {
+            ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
         DeleteResult result = ExchangeUtility.defaultDeleteOperation(filter, "companies");
         if (result == null) {
-            queryErrorResponse(exchange);
+            ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
 
@@ -62,18 +68,18 @@ public abstract class ComRoutes {
         } catch (IOException e) {}
     }
 
-    public static void putCompanies(HttpExchange exchange) {
-        Company toUpdate = parseQueryString(exchange);
-        if (toUpdate == null) {
-            invalidQueryResponse(exchange);
+    public static void put(HttpExchange exchange) {
+        Incident toUpdate = parseBody(exchange);
+        if (toUpdate == null || toUpdate.getId() == null) {
+            ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
-        Company filter = new Company();
+        Incident filter = new Incident();
         filter.setId(toUpdate.getId());
         UpdateResult result = ExchangeUtility.defaultPutOperation(filter, toUpdate, "companies");
         if (result == null) {
-            queryErrorResponse(exchange);
+            ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
 
@@ -92,16 +98,16 @@ public abstract class ComRoutes {
         } catch (IOException e) {}
     }
 
-    public static void postCompanies(HttpExchange exchange) {
-        Company filter = parseQueryString(exchange);
-        if (filter == null) {
-            invalidQueryResponse(exchange);
+    public static void post(HttpExchange exchange) {
+        Incident filter = parseBody(exchange);
+        if (filter == null || filter.getId() != null) {
+            ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
         InsertOneResult result = ExchangeUtility.defaultPostOperation(filter, "companies");
         if (result == null) {
-            queryErrorResponse(exchange);
+            ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
 
@@ -120,47 +126,67 @@ public abstract class ComRoutes {
         } catch (IOException e) {}
     }
 
-    private static void queryErrorResponse(HttpExchange exchange) {
-        Response response = new Response();
-        response.setMsg("Something went wrong when executing query.");
-        response.setStatusCode(1);
+    private static Incident parseBody(HttpExchange exchange) {
         try {
-            response.sendResponse(exchange);
-        } catch (IOException e) {}
+            return ExchangeUtility.parseJsonBody(exchange, 1000, Incident.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    private static void invalidQueryResponse(HttpExchange exchange) {
-        Response response = new Response();
-        response.setMsg("Invalid query.");
-        response.setStatusCode(1);
-        try {
-            response.sendResponse(exchange);
-        } catch (IOException e) {}
-    }
-
-    private static Company parseQueryString(HttpExchange exchange) {
+    private static Document parseQueryString(HttpExchange exchange) {
         try {
             Document document = new Document();
             String[] tuples = exchange.getRequestURI().getQuery().split("&");
             for (String tuple : tuples) {
                 String[] pair = tuple.split("=");
 
+                if (pair[0].equals("priority")) {
+                    document.put("priority", Integer.parseInt(pair[1]));
+                    continue;
+                }
+
+                if (pair[0].equals("resolved")) {
+                    document.put("resolved", Boolean.parseBoolean(pair[1]));
+                    continue;
+                }
+
+                if (pair[0].equals("header")) {
+                    document.put("header", pair[1]);
+                    continue;
+                }
+
+                if (pair[0].equals("acknowledgedBy")) {
+                    document.put("acknowledgedBy", pair[1]);
+                    continue;
+                }
+
+                if (pair[0].equals("creationDate")) {
+                    document.put("creationDate", Long.parseLong(pair[1]));
+                    continue;
+                }
+
                 if (pair[0].equals("id")) {
-                    if (pair[1].equals("*")) return new Company();
+                    if (pair[1].equals("*")) return new Document();
 
                     document.put("_id", new ObjectId(pair[1]));
                     continue;
                 }
 
-                if (pair[0].equals("name")) {
-                    document.put("name", pair[1]);
+                if (pair[0].equals("start")) {
+                    document.put("start", Long.parseLong(pair[1]));
+                    continue;
+                }
+
+                if (pair[0].equals("end")) {
+                    document.put("end", Long.parseLong(pair[1]));
                     continue;
                 }
 
                 return null;
             }
 
-            return new Company().fromDocument(document);
+            return document;
         } catch (Exception e) {
             return null;
         }

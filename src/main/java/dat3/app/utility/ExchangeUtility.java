@@ -90,4 +90,22 @@ public abstract class ExchangeUtility {
             return null;
         }
     }
+
+    public static void queryExecutionErrorResponse(HttpExchange exchange) {
+        Response response = new Response();
+        response.setMsg("Something went wrong when executing query.");
+        response.setStatusCode(1);
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {}
+    }
+
+    public static void invalidQueryResponse(HttpExchange exchange) {
+        Response response = new Response();
+        response.setMsg("Invalid query.");
+        response.setStatusCode(1);
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {}
+    }
 }
