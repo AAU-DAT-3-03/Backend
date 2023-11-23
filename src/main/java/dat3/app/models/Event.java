@@ -7,9 +7,18 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class Event extends StandardModel<Event>{
+    private String id;
     private Date date;
     private User user;
     private String message;
+
+    // Getter
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
+    }
 
     //Updating priority
     public Event(User user) {
