@@ -15,7 +15,9 @@ import com.mongodb.client.MongoDatabase;
 import dat3.app.models.Incident;
 import dat3.app.models.User;
 import dat3.app.routes.companies.CompanyRoutes;
+import dat3.app.routes.companies.CompanyRoutes;
 import dat3.app.routes.incidents.IncidentRoutes;
+import dat3.app.routes.incidents.IncidentRoutes2;
 import dat3.app.routes.services.ServiceRoutes;
 import dat3.app.routes.users.UserRoutes;
 import dat3.app.server.DBNotFound;
@@ -45,10 +47,10 @@ public class App {
         server.addPostRoute("/login", Routes::loginUser);
 
         // Company
-        server.addGetRoute("/companies", CompanyRoutes::getCompanies);
-        server.addPutRoute("/companies", CompanyRoutes::putCompanies);
-        server.addDeleteRoute("/companies", CompanyRoutes::deleteCompanies);
-        server.addPostRoute("/companies", CompanyRoutes::postCompanies);
+        server.addGetRoute("/companies", CompanyRoutes::get);
+        server.addPutRoute("/companies", CompanyRoutes::put);
+        server.addDeleteRoute("/companies", CompanyRoutes::delete);
+        server.addPostRoute("/companies", CompanyRoutes::post);
 
         // Services
         server.addGetRoute("/services", ServiceRoutes::getService);
@@ -57,10 +59,10 @@ public class App {
         server.addPostRoute("/services", ServiceRoutes::postService);
 
         // Incidents
-        server.addGetRoute("/incidents", IncidentRoutes::getIncident);
-        server.addDeleteRoute("/incidents", IncidentRoutes::deleteIncident);
-        server.addPutRoute("/incidents", IncidentRoutes::putIncident);
-        server.addPostRoute("/incidents", IncidentRoutes::postIncident);
+        server.addGetRoute("/incidents", IncidentRoutes2::get);
+        server.addDeleteRoute("/incidents", IncidentRoutes2::delete);
+        server.addPutRoute("/incidents", IncidentRoutes2::put);
+        server.addPostRoute("/incidents", IncidentRoutes2::post);
 
         // Users
         server.addGetRoute("/users", UserRoutes::getUser);

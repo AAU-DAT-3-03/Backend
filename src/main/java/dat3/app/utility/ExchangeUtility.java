@@ -1,10 +1,20 @@
 package dat3.app.utility;
 
 import java.io.IOException;
+import java.util.List;
+
+import org.bson.Document;
 
 import com.google.gson.Gson;
+import com.mongodb.client.ClientSession;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
+import dat3.app.models.StandardModel;
 import dat3.app.server.Response;
 
 public abstract class ExchangeUtility {
@@ -28,6 +38,72 @@ public abstract class ExchangeUtility {
         Response response = new Response();
         response.setMsg("Not authorized");
         response.setStatusCode(-1);
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {}
+    }
+
+    public static <T extends StandardModel<T>> List<T> defaultGetOperation(T filter, String collectionName) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> collection = MongoUtility.getCollection(client, collectionName);
+                return MongoUtility.iterableToList(filter.findMany(collection, session));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static <T extends StandardModel<T>> DeleteResult defaultDeleteOperation(T filter, String collectionName) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> collection = MongoUtility.getCollection(client, collectionName);
+                return filter.deleteOne(collection, session);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static <T extends StandardModel<T>> UpdateResult defaultPutOperation(T filter, T toUpdate, String collectionName) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> collection = MongoUtility.getCollection(client, collectionName);
+                return toUpdate.updateOne(collection, session, filter);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static <T extends StandardModel<T>> InsertOneResult defaultPostOperation(T toInsert, String collectionName) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> collection = MongoUtility.getCollection(client, collectionName);
+                return toInsert.insertOne(collection, session);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static void queryExecutionErrorResponse(HttpExchange exchange) {
+        Response response = new Response();
+        response.setMsg("Something went wrong when executing query.");
+        response.setStatusCode(1);
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {}
+    }
+
+    public static void invalidQueryResponse(HttpExchange exchange) {
+        Response response = new Response();
+        response.setMsg("Invalid query.");
+        response.setStatusCode(1);
         try {
             response.sendResponse(exchange);
         } catch (IOException e) {}
