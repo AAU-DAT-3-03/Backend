@@ -53,30 +53,33 @@ public abstract class MongoUtility {
         }
 
 
-        {
-            List<User> users = iterableToList(userBuilder.getUser().findMany(userCollection, session));
-            Iterator<String> headers = TestData.randomIncidentnames().iterator();
-            IncidentBuilder incidentBuilder = new IncidentBuilder();
-            for (int i = 0; i < 150; i++) {
-                List<String> userIds = new ArrayList<>();
-                for (int j = 0; j < TestData.randomIntExcl(10); j++) {
-                    userIds.add(users.get(TestData.randomIntExcl(users.size())).getId());
-                }
+        List<User> users = iterableToList(userBuilder.getUser().findMany(userCollection, session));
+        Iterator<String> headers = TestData.randomIncidentnames().iterator();
+        IncidentBuilder incidentBuilder = new IncidentBuilder();
+        for (int i = 0; i < 150; i++) {
+            List<String> userIds = new ArrayList<>();
+            List<String> calls = new ArrayList<>();
+            String acknowledgedBy = null;
 
-                boolean acknowledged = TestData.randomBoolean();
-                String acknowledgedBy = null;
-                if (acknowledged) acknowledgedBy = users.get(TestData.randomIntExcl(users.size())).getId();
-                incidentBuilder
-                    .setAcknowledgedBy(acknowledgedBy)
-                    .setAlarms(null)
-                    .setCreationDate(System.currentTimeMillis())
-                    .setHeader(headers.hasNext() ? headers.next() : null)
-                    .setPriority(TestData.randomIntExcl(4) + 1)
-                    .setUsers(userIds)
-                    .getIncident().insertOne(incidentCollection, session);
+            for (int j = 0; j < TestData.randomIntExcl(10); j++) {
+                User userToAdd = users.get(TestData.randomIntExcl(users.size()));
+                if (j == 0) acknowledgedBy = userToAdd.getId();
+                userIds.add(userToAdd.getId());
+                if (TestData.randomBoolean()) calls.add(userToAdd.getId());
             }
-        }
 
+            incidentBuilder
+                .setAcknowledgedBy(acknowledgedBy)
+                .setAlarms(null)
+                .setCalls(calls)
+                .setCreationDate(System.currentTimeMillis())
+                .setHeader(headers.hasNext() ? headers.next() : null)
+                .setIncidentNote(acknowledgedBy != null ? "Data" : null)
+                .setPriority(TestData.randomIntExcl(4) + 1)
+                .setResolved(acknowledgedBy != null ? TestData.randomIntExcl(3) == 0 : false)
+                .setUsers(userIds)
+                .getIncident().insertOne(incidentCollection, session);
+        }
 
         session.close();
         client.close();
