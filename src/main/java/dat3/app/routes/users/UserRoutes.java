@@ -182,9 +182,7 @@ public abstract class UserRoutes {
                 Event.EventBuilder eventbuilder = new Event.EventBuilder();
                 eventbuilder.setAffectedObjectId(userId);
                 Event filter = eventbuilder.getEvent();
-                List<Event> events =  MongoUtility.iterableToList(filter.findMany(eventCollection, session));
-                session.close();
-                return events;
+                return MongoUtility.iterableToList(filter.findMany(eventCollection, session));
             } catch(Exception e) {
             }
         } catch(Exception e) {
@@ -201,7 +199,7 @@ public abstract class UserRoutes {
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> eventCollection = MongoUtility.getCollection(client, "events");
-                // Indsæt event i DB
+                event.insertOne(eventCollection, session);
             } catch(Exception e) {
             }
         } catch(Exception e) {

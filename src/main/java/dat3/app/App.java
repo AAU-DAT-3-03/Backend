@@ -53,6 +53,9 @@ public class App {
         server.addPutRoute("/users", UserRoutes::updateUser);
         server.addDeleteRoute("/users", UserRoutes::deleteUser);
 
+        server.addGetRoute("/events", IncidentRoutes::getEvents);
+        server.addGetRoute("/events2", IncidentRoutes::postEvents);
+
         try {
             server.startServer();
         } catch (IOException ioe) {

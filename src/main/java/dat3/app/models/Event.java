@@ -4,10 +4,10 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class Event extends StandardModel<Event>{
-    private Long date;
-    private String userId;
-    private String message;
-    private String affectedObjectId;
+    private Long date = null;
+    private String userId = null;
+    private String message = null;
+    private String affectedObjectId = null;
     public Long getDate() {
         return this.date;
     }
@@ -35,19 +35,19 @@ public class Event extends StandardModel<Event>{
     public static class EventBuilder{
         private Event event = new Event();
         public EventBuilder setDate(Long date) {
-            event.setDate(date);
+            this.event.setDate(date);
             return this;
         }
         public EventBuilder setUserId(String userId) {
-            event.setUserId(userId);
+            this.event.setUserId(userId);
             return this;
         }
         public EventBuilder setMessage(String message) {
-            event.setMessage(message);
+            this.event.setMessage(message);
             return this;
         }
         public EventBuilder setAffectedObjectId(String affectedObjectId) {
-            event.affectedObjectId = affectedObjectId;
+            this.event.affectedObjectId = affectedObjectId;
             return this;
         }
         public Event getEvent() {

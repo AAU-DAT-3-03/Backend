@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.google.gson.Gson;
 import dat3.app.models.Event;
 import dat3.app.models.Event.EventBuilder;
 import org.bson.Document;
@@ -74,6 +75,7 @@ public class IncidentRoutes {
                 response.sendResponse(exchange);
             } catch (Exception e1) {}
         }
+
     }
 
     public static void deleteIncident(HttpExchange exchange) {
@@ -322,6 +324,29 @@ public class IncidentRoutes {
             return null;
         }
     }
+    public static void getEvents(HttpExchange exchange) {
+        try {
+            List<Event> list = fetchEvents("das");
+            Response response = new Response();
+            response.setMsg(new Gson().toJson(list));
+            response.setStatusCode(1);
+            response.sendResponse(exchange);
+        } catch(Exception e) {
+
+        }
+    }
+    public static void postEvents(HttpExchange exchange) {
+        try {
+            System.out.println("test1");
+            createEvent("name", "test", "das");
+            Response response = new Response();
+            response.setMsg(new EventBuilder().setMessage("test").getEvent().toDocument().toJson());
+            response.setStatusCode(1);
+            response.sendResponse(exchange);
+        } catch(Exception e) {
+
+        }
+    }
 
     /**
      *
@@ -335,9 +360,7 @@ public class IncidentRoutes {
                 EventBuilder eventbuilder = new EventBuilder();
                 eventbuilder.setAffectedObjectId(incidentId);
                 Event filter = eventbuilder.getEvent();
-                List<Event> events =  MongoUtility.iterableToList(filter.findMany(eventCollection, session));
-                session.close();
-                return events;
+                return MongoUtility.iterableToList(filter.findMany(eventCollection, session));
             } catch(Exception e) {
             }
         } catch(Exception e) {
@@ -345,16 +368,20 @@ public class IncidentRoutes {
         return null;
     }
     private static void createEvent(String userId, String message, String affectedIncidentId) {
+        // Auth.auth(exchange) giver user
         EventBuilder eventbuilder = new EventBuilder();
         eventbuilder.setUserId(userId);
         eventbuilder.setMessage(message);
         eventbuilder.setAffectedObjectId(affectedIncidentId);
         eventbuilder.setDate(new Date().getTime());
         Event event = eventbuilder.getEvent();
+        System.out.println("dsa");
+        event.toDocument();
+        System.out.println("sad");
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> eventCollection = MongoUtility.getCollection(client, "events");
-                // Indsæt event i DB
+                event.insertOne(eventCollection, session);
             } catch(Exception e) {
             }
         } catch(Exception e) {
