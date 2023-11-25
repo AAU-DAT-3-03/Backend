@@ -52,7 +52,6 @@ public class IncidentRoutes {
                     return;
                 }
 
-                System.out.println(filter.toDocument());
                 List<Incident> incidents = MongoUtility.iterableToList(filter.findMany(incidentCollection, session));
                 incidents = filterByPeriod(incidents, docFilter);
                 List<IncidentPublic> toSend = new ArrayList<>();
@@ -314,7 +313,7 @@ public class IncidentRoutes {
                     continue;
                 }
 
-                System.out.println(pair[0] + "====" + pair[1]);
+                return null;
             }
             
             if (isEmpty) return null;
@@ -396,6 +395,16 @@ class IncidentPublic {
     private Long creationDate = null;
     private String id = null;
     private List<User> users = null;
+    private List<User> calls = null;
+    private String incidentNote = null;
+
+    public String getIncidentNote() {
+        return incidentNote;
+    }
+
+    public List<User> getCalls() {
+        return calls;
+    }
 
     public Boolean getResolved() {
         return resolved;
@@ -431,23 +440,30 @@ class IncidentPublic {
 
             IncidentPublic incidentPublic = new IncidentPublic();
             incidentPublic.id = incident.getId();
-            try {
+            if (incident.getAcknowledgedBy() != null)  {
                 incidentPublic.acknowledgedBy = builder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session);
                 incidentPublic.acknowledgedBy.setPassword(null);
-            } catch (Exception e) {
-                incidentPublic.acknowledgedBy = null;
             }
             incidentPublic.creationDate = incident.getCreationDate();
             incidentPublic.header = incident.getHeader();
             incidentPublic.priority = incident.getPriority();
             incidentPublic.resolved = incident.getResolved();
-            incidentPublic.users = new ArrayList<>();
+            incidentPublic.incidentNote = incident.getIncidentNote();
 
+            incidentPublic.users = new ArrayList<>();
             for (String hex : incident.getUsers()) {
                 User user = builder.setId(hex).getUser().findOne(userCollection, session);
                 if (user == null) continue;
                 user.setPassword(null);
                 incidentPublic.users.add(user);
+            }
+
+            incidentPublic.calls = new ArrayList<>();
+            for (String hex : incident.getCalls()) {
+                User user = builder.setId(hex).getUser().findOne(userCollection, session);
+                if (user == null) continue;
+                user.setPassword(null);
+                incidentPublic.calls.add(user);
             }
 
             return incidentPublic;

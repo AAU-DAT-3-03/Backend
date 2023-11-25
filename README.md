@@ -17,7 +17,49 @@ Backend can then be built with `./build` to clean the current build, create new
 build and copy dependencies into project directories. Then it can be run with `./start`
  to execute class dat3.app.App with necessary .jar files.
 
+## Users & Logins
+### Quick script for logging in:
+```
+let credentials = {
+    email: {email},
+    password: {password}
+}
+fetch("http://localhost/login", {method: "POST", body: JSON.stringify(credentials)})
+```
+### User email and logins:
+```
+email: "mads.byriel@gmail.com"
+password: "mads.byriel123"
+
+email: "mads.guldbæk@gmail.com"
+password: "mads.guldbæk123"
+
+email: "rasmus.pedersen@gmail.com"
+password: "rasmus.pedersen123"
+
+email: "sandra.rosenbeck@gmail.com"
+password: "sandra.rosenbeck123"
+
+email: "mikkel.helsing@gmail.com"
+password: "mikkel.helsing123"
+
+email: "oliver.nielsen@gmail.com"
+password: "oliver.nielsen123"
+```
+
+
 ## Endpoints!
+
+### `/auth`
+```
+GET:
+Returns the user which is authorized, in JSON format. If no user is authorized, returns a statuscode of 1.
+```
+
+### `/login`
+
+### `/register`
+
 ### `/users`
 ```
 GET:
@@ -121,3 +163,61 @@ This endpoint creates a new incident. One example of a body could be:
 it is important to note that an incident will be created as long as there is at least one field 
 specified AND the id is not specified.
 ```
+
+### `/companies`
+```
+GET:
+/companies?id={id}
+Can also do equality filter on other fields, such as name or companyId.
+
+DELETE:
+{
+    'id': '{id}'
+}
+Deletes the company with a specific id. Does not allow for filtering on other fields 
+than id. Deletes all associated services as well.
+
+PUT:
+{
+    'id': '{id}',
+    'name': 'Some new company',
+}
+Updates the fields of the resource specified by id. Meaning the name is updated in this instance.
+
+POST:
+{
+    'name': 'Brand new company',
+}
+Creates a new resource. Must specifically have no id field.
+```
+
+### `/services`
+```
+GET: 
+/services?id={id}
+Can also do equality filter on other fields, such as name or companyId.  
+
+DELETE:
+{
+    'id': '{id}'
+}
+Deletes the service with a specific id. Does not allow for filtering on other fields 
+than id.
+
+PUT:
+{
+    'id': '{id}',
+    'name': 'Some new name',
+    'companyId': 'Some long hex string'
+}
+Updates the fields of the resource specified by id. Meaning the name and companyId is updated 
+in this instance. 
+
+POST:
+{
+    'name': 'Brand new service',
+    'companyId': 'companyIdHexString'
+}
+Creates a new resource. Must specifically have no id field.
+```
+

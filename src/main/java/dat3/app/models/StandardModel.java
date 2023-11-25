@@ -11,6 +11,8 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 
 public abstract class StandardModel<T> extends Model<T> {
+    public abstract String getId();
+    public abstract void setId(String id);
 
     @Override
     public InsertOneResult insertOne(MongoCollection<Document> collection, ClientSession session) throws Exception {

@@ -1,16 +1,92 @@
 package dat3.app.testkit;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import dat3.app.models.Company;
 import dat3.app.models.Incident;
+import dat3.app.models.Service;
 import dat3.app.models.User;
+import dat3.app.models.Company.CompanyBuilder;
+import dat3.app.models.Service.ServiceBuilder;
 import dat3.app.models.User.UserBuilder;
 
 public class TestData {
     private static Random random = new Random(System.currentTimeMillis());
+
+    private static String[] companyNames = new String[] {
+        "Quantum Innovations Co.",
+        "Nebula Dynamics Solutions",
+        "SynthoCraft Technologies",
+        "ElectroPulse Innovations",
+        "Zenith Nexus Enterprises",
+        "Virtuoso Visionaries Ltd.",
+        "LuminaSphere Innovations",
+        "TechVortex Innovations",
+        "NovaFusion Systems",
+        "EchoSynergy Solutions",
+        "Aetheric Nexus Technologies",
+        "Pinnacle Pulse Innovations",
+        "QuasarQuest Dynamics",
+        "Ethereal Edge Solutions",
+        "CipherSprint Innovations",
+        "QuantumQuotient Ventures",
+        "Solaris Spark Industries",
+        "NebulaNova Innovations",
+        "Vertex Visionary Systems",
+        "Astral Axis Technologies",
+    };
+
+    private static String[] serviceNames = new String[] {
+        "Uber",
+        "Lyft",
+        "Didi Chuxing",
+        "DoorDash",
+        "Grubhub",
+        "Uber Eats",
+        "Netflix",
+        "Hulu",
+        "Amazon Prime Video",
+        "Peloton",
+        "MyFitnessPal",
+        "Headspace",
+        "Upwork",
+        "Fiverr",
+        "Freelancer",
+        "Coursera",
+        "Udemy",
+        "Khan Academy",
+        "Facebook",
+        "Instagram",
+        "Twitter",
+        "PayPal",
+        "Venmo",
+        "Cash App",
+        "TaskRabbit",
+        "Handy",
+        "Thumbtack",
+        "Airbnb",
+        "Booking.com",
+        "Expedia",
+        "Birchbox",
+        "Blue Apron",
+        "Stitch Fix",
+        "Google Translate",
+        "Microsoft Translator",
+        "Babbel",
+        "Zoom",
+        "Microsoft Teams",
+        "Google Meet",
+        "The New York Times",
+        "The Washington Post",
+        "Spotify",
+        "Postmates",
+        "Instacart",
+        "Shipt",
+    };
 
     private static String[] firstPartEmail = new String[] {
         "john.doe",
@@ -18,21 +94,6 @@ public class TestData {
         "alex.jones",
         "lisa.miller",
         "mark.wilson",
-        "sarah.jones",
-        "mike.smith",
-        "emily.wilson",
-        "chris.martin",
-        "laura.brown",
-        "daniel.carter",
-        "olivia.jenkins",
-        "brian.roberts",
-        "mia.anderson",
-        "jacob.evans",
-        "sophia.perez",
-        "liam.thompson",
-        "abigail.morris",
-        "ethan.russell",
-        "ava.hall",
     };
 
     private static String[] secondPartEmail = new String[] {
@@ -40,22 +101,7 @@ public class TestData {
         "tech_solutions",
         "global_enterprises",
         "stellar_innovations",
-        "alpha_industries",
-        "digital_solutions",
-        "quantum_technologies",
-        "united_services",
-        "synergy_systems",
-        "global_innovators",
-        "dynamic_enterprises",
-        "fusion_solutions",
-        "stellar_consulting",
-        "prime_group",
-        "agile_innovations",
-        "apex_corp",
-        "matrix_technologies",
-        "nexus_solutions",
-        "pioneer_systems",
-        "horizon_innovations",
+        "alpha_industries"
     };
 
     private static String[] thirdPartEmail = new String[] {
@@ -63,22 +109,7 @@ public class TestData {
         "net",
         "org",
         "co",
-        "io",
-        "biz",
-        "info",
-        "us",
-        "co.uk",
-        "tech",
-        "edu",
-        "gov",
-        "mobi",
-        "pro",
-        "name",
-        "tv",
-        "travel",
-        "blog",
-        "app",
-        "shop",
+        "io"
     };
 
     private static String[] firstPartName = new String[] {
@@ -86,12 +117,7 @@ public class TestData {
         "Ethan",
         "Olivia",
         "Mason",
-        "Ava",
-        "Logan",
-        "Sophia",
-        "Jackson",
-        "Isabella",
-        "Liam",
+        "Ava"
     };
 
     private static String[] secondPartName = new String[] {
@@ -99,12 +125,7 @@ public class TestData {
         "Grace",
         "Alexander",
         "Rose",
-        "Benjamin",
-        "Emma",
-        "Carter",
-        "Ava",
-        "Henry",
-        "Lily",
+        "Benjamin"
     };
 
     private static String[] thirdPartName = new String[] {
@@ -112,12 +133,7 @@ public class TestData {
         "Johnson",
         "Williams",
         "Jones",
-        "Brown",
-        "Davis",
-        "Miller",
-        "Wilson",
-        "Moore",
-        "Taylor",
+        "Brown"
     };
 
     private static String[] firstPartNumber = new String[] {
@@ -125,12 +141,7 @@ public class TestData {
         "45 6",
         "78 9",
         "23 4",
-        "56 7",
-        "89 0",
-        "34 5",
-        "67 8",
-        "90 1",
-        "45 6",
+        "56 7"
     };
 
     private static String[] secondPartNumber = new String[] {
@@ -138,12 +149,7 @@ public class TestData {
         "2 34 ",
         "3 45 ",
         "4 56 ",
-        "5 67 ",
-        "6 78 ",
-        "7 89 ",
-        "8 90 ",
-        "9 01 ",
-        "0 12 ",
+        "5 67 "
     };
 
     private static String[] thirdPartNumber = new String[] {
@@ -151,12 +157,7 @@ public class TestData {
         "45",
         "56",
         "67",
-        "78",
-        "89",
-        "90",
-        "01",
-        "12",
-        "23",
+        "78"
     };
 
     private static String[] firstPartIncident = new String[] {
@@ -244,8 +245,16 @@ public class TestData {
         return random.nextInt(2) == 0;
     }
 
+    public static List<Company> randomCompanies() {
+        return shuffleList(unshuffledCompanies(), 10);
+    }
+
     public static List<String> randomValidPhoneNumbers() {
         return shuffleList(unshuffledValidPhoneNumbers(), 10);
+    }
+
+    public static List<Service> randomServices() {
+        return shuffleList(unshuffledServices(), 10);
     }
 
     public static <T> List<T> shuffleList(List<T> list, int randomness) {
@@ -261,6 +270,16 @@ public class TestData {
         return list;
     }
 
+    public static List<Company> unshuffledCompanies() {
+        List<Company> companies = new ArrayList<>();
+        CompanyBuilder builder = new CompanyBuilder();
+        for (String string : companyNames) {
+            builder.setName(string);
+            companies.add(builder.getCompany());
+        }
+        return companies;
+    }
+
     public static List<String> unshuffledValidEmails() {
         List<String> validEmails = new ArrayList<>(firstPartEmail.length * secondPartEmail.length * thirdPartEmail.length);
         for (int i = 0; i < firstPartEmail.length; i++) {
@@ -272,6 +291,15 @@ public class TestData {
         }
 
         return validEmails;
+    }
+
+    public static List<Service> unshuffledServices() {
+        ServiceBuilder builder = new ServiceBuilder();
+        List<Service> services = new ArrayList<>();
+        for (String serviceName : serviceNames) {
+            services.add(builder.setName(serviceName).getService());
+        }
+        return services;
     }
 
     public static List<String> unshuffledValidNames() {

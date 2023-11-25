@@ -4,10 +4,19 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public class Event extends StandardModel<Event>{
+    private String _id = null;
     private Long date = null;
     private String userId = null;
     private String message = null;
     private String affectedObjectId = null;
+    @Override
+    public String getId() {
+        return this._id;
+    }
+    @Override
+    public void setId(String id) {
+        this._id = id;
+    }
     public Long getDate() {
         return this.date;
     }

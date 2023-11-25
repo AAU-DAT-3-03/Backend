@@ -13,7 +13,9 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 import dat3.app.ProjectSettings;
+import dat3.app.models.Company;
 import dat3.app.models.Model;
+import dat3.app.models.Service;
 import dat3.app.models.User;
 import dat3.app.models.Incident.IncidentBuilder;
 import dat3.app.models.StandardModel;
@@ -31,7 +33,18 @@ public abstract class MongoUtility {
         UserBuilder userBuilder = new UserBuilder();
         MongoCollection<Document> userCollection = getCollection(client, "users");
         MongoCollection<Document> incidentCollection = getCollection(client, "incidents");
-    
+        MongoCollection<Document> companyCollection = getCollection(client, "companies");
+        MongoCollection<Document> servicesCollection = getCollection(client, "services");
+
+        for (Company company : TestData.randomCompanies()) {
+            company.insertOne(companyCollection, session);
+        }
+        List<Company> companies = MongoUtility.iterableToList(new Company().findMany(companyCollection, session));
+        for (Service service : TestData.randomServices()) {
+            service.setCompanyId(companies.get(TestData.randomIntExcl(companies.size())).getId());
+            service.insertOne(servicesCollection, session);
+        }
+
         for (User user : TestData.personalizedUsers()) {
             user.insertOne(userCollection, session);
         }
@@ -40,30 +53,33 @@ public abstract class MongoUtility {
         }
 
 
-        {
-            List<User> users = iterableToList(userBuilder.getUser().findMany(userCollection, session));
-            Iterator<String> headers = TestData.randomIncidentnames().iterator();
-            IncidentBuilder incidentBuilder = new IncidentBuilder();
-            for (int i = 0; i < 150; i++) {
-                List<String> userIds = new ArrayList<>();
-                for (int j = 0; j < TestData.randomIntExcl(10); j++) {
-                    userIds.add(users.get(TestData.randomIntExcl(users.size())).getId());
-                }
+        List<User> users = iterableToList(userBuilder.getUser().findMany(userCollection, session));
+        Iterator<String> headers = TestData.randomIncidentnames().iterator();
+        IncidentBuilder incidentBuilder = new IncidentBuilder();
+        for (int i = 0; i < 150; i++) {
+            List<String> userIds = new ArrayList<>();
+            List<String> calls = new ArrayList<>();
+            String acknowledgedBy = null;
 
-                boolean acknowledged = TestData.randomBoolean();
-                String acknowledgedBy = null;
-                if (acknowledged) acknowledgedBy = users.get(TestData.randomIntExcl(users.size())).getId();
-                incidentBuilder
-                    .setAcknowledgedBy(acknowledgedBy)
-                    .setAlarms(null)
-                    .setCreationDate(System.currentTimeMillis())
-                    .setHeader(headers.hasNext() ? headers.next() : null)
-                    .setPriority(TestData.randomIntExcl(4) + 1)
-                    .setUsers(userIds)
-                    .getIncident().insertOne(incidentCollection, session);
+            for (int j = 0; j < TestData.randomIntExcl(10); j++) {
+                User userToAdd = users.get(TestData.randomIntExcl(users.size()));
+                if (j == 0) acknowledgedBy = userToAdd.getId();
+                userIds.add(userToAdd.getId());
+                if (TestData.randomBoolean()) calls.add(userToAdd.getId());
             }
-        }
 
+            incidentBuilder
+                .setAcknowledgedBy(acknowledgedBy)
+                .setAlarms(null)
+                .setCalls(calls)
+                .setCreationDate(System.currentTimeMillis())
+                .setHeader(headers.hasNext() ? headers.next() : null)
+                .setIncidentNote(acknowledgedBy != null ? "Data" : null)
+                .setPriority(TestData.randomIntExcl(4) + 1)
+                .setResolved(acknowledgedBy != null ? TestData.randomIntExcl(3) == 0 : false)
+                .setUsers(userIds)
+                .getIncident().insertOne(incidentCollection, session);
+        }
 
         session.close();
         client.close();
