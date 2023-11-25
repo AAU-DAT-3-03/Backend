@@ -337,7 +337,7 @@ public class IncidentRoutes {
     public static void postEvents(HttpExchange exchange) {
         try {
             System.out.println("test1");
-            createEvent("65609859e0dc2e746560e76d", "test", "65609a002f61f91bd5f29754");
+            createEvent("6562479a5df3640a6f5a603b", "test", "6562479a5df3640a6f5a603b");
             Response response = new Response();
             response.setMsg(new EventBuilder().setMessage("test").getEvent());
             response.setStatusCode(1);

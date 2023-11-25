@@ -3,6 +3,7 @@ package dat3.app.models;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import javax.print.Doc;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,7 @@ public class Incident extends StandardModel<Incident> {
     private List<String> alarms = null;
     private List<String> calls = null;
     private String incidentNote = null;
+    private List<Event> eventLog = null;
 
     // ---------- Getters & Setters ---------- //
     public Integer getPriority() {
@@ -79,6 +81,12 @@ public class Incident extends StandardModel<Incident> {
     public void setIncidentNote(String incidentNote) {
         this.incidentNote = incidentNote;
     }
+    public List<Event> getEventLog() {
+        return this.eventLog;
+    }
+    public void setEventLog(List<Event> eventLog) {
+        this.eventLog = eventLog;
+    }
 
     // ---------- Builder subclass ---------- //
     public static class IncidentBuilder {
@@ -123,6 +131,10 @@ public class Incident extends StandardModel<Incident> {
             incident.setIncidentNote(incidentNote);
             return this;
         }
+        public IncidentBuilder setEventLog(List<Event> eventLog) {
+            this.incident.setEventLog(eventLog);
+            return this;
+        }
         public Incident getIncident() {
             Incident temp = this.incident;
             this.incident = new Incident();
@@ -161,7 +173,13 @@ public class Incident extends StandardModel<Incident> {
             });
             document.append("calls", ids);
         }
-
+        if (this.eventLog != null) {
+            List<Document> eventLogList = new ArrayList<>();
+            for (Event event : this.eventLog) {
+                eventLogList.add(event.toDocument());
+            }
+            document.append("eventLog", eventLogList);
+        }
         return document;
     }
     @Override
@@ -191,6 +209,12 @@ public class Incident extends StandardModel<Incident> {
             incident.calls = new ArrayList<>();
             document.getList("calls", ObjectId.class).forEach((ObjectId id) -> {
                 incident.calls.add(id.toHexString());
+            });
+        }
+        if (document.containsKey("eventLog")) {
+            incident.eventLog = new ArrayList<>();
+            document.getList("eventLog", Event.class).forEach((Event event) -> {
+                incident.eventLog.add(event);
             });
         }
         

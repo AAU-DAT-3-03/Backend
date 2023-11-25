@@ -3,6 +3,8 @@ package dat3.app.routes.incidents;
 import java.io.IOException;
 import java.util.List;
 
+import dat3.app.models.Event;
+import dat3.app.models.Event.EventBuilder;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -29,6 +31,12 @@ public abstract class IncidentRoutes2 {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
+        for (Incident incident : result) {
+            Event eventFilter = new EventBuilder().setAffectedObjectId(incident.getId()).getEvent();
+            List<Event> eventLog = ExchangeUtility.defaultGetOperation(eventFilter, "events");
+            incident.setEventLog(eventLog);
+        }
+
 
         // add start and end filtering.
 
@@ -52,6 +60,8 @@ public abstract class IncidentRoutes2 {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
+        Event eventFilter = new EventBuilder().setAffectedObjectId(filter.getId()).getEvent();
+        DeleteResult eventLogResult = ExchangeUtility.defaultDeleteOperation(eventFilter, "events");
 
         Response response = new Response();
         if (result.getDeletedCount() == 0) {

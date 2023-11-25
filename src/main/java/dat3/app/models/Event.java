@@ -43,6 +43,10 @@ public class Event extends StandardModel<Event>{
     }
     public static class EventBuilder{
         private Event event = new Event();
+        public EventBuilder setId(String id) {
+            this.event.setId(id);
+            return this;
+        }
         public EventBuilder setDate(Long date) {
             this.event.setDate(date);
             return this;
@@ -68,21 +72,18 @@ public class Event extends StandardModel<Event>{
     }
     @Override
     public Document toDocument() {
-        System.out.println("redas");
         Document document = new Document();
+        if (this._id != null) document.append("_id", new ObjectId(this._id));
         if (this.date != null) document.append("date", this.date);
-        System.out.println("dsa");
         if (this.userId != null) document.append("userId", new ObjectId(this.userId));
-        System.out.println("da");
         if (this.message != null) document.append("message", this.message);
-        System.out.println("s");
         if (this.affectedObjectId != null) document.append("affectedObjectId", new ObjectId(this.affectedObjectId));
-        System.out.println("21");
         return document;
     }
     @Override
     public Event fromDocument(Document document) {
         Event event = new Event();
+        if (document.containsKey("_id")) event._id = document.getObjectId("_id").toHexString();
         if (document.containsKey("date")) event.date = document.getLong("date");
         if (document.containsKey("userId")) event.userId = document.getObjectId("userId").toHexString();
         if (document.containsKey("message")) event.message = document.getString("message");
