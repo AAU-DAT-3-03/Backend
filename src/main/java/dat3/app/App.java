@@ -52,7 +52,7 @@ public class App {
         server.addGetRoute("/users", UserRoutes::getUser);
         server.addPutRoute("/users", UserRoutes::updateUser);
         server.addDeleteRoute("/users", UserRoutes::deleteUser);
-
+        System.out.println("Fs");
         server.addGetRoute("/events", IncidentRoutes::getEvents);
         server.addGetRoute("/events2", IncidentRoutes::postEvents);
 

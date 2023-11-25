@@ -326,9 +326,9 @@ public class IncidentRoutes {
     }
     public static void getEvents(HttpExchange exchange) {
         try {
-            List<Event> list = fetchEvents("das");
+            List<Event> list = fetchEvents("65609a002f61f91bd5f29754");
             Response response = new Response();
-            response.setMsg(new Gson().toJson(list));
+            response.setMsg(list);
             response.setStatusCode(1);
             response.sendResponse(exchange);
         } catch(Exception e) {
@@ -338,9 +338,9 @@ public class IncidentRoutes {
     public static void postEvents(HttpExchange exchange) {
         try {
             System.out.println("test1");
-            createEvent("name", "test", "das");
+            createEvent("65609859e0dc2e746560e76d", "test", "65609a002f61f91bd5f29754");
             Response response = new Response();
-            response.setMsg(new EventBuilder().setMessage("test").getEvent().toDocument().toJson());
+            response.setMsg(new EventBuilder().setMessage("test").getEvent());
             response.setStatusCode(1);
             response.sendResponse(exchange);
         } catch(Exception e) {

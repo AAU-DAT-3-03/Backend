@@ -59,11 +59,16 @@ public class Event extends StandardModel<Event>{
     }
     @Override
     public Document toDocument() {
+        System.out.println("redas");
         Document document = new Document();
         if (this.date != null) document.append("date", this.date);
+        System.out.println("dsa");
         if (this.userId != null) document.append("userId", new ObjectId(this.userId));
+        System.out.println("da");
         if (this.message != null) document.append("message", this.message);
+        System.out.println("s");
         if (this.affectedObjectId != null) document.append("affectedObjectId", new ObjectId(this.affectedObjectId));
+        System.out.println("21");
         return document;
     }
     @Override
