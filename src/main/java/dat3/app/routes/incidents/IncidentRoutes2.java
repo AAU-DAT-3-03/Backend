@@ -94,8 +94,12 @@ public abstract class IncidentRoutes2 {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
-        Event event = new EventBuilder().setAffectedObjectId(toUpdate.getId()).setMessage("temp message").setDate(new Date().getTime()).setUserId(Auth.auth(exchange).getId()).getEvent();
-        ExchangeUtility.defaultPostOperation(event, "events");
+        try {
+            Event event = new EventBuilder().setAffectedObjectId(toUpdate.getId()).setMessage("temp message").setDate(new Date().getTime()).setUserId(Auth.auth(exchange).getId()).getEvent();
+            ExchangeUtility.defaultPostOperation(event, "events");
+        } catch(Exception e) {
+            System.out.println("Couldnt log an event for incident" + toUpdate.getId());
+        }
 
         Response response = new Response();
         if (result.getModifiedCount() == 0) {
