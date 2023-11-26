@@ -1,10 +1,12 @@
 package dat3.app.routes.incidents;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import dat3.app.models.Event;
 import dat3.app.models.Event.EventBuilder;
+import dat3.app.server.Auth;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -92,6 +94,8 @@ public abstract class IncidentRoutes2 {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
+        Event event = new EventBuilder().setAffectedObjectId(toUpdate.getId()).setMessage("temp message").setDate(new Date().getTime()).setUserId(Auth.auth(exchange).getId()).getEvent();
+        ExchangeUtility.defaultPostOperation(event, "events");
 
         Response response = new Response();
         if (result.getModifiedCount() == 0) {
