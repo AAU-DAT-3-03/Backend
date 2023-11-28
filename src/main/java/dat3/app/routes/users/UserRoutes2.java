@@ -1,4 +1,4 @@
-package dat3.app.routes.incidents;
+package dat3.app.routes.users;
 
 import java.io.IOException;
 import java.util.List;
@@ -7,16 +7,15 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
-import dat3.app.models.Incident;
+import dat3.app.models.User;
 import dat3.app.server.Auth;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
 
-public abstract class IncidentRoutes2 {
+public class UserRoutes2 {
     public static void get(HttpExchange exchange) {
         if (Auth.auth(exchange) == null) {
             ExchangeUtility.sendUnauthorizedResponse(exchange);
@@ -24,19 +23,17 @@ public abstract class IncidentRoutes2 {
         }
 
         Document documentFilter = parseQueryString(exchange);
-        Incident filter = new Incident().fromDocument(documentFilter);
+        User filter = new User().fromDocument(documentFilter);
         if (filter == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
-        List<Incident> result = ExchangeUtility.defaultGetOperation(filter, "incidents");
+        List<User> result = ExchangeUtility.defaultGetOperation(filter, "users");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
-
-        // add start and end filtering.
 
         Response response = new Response();
         response.setMsg(result);
@@ -52,13 +49,13 @@ public abstract class IncidentRoutes2 {
             return;
         }
 
-        Incident filter = parseBody(exchange);
+        User filter = parseBody(exchange);
         if (filter == null || filter.getId() == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
-        DeleteResult result = ExchangeUtility.defaultDeleteOperation(filter, "incidents");
+        DeleteResult result = ExchangeUtility.defaultDeleteOperation(filter, "users");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
@@ -85,15 +82,15 @@ public abstract class IncidentRoutes2 {
             return;
         }
 
-        Incident toUpdate = parseBody(exchange);
+        User toUpdate = parseBody(exchange);
         if (toUpdate == null || toUpdate.getId() == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
-        Incident filter = new Incident();
+        User filter = new User();
         filter.setId(toUpdate.getId());
-        UpdateResult result = ExchangeUtility.defaultPutOperation(filter, toUpdate, "incidents");
+        UpdateResult result = ExchangeUtility.defaultPutOperation(filter, toUpdate, "users");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
@@ -114,42 +111,9 @@ public abstract class IncidentRoutes2 {
         } catch (IOException e) {}
     }
 
-    public static void post(HttpExchange exchange) {
-        if (Auth.auth(exchange) == null) {
-            ExchangeUtility.sendUnauthorizedResponse(exchange);
-            return;
-        }
-        
-        Incident filter = parseBody(exchange);
-        if (filter == null || filter.getId() != null) {
-            ExchangeUtility.invalidQueryResponse(exchange);
-            return;
-        }
-
-        InsertOneResult result = ExchangeUtility.defaultPostOperation(filter, "incidents");
-        if (result == null) {
-            ExchangeUtility.queryExecutionErrorResponse(exchange);
-            return;
-        }
-
-        Response response = new Response();
-        if (!result.wasAcknowledged()) {
-            response.setMsg("Did not insert any objects.");
-            response.setStatusCode(1);
-            return;
-        } else {
-            response.setMsg("Inserted object successfully.");
-            response.setStatusCode(0);
-        }
-
+    private static User parseBody(HttpExchange exchange) {
         try {
-            response.sendResponse(exchange);
-        } catch (IOException e) {}
-    }
-
-    private static Incident parseBody(HttpExchange exchange) {
-        try {
-            return ExchangeUtility.parseJsonBody(exchange, 1000, Incident.class);
+            return ExchangeUtility.parseJsonBody(exchange, 1000, User.class);
         } catch (Exception e) {
             return null;
         }
@@ -162,31 +126,6 @@ public abstract class IncidentRoutes2 {
             for (String tuple : tuples) {
                 String[] pair = tuple.split("=");
 
-                if (pair[0].equals("priority")) {
-                    document.put("priority", Integer.parseInt(pair[1]));
-                    continue;
-                }
-
-                if (pair[0].equals("resolved")) {
-                    document.put("resolved", Boolean.parseBoolean(pair[1]));
-                    continue;
-                }
-
-                if (pair[0].equals("header")) {
-                    document.put("header", pair[1]);
-                    continue;
-                }
-
-                if (pair[0].equals("acknowledgedBy")) {
-                    document.put("acknowledgedBy", pair[1]);
-                    continue;
-                }
-
-                if (pair[0].equals("creationDate")) {
-                    document.put("creationDate", Long.parseLong(pair[1]));
-                    continue;
-                }
-
                 if (pair[0].equals("id")) {
                     if (pair[1].equals("*")) return new Document();
 
@@ -194,13 +133,28 @@ public abstract class IncidentRoutes2 {
                     continue;
                 }
 
-                if (pair[0].equals("start")) {
-                    document.put("start", Long.parseLong(pair[1]));
+                if (pair[0].equals("email")) {
+                    document.put("email", pair[1]);
                     continue;
                 }
 
-                if (pair[0].equals("end")) {
-                    document.put("end", Long.parseLong(pair[1]));
+                if (pair[0].equals("name")) {
+                    document.put("name", pair[1]);
+                    continue;
+                }
+
+                if (pair[0].equals("phoneNumber")) {
+                    document.put("phoneNumber", pair[1]);
+                    continue;
+                }
+
+                if (pair[0].equals("onCall")) {
+                    document.put("onCall", Boolean.parseBoolean(pair[1]));
+                    continue;
+                }
+
+                if (pair[0].equals("onDuty")) {
+                    document.put("onDuty", Boolean.parseBoolean(pair[1]));
                     continue;
                 }
 
