@@ -12,11 +12,17 @@ import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.models.Company;
+import dat3.app.server.Auth;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
 
 public abstract class CompanyRoutes {
     public static void get(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
         Document documentFilter = parseQueryString(exchange);
         Company filter = new Company().fromDocument(documentFilter);
         if (filter == null) {
@@ -39,6 +45,11 @@ public abstract class CompanyRoutes {
     }
 
     public static void delete(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
         Company filter = parseBody(exchange);
         if (filter == null || filter.getId() == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
@@ -67,6 +78,11 @@ public abstract class CompanyRoutes {
     }
 
     public static void put(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
         Company toUpdate = parseBody(exchange);
         if (toUpdate == null || toUpdate.getId() == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
@@ -97,6 +113,11 @@ public abstract class CompanyRoutes {
     }
 
     public static void post(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+        
         Company filter = parseBody(exchange);
         if (filter == null || filter.getId() != null) {
             ExchangeUtility.invalidQueryResponse(exchange);

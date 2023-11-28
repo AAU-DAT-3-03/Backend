@@ -1,4 +1,4 @@
-package dat3.app.routes.services;
+package dat3.app.routes.users;
 
 import java.io.IOException;
 import java.util.List;
@@ -7,16 +7,15 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
-import dat3.app.models.Service;
+import dat3.app.models.User;
 import dat3.app.server.Auth;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
 
-public class ServiceRoutes2 {
+public class UserRoutes2 {
     public static void get(HttpExchange exchange) {
         if (Auth.auth(exchange) == null) {
             ExchangeUtility.sendUnauthorizedResponse(exchange);
@@ -24,13 +23,13 @@ public class ServiceRoutes2 {
         }
 
         Document documentFilter = parseQueryString(exchange);
-        Service filter = new Service().fromDocument(documentFilter);
+        User filter = new User().fromDocument(documentFilter);
         if (filter == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
-        List<Service> result = ExchangeUtility.defaultGetOperation(filter, "services");
+        List<User> result = ExchangeUtility.defaultGetOperation(filter, "users");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
@@ -50,13 +49,13 @@ public class ServiceRoutes2 {
             return;
         }
 
-        Service filter = parseBody(exchange);
+        User filter = parseBody(exchange);
         if (filter == null || filter.getId() == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
-        DeleteResult result = ExchangeUtility.defaultDeleteOperation(filter, "services");
+        DeleteResult result = ExchangeUtility.defaultDeleteOperation(filter, "users");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
@@ -83,15 +82,15 @@ public class ServiceRoutes2 {
             return;
         }
 
-        Service toUpdate = parseBody(exchange);
+        User toUpdate = parseBody(exchange);
         if (toUpdate == null || toUpdate.getId() == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
-        Service filter = new Service();
+        User filter = new User();
         filter.setId(toUpdate.getId());
-        UpdateResult result = ExchangeUtility.defaultPutOperation(filter, toUpdate, "services");
+        UpdateResult result = ExchangeUtility.defaultPutOperation(filter, toUpdate, "users");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
@@ -111,43 +110,10 @@ public class ServiceRoutes2 {
             response.sendResponse(exchange);
         } catch (IOException e) {}
     }
-    
-    public static void post(HttpExchange exchange) {
-        if (Auth.auth(exchange) == null) {
-            ExchangeUtility.sendUnauthorizedResponse(exchange);
-            return;
-        }
 
-        Service filter = parseBody(exchange);
-        if (filter == null || filter.getId() != null) {
-            ExchangeUtility.invalidQueryResponse(exchange);
-            return;
-        }
-
-        InsertOneResult result = ExchangeUtility.defaultPostOperation(filter, "services");
-        if (result == null) {
-            ExchangeUtility.queryExecutionErrorResponse(exchange);
-            return;
-        }
-
-        Response response = new Response();
-        if (!result.wasAcknowledged()) {
-            response.setMsg("Did not insert any objects.");
-            response.setStatusCode(1);
-            return;
-        } else {
-            response.setMsg("Inserted object successfully.");
-            response.setStatusCode(0);
-        }
-
+    private static User parseBody(HttpExchange exchange) {
         try {
-            response.sendResponse(exchange);
-        } catch (IOException e) {}
-    }
-
-    private static Service parseBody(HttpExchange exchange) {
-        try {
-            return ExchangeUtility.parseJsonBody(exchange, 1000, Service.class);
+            return ExchangeUtility.parseJsonBody(exchange, 1000, User.class);
         } catch (Exception e) {
             return null;
         }
@@ -167,13 +133,28 @@ public class ServiceRoutes2 {
                     continue;
                 }
 
+                if (pair[0].equals("email")) {
+                    document.put("email", pair[1]);
+                    continue;
+                }
+
                 if (pair[0].equals("name")) {
                     document.put("name", pair[1]);
                     continue;
                 }
 
-                if (pair[0].equals("companyId")) {
-                    document.put("companyId", new ObjectId(pair[1]));
+                if (pair[0].equals("phoneNumber")) {
+                    document.put("phoneNumber", pair[1]);
+                    continue;
+                }
+
+                if (pair[0].equals("onCall")) {
+                    document.put("onCall", Boolean.parseBoolean(pair[1]));
+                    continue;
+                }
+
+                if (pair[0].equals("onDuty")) {
+                    document.put("onDuty", Boolean.parseBoolean(pair[1]));
                     continue;
                 }
 

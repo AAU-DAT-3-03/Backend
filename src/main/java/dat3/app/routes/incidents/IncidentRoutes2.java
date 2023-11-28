@@ -16,11 +16,17 @@ import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.models.Incident;
+import dat3.app.server.Auth;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
 
 public abstract class IncidentRoutes2 {
     public static void get(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
         Document documentFilter = parseQueryString(exchange);
         Incident filter = new Incident().fromDocument(documentFilter);
         if (filter == null) {
@@ -51,13 +57,18 @@ public abstract class IncidentRoutes2 {
     }
 
     public static void delete(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
         Incident filter = parseBody(exchange);
         if (filter == null || filter.getId() == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
-        DeleteResult result = ExchangeUtility.defaultDeleteOperation(filter, "companies");
+        DeleteResult result = ExchangeUtility.defaultDeleteOperation(filter, "incidents");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
@@ -81,6 +92,11 @@ public abstract class IncidentRoutes2 {
     }
 
     public static void put(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
         Incident toUpdate = parseBody(exchange);
         if (toUpdate == null || toUpdate.getId() == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
@@ -89,7 +105,7 @@ public abstract class IncidentRoutes2 {
 
         Incident filter = new Incident();
         filter.setId(toUpdate.getId());
-        UpdateResult result = ExchangeUtility.defaultPutOperation(filter, toUpdate, "companies");
+        UpdateResult result = ExchangeUtility.defaultPutOperation(filter, toUpdate, "incidents");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
@@ -117,13 +133,18 @@ public abstract class IncidentRoutes2 {
     }
 
     public static void post(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+        
         Incident filter = parseBody(exchange);
         if (filter == null || filter.getId() != null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
 
-        InsertOneResult result = ExchangeUtility.defaultPostOperation(filter, "companies");
+        InsertOneResult result = ExchangeUtility.defaultPostOperation(filter, "incidents");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;

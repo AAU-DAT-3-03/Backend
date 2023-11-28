@@ -19,7 +19,9 @@ import dat3.app.routes.companies.CompanyRoutes;
 import dat3.app.routes.incidents.IncidentRoutes;
 import dat3.app.routes.incidents.IncidentRoutes2;
 import dat3.app.routes.services.ServiceRoutes;
+import dat3.app.routes.services.ServiceRoutes2;
 import dat3.app.routes.users.UserRoutes;
+import dat3.app.routes.users.UserRoutes2;
 import dat3.app.server.DBNotFound;
 import dat3.app.server.Server;
 import dat3.app.testkit.TestData;
@@ -39,10 +41,11 @@ public class App {
 
         Server server = new Server(projectSettings.getHostname(), projectSettings.getPort());
         
+        // Index page
         server.addGetRoute("/", Routes::index);
-        // server.addGetRoute("/incidents", Routes::getIncidents);
+        
+        // Authentication
         server.addGetRoute("/auth", Routes::authenticateRequest);
-
         server.addPostRoute("/register", Routes::registerUser);
         server.addPostRoute("/login", Routes::loginUser);
 
@@ -53,10 +56,10 @@ public class App {
         server.addPostRoute("/companies", CompanyRoutes::post);
 
         // Services
-        server.addGetRoute("/services", ServiceRoutes::getService);
-        server.addDeleteRoute("/services", ServiceRoutes::deleteService);
-        server.addPutRoute("/services", ServiceRoutes::putService);
-        server.addPostRoute("/services", ServiceRoutes::postService);
+        server.addGetRoute("/services", ServiceRoutes2::get);
+        server.addDeleteRoute("/services", ServiceRoutes2::delete);
+        server.addPutRoute("/services", ServiceRoutes2::put);
+        server.addPostRoute("/services", ServiceRoutes2::post);
 
         // Incidents
         server.addGetRoute("/incidents", IncidentRoutes2::get);
@@ -65,9 +68,9 @@ public class App {
         server.addPostRoute("/incidents", IncidentRoutes2::post);
 
         // Users
-        server.addGetRoute("/users", UserRoutes::getUser);
-        server.addPutRoute("/users", UserRoutes::updateUser);
-        server.addDeleteRoute("/users", UserRoutes::deleteUser);
+        server.addGetRoute("/users", UserRoutes2::get);
+        server.addPutRoute("/users", UserRoutes2::put);
+        server.addDeleteRoute("/users", UserRoutes2::delete);
 
         try {
             server.startServer();
