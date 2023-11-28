@@ -71,7 +71,6 @@ public class App {
         server.addGetRoute("/users", UserRoutes2::get);
         server.addPutRoute("/users", UserRoutes2::put);
         server.addDeleteRoute("/users", UserRoutes2::delete);
-        
 
         try {
             server.startServer();

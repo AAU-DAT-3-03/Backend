@@ -1,7 +1,9 @@
 package dat3.app.routes.users;
 
+import java.util.Date;
 import java.util.List;
 
+import dat3.app.models.Event;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -171,6 +173,36 @@ public abstract class UserRoutes {
             return new User().fromDocument(document);
         } catch (Exception e) {
             return null;
+        }
+    }
+    private static List<Event> fetchEvents(String userId) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> eventCollection = MongoUtility.getCollection(client, "events");
+                Event.EventBuilder eventbuilder = new Event.EventBuilder();
+                eventbuilder.setAffectedObjectId(userId);
+                Event filter = eventbuilder.getEvent();
+                return MongoUtility.iterableToList(filter.findMany(eventCollection, session));
+            } catch(Exception e) {
+            }
+        } catch(Exception e) {
+        }
+        return null;
+    }
+    private static void createEvent(String userId, String message, String affectedUserId) {
+        Event.EventBuilder eventbuilder = new Event.EventBuilder();
+        eventbuilder.setUserId(userId);
+        eventbuilder.setMessage(message);
+        eventbuilder.setAffectedObjectId(affectedUserId);
+        eventbuilder.setDate(new Date().getTime());
+        Event event = eventbuilder.getEvent();
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> eventCollection = MongoUtility.getCollection(client, "events");
+                event.insertOne(eventCollection, session);
+            } catch(Exception e) {
+            }
+        } catch(Exception e) {
         }
     }
 }

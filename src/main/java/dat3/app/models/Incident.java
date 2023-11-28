@@ -3,6 +3,7 @@ package dat3.app.models;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import javax.print.Doc;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,9 @@ public class Incident extends StandardModel<Incident> {
     private String id = null;
     private List<String> users = null;
     private List<String> alarms = null;
-    private List<String> eventLog = null;
+    private List<String> calls = null;
+    private String incidentNote = null;
+    private List<Event> eventLog = null;
 
     // ---------- Getters & Setters ---------- //
     public Integer getPriority() {
@@ -66,12 +69,25 @@ public class Incident extends StandardModel<Incident> {
     public void setAlarms(List<String> alarms) {
         this.alarms = alarms;
     }
-    public List<String> getEventLog() {
-        return eventLog;
+    public List<String> getCalls() {
+        return calls;
     }
-    public void setEventLog(List<String> eventLog) {
+    public void setCalls(List<String> calls) {
+        this.calls = calls;
+    }
+    public String getIncidentNote() {
+        return incidentNote;
+    }
+    public void setIncidentNote(String incidentNote) {
+        this.incidentNote = incidentNote;
+    }
+    public List<Event> getEventLog() {
+        return this.eventLog;
+    }
+    public void setEventLog(List<Event> eventLog) {
         this.eventLog = eventLog;
     }
+
     // ---------- Builder subclass ---------- //
     public static class IncidentBuilder {
         private Incident incident = new Incident();
@@ -107,8 +123,16 @@ public class Incident extends StandardModel<Incident> {
             incident.setAlarms(alarms);
             return this;
         }
-        public IncidentBuilder setEventLog(List<String> eventLog) {
-            incident.setEventLog(eventLog);
+        public IncidentBuilder setCalls(List<String> calls) {
+            incident.setCalls(calls);
+            return this;
+        }
+        public IncidentBuilder setIncidentNote(String incidentNote) {
+            incident.setIncidentNote(incidentNote);
+            return this;
+        }
+        public IncidentBuilder setEventLog(List<Event> eventLog) {
+            this.incident.setEventLog(eventLog);
             return this;
         }
         public Incident getIncident() {
@@ -127,7 +151,7 @@ public class Incident extends StandardModel<Incident> {
         if (this.acknowledgedBy != null) document.append("acknowledgedBy", new ObjectId(this.acknowledgedBy));
         if (this.creationDate != null) document.append("creationDate", this.creationDate);
         if (this.id != null) document.append("_id", new ObjectId(this.id));
-
+        if (this.incidentNote != null) document.append("incidentNote", this.incidentNote);
         if (this.users != null) {
             List<ObjectId> ids = new ArrayList<>();
             this.users.forEach((String hexString) -> {
@@ -142,14 +166,20 @@ public class Incident extends StandardModel<Incident> {
             });
             document.append("alarms", ids);
         }
-        if (this.eventLog!= null) {
+        if (this.calls != null) {
             List<ObjectId> ids = new ArrayList<>();
-            this.eventLog.forEach((String hexString) -> {
+            this.calls.forEach((String hexString) -> {
                 ids.add(new ObjectId(hexString));
             });
-            document.append("eventLog", ids);
+            document.append("calls", ids);
         }
-
+        if (this.eventLog != null) {
+            List<Document> eventLogList = new ArrayList<>();
+            for (Event event : this.eventLog) {
+                eventLogList.add(event.toDocument());
+            }
+            document.append("eventLog", eventLogList);
+        }
         return document;
     }
     @Override
@@ -161,7 +191,8 @@ public class Incident extends StandardModel<Incident> {
         if (document.containsKey("acknowledgedBy")) incident.acknowledgedBy = document.getObjectId("acknowledgedBy").toHexString();
         if (document.containsKey("creationDate")) incident.creationDate = document.getLong("creationDate");
         if (document.containsKey("_id")) incident.id = document.getObjectId("_id").toHexString();
-
+        if (document.containsKey("incidentNote")) incident.incidentNote = document.getString("incidentNote");
+        
         if (document.containsKey("users")) {
             incident.users = new ArrayList<>();
             document.getList("users", ObjectId.class).forEach((ObjectId id) -> {
@@ -174,10 +205,16 @@ public class Incident extends StandardModel<Incident> {
                 incident.alarms.add(id.toHexString());
             });;
         }
+        if (document.containsKey("calls")) {
+            incident.calls = new ArrayList<>();
+            document.getList("calls", ObjectId.class).forEach((ObjectId id) -> {
+                incident.calls.add(id.toHexString());
+            });
+        }
         if (document.containsKey("eventLog")) {
             incident.eventLog = new ArrayList<>();
-            document.getList("eventLog", ObjectId.class).forEach((ObjectId id) -> {
-                incident.eventLog.add(id.toHexString());
+            document.getList("eventLog", Event.class).forEach((Event event) -> {
+                incident.eventLog.add(event);
             });
         }
         

@@ -1,8 +1,12 @@
 package dat3.app.routes.incidents;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import com.google.gson.Gson;
+import dat3.app.models.Event;
+import dat3.app.models.Event.EventBuilder;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -48,7 +52,6 @@ public class IncidentRoutes {
                     return;
                 }
 
-                System.out.println(filter.toDocument());
                 List<Incident> incidents = MongoUtility.iterableToList(filter.findMany(incidentCollection, session));
                 incidents = filterByPeriod(incidents, docFilter);
                 List<IncidentPublic> toSend = new ArrayList<>();
@@ -71,6 +74,7 @@ public class IncidentRoutes {
                 response.sendResponse(exchange);
             } catch (Exception e1) {}
         }
+
     }
 
     public static void deleteIncident(HttpExchange exchange) {
@@ -309,7 +313,7 @@ public class IncidentRoutes {
                     continue;
                 }
 
-                System.out.println(pair[0] + "====" + pair[1]);
+                return null;
             }
             
             if (isEmpty) return null;
@@ -317,6 +321,69 @@ public class IncidentRoutes {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+    public static void getEvents(HttpExchange exchange) {
+        try {
+            List<Event> list = fetchEvents("65609a002f61f91bd5f29754");
+            Response response = new Response();
+            response.setMsg(list);
+            response.setStatusCode(1);
+            response.sendResponse(exchange);
+        } catch(Exception e) {
+
+        }
+    }
+    public static void postEvents(HttpExchange exchange) {
+        try {
+            System.out.println("test1");
+            createEvent("6562479a5df3640a6f5a603b", "test", "6562479a5df3640a6f5a603b");
+            Response response = new Response();
+            response.setMsg(new EventBuilder().setMessage("test").getEvent());
+            response.setStatusCode(1);
+            response.sendResponse(exchange);
+        } catch(Exception e) {
+
+        }
+    }
+
+    /**
+     *
+     * @param incidentId a string containing the id of the incident which events need to be fetched
+     * @return a list containing all the events corresponding to the input filter.
+     */
+    private static List<Event> fetchEvents(String incidentId) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> eventCollection = MongoUtility.getCollection(client, "events");
+                EventBuilder eventbuilder = new EventBuilder();
+                eventbuilder.setAffectedObjectId(incidentId);
+                Event filter = eventbuilder.getEvent();
+                return MongoUtility.iterableToList(filter.findMany(eventCollection, session));
+            } catch(Exception e) {
+            }
+        } catch(Exception e) {
+        }
+        return null;
+    }
+    private static void createEvent(String userId, String message, String affectedIncidentId) {
+        // Auth.auth(exchange) giver user
+        EventBuilder eventbuilder = new EventBuilder();
+        eventbuilder.setUserId(userId);
+        eventbuilder.setMessage(message);
+        eventbuilder.setAffectedObjectId(affectedIncidentId);
+        eventbuilder.setDate(new Date().getTime());
+        Event event = eventbuilder.getEvent();
+        System.out.println("dsa");
+        event.toDocument();
+        System.out.println("sad");
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> eventCollection = MongoUtility.getCollection(client, "events");
+                event.insertOne(eventCollection, session);
+            } catch(Exception e) {
+            }
+        } catch(Exception e) {
         }
     }
 }
@@ -328,6 +395,16 @@ class IncidentPublic {
     private Long creationDate = null;
     private String id = null;
     private List<User> users = null;
+    private List<User> calls = null;
+    private String incidentNote = null;
+
+    public String getIncidentNote() {
+        return incidentNote;
+    }
+
+    public List<User> getCalls() {
+        return calls;
+    }
 
     public Boolean getResolved() {
         return resolved;
@@ -363,23 +440,30 @@ class IncidentPublic {
 
             IncidentPublic incidentPublic = new IncidentPublic();
             incidentPublic.id = incident.getId();
-            try {
+            if (incident.getAcknowledgedBy() != null)  {
                 incidentPublic.acknowledgedBy = builder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session);
                 incidentPublic.acknowledgedBy.setPassword(null);
-            } catch (Exception e) {
-                incidentPublic.acknowledgedBy = null;
             }
             incidentPublic.creationDate = incident.getCreationDate();
             incidentPublic.header = incident.getHeader();
             incidentPublic.priority = incident.getPriority();
             incidentPublic.resolved = incident.getResolved();
-            incidentPublic.users = new ArrayList<>();
+            incidentPublic.incidentNote = incident.getIncidentNote();
 
+            incidentPublic.users = new ArrayList<>();
             for (String hex : incident.getUsers()) {
                 User user = builder.setId(hex).getUser().findOne(userCollection, session);
                 if (user == null) continue;
                 user.setPassword(null);
                 incidentPublic.users.add(user);
+            }
+
+            incidentPublic.calls = new ArrayList<>();
+            for (String hex : incident.getCalls()) {
+                User user = builder.setId(hex).getUser().findOne(userCollection, session);
+                if (user == null) continue;
+                user.setPassword(null);
+                incidentPublic.calls.add(user);
             }
 
             return incidentPublic;

@@ -1,69 +1,93 @@
 package dat3.app.models;
 
 import org.bson.Document;
-
-import javax.print.Doc;
-import java.util.ArrayList;
-import java.util.Date;
+import org.bson.types.ObjectId;
 
 public class Event extends StandardModel<Event>{
-    private String id;
-    private Date date;
-    private User user;
-    private String message;
-
-    // Getter
+    private String _id = null;
+    private Long date = null;
+    private String userId = null;
+    private String message = null;
+    private String affectedObjectId = null;
+    @Override
     public String getId() {
-        return id;
+        return this._id;
     }
+    @Override
     public void setId(String id) {
-        this.id = id;
+        this._id = id;
     }
-
-    //Updating priority
-    public Event(User user) {
-        this.date = new Date();
-        this.user = user;
+    public Long getDate() {
+        return this.date;
     }
-    public void UpdatePriority(int newPriority) {
-        this.message = this.user.getName() + " changed the priority to " + newPriority;
+    public void setDate(Long date) {
+        this.date = date;
     }
-
-    //Adding users
-    public void AddUsers(ArrayList<User> addedUsers) {
-        StringBuilder message = new StringBuilder(this.user.getName() + " added the following users:");
-        for (User addedUser : addedUsers) {
-            message.append(" ").append(addedUser.getName());
+    public String getUserId() {
+        return this.userId;
+    }
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+    public String getMessage() {
+        return this.message;
+    }
+    public void setMessage(String message) {
+        this.message = message;
+    }
+    public String getAffectedObjectId() {
+        return this.affectedObjectId;
+    }
+    public void setAffectedObjectId(String affectedObjectId) {
+        this.affectedObjectId = affectedObjectId;
+    }
+    public static class EventBuilder{
+        private Event event = new Event();
+        public EventBuilder setId(String id) {
+            this.event.setId(id);
+            return this;
         }
-        message.append(".");
-        this.message = message.toString();
-    }
-
-    //Removing users
-    public void RemoveUsers(ArrayList<User> removedUsers) {
-        StringBuilder message = new StringBuilder(this.user.getName() + " removed the following users:");
-        for (User removedUser : removedUsers) {
-            message.append(" ").append(removedUser.getName());
+        public EventBuilder setDate(Long date) {
+            this.event.setDate(date);
+            return this;
         }
-        message.append(".");
-        this.message = message.toString();
-    }
+        public EventBuilder setUserId(String userId) {
+            this.event.setUserId(userId);
+            return this;
+        }
+        public EventBuilder setMessage(String message) {
+            this.event.setMessage(message);
+            return this;
+        }
+        public EventBuilder setAffectedObjectId(String affectedObjectId) {
+            this.event.affectedObjectId = affectedObjectId;
+            return this;
+        }
+        public Event getEvent() {
+            Event temp = this.event;
+            this.event = new Event();
+            return temp;
+        }
 
-    //Resolving incidents
-    public void ResolveIncident() {
-        this.message = this.user.getName() + " has marked this incident as resolved.";
     }
-
     @Override
     public Document toDocument() {
         Document document = new Document();
+        if (this._id != null) document.append("_id", new ObjectId(this._id));
         if (this.date != null) document.append("date", this.date);
-        if (this.user != null) document.append("user", this.user);
+        if (this.userId != null) document.append("userId", new ObjectId(this.userId));
         if (this.message != null) document.append("message", this.message);
+        if (this.affectedObjectId != null) document.append("affectedObjectId", new ObjectId(this.affectedObjectId));
         return document;
     }
     @Override
     public Event fromDocument(Document document) {
-        return new Event(new User());
+        Event event = new Event();
+        if (document.containsKey("_id")) event._id = document.getObjectId("_id").toHexString();
+        if (document.containsKey("date")) event.date = document.getLong("date");
+        if (document.containsKey("userId")) event.userId = document.getObjectId("userId").toHexString();
+        if (document.containsKey("message")) event.message = document.getString("message");
+        if (document.containsKey("affectedObjectId")) event.affectedObjectId = document.getObjectId("affectedObjectId").toHexString();
+        return event;
     }
 }
