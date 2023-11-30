@@ -16,7 +16,6 @@ import dat3.app.models.Incident;
 import dat3.app.models.User;
 import dat3.app.routes.companies.CompanyRoutes;
 import dat3.app.routes.companies.CompanyRoutes;
-import dat3.app.routes.incidents.IncidentRoutes;
 import dat3.app.routes.incidents.IncidentRoutes2;
 import dat3.app.routes.services.ServiceRoutes;
 import dat3.app.routes.services.ServiceRoutes2;

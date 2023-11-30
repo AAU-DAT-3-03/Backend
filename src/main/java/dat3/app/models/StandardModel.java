@@ -45,6 +45,9 @@ public abstract class StandardModel<T> extends Model<T> {
 
     @Override
     public <U extends Model<U>> UpdateResult updateOne(MongoCollection<Document> collection, ClientSession session, U filter) throws Exception {
+        if (filter == null || filter.toDocument().isEmpty()) {
+            return collection.updateOne(session, new Document(), new Document("$set", this.toDocument()));
+        }
         return collection.updateOne(session, filter.toDocument(), new Document("$set", this.toDocument()));
     }
 

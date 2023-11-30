@@ -1,24 +1,33 @@
 package dat3.app.routes.incidents;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import dat3.app.models.Alarm;
 import dat3.app.models.Event;
 import dat3.app.models.Event.EventBuilder;
+import dat3.app.models.User.UserBuilder;
 import dat3.app.server.Auth;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import com.mongodb.client.ClientSession;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.models.Incident;
-import dat3.app.server.Auth;
+import dat3.app.models.Misc;
+import dat3.app.models.User;
+import dat3.app.models.Alarm.AlarmBuilder;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
+import dat3.app.utility.MongoUtility;
 
 public abstract class IncidentRoutes2 {
     public static void get(HttpExchange exchange) {
@@ -39,21 +48,69 @@ public abstract class IncidentRoutes2 {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
+        List<IncidentPublic> resultPublic = new ArrayList<>();
+        
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
+                MongoCollection<Document> alarmCollection = MongoUtility.getCollection(client, "alarms");
+
+                result.forEach((Incident incident) -> {
+                    IncidentPublic toDisplay = new IncidentPublic();
+                    List<User> calls = new ArrayList<>();
+                    List<User> users = new ArrayList<>();
+                    List<Alarm> alarms = new ArrayList<>();
+                    incident.getCallIds().forEach((String id) -> {
+                        UserBuilder builder = new UserBuilder();
+                        try {
+                            calls.add(builder.setId(id).getUser().findOne(userCollection, session));
+                        } catch (Exception e) {}
+                    });
+                    incident.getAlarmIds().forEach((String id) -> {
+                        AlarmBuilder builder = new AlarmBuilder();
+                        try {
+                            alarms.add(builder.setId(id).getAlarm().findOne(alarmCollection, session));
+                        } catch (Exception e) {}
+                    });
+                    incident.getUserIds().forEach((String id) -> {
+                        UserBuilder builder = new UserBuilder();
+                        try {
+                            users.add(builder.setId(id).getUser().findOne(userCollection, session));
+                        } catch (Exception e) {}
+                    });
+                    toDisplay.setAcknowledgedBy(incident.getAcknowledgedBy());
+                    toDisplay.setAlarmsPublic(alarms);
+                    toDisplay.setCallsPublic(calls);
+                    toDisplay.setCreationDate(incident.getCreationDate());
+                    toDisplay.setCaseNumber(incident.getCaseNumber());
+                    toDisplay.setHeader(incident.getHeader());
+                    toDisplay.setId(incident.getId());
+                    toDisplay.setIncidentNote(incident.getIncidentNote());
+                    toDisplay.setPriority(incident.getPriority());
+                    toDisplay.setResolved(incident.getResolved());
+                    toDisplay.setUsersPublic(users);
+
+                    resultPublic.add(toDisplay);
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
         for (Incident incident : result) {
             Event eventFilter = new EventBuilder().setAffectedObjectId(incident.getId()).getEvent();
             List<Event> eventLog = ExchangeUtility.defaultGetOperation(eventFilter, "events");
             incident.setEventLog(eventLog);
         }
 
-
         // add start and end filtering.
 
         Response response = new Response();
-        response.setMsg(result);
+        response.setMsg(resultPublic);
         response.setStatusCode(0);
         try {
             response.sendResponse(exchange);
-        } catch (Exception e) {}
+        } catch (Exception e) {e.printStackTrace();}
     }
 
     public static void delete(HttpExchange exchange) {
@@ -98,7 +155,7 @@ public abstract class IncidentRoutes2 {
         }
 
         Incident toUpdate = parseBody(exchange);
-        if (toUpdate == null || toUpdate.getId() == null) {
+        if (toUpdate == null || toUpdate.getId() == null || toUpdate.getCaseNumber() != null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
@@ -139,10 +196,17 @@ public abstract class IncidentRoutes2 {
         }
         
         Incident filter = parseBody(exchange);
-        if (filter == null || filter.getId() != null) {
+        if (filter == null || filter.getId() != null || filter.getCaseNumber() != null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
+        Long caseNumber = Misc.getCaseNumberAndIncrement();
+        if (caseNumber == null) {
+            ExchangeUtility.queryExecutionErrorResponse(exchange);
+            return;
+        }
+
+        filter.setCaseNumber(caseNumber);
 
         InsertOneResult result = ExchangeUtility.defaultPostOperation(filter, "incidents");
         if (result == null) {
@@ -169,6 +233,7 @@ public abstract class IncidentRoutes2 {
         try {
             return ExchangeUtility.parseJsonBody(exchange, 1000, Incident.class);
         } catch (Exception e) {
+            AlarmBuilder alarmBuilder = new AlarmBuilder();
             return null;
         }
     }
@@ -205,6 +270,11 @@ public abstract class IncidentRoutes2 {
                     continue;
                 }
 
+                if (pair[0].equals("caseNumber")) {
+                    document.put("caseNumber", Long.parseLong(pair[1]));
+                    continue;
+                }
+
                 if (pair[0].equals("id")) {
                     if (pair[1].equals("*")) return new Document();
 
@@ -231,3 +301,28 @@ public abstract class IncidentRoutes2 {
         }
     }
 }
+
+class IncidentPublic extends Incident {
+    private List<User> calls;
+    private List<Alarm> alarms;
+    private List<User> users;
+
+    public List<User> getCallsPublic() {
+        return calls;
+    }
+    public void setCallsPublic(List<User> calls) {
+        this.calls = calls;
+    }
+    public List<Alarm> getAlarmsPublic() {
+        return alarms;
+    }
+    public void setAlarmsPublic(List<Alarm> alarms) {
+        this.alarms = alarms;
+    }
+    public List<User> getUsersPublic() {
+        return users;
+    }
+    public void setUsersPublic(List<User> users) {
+        this.users = users;
+    }
+} 

@@ -7,6 +7,7 @@ public class Alarm extends StandardModel<Alarm> {
     private String id = null;
     private String name = null;
     private String serviceId = null;
+    private String alarmNote = null;
 
     // ---------- Getters & Setters ---------- //
     public String getId() {
@@ -32,7 +33,14 @@ public class Alarm extends StandardModel<Alarm> {
     public void setServiceId(String serviceId) {
         this.serviceId = serviceId;
     }
-
+    
+    public String getAlarmNote() {
+        return alarmNote;
+    }
+    
+    public void setAlarmNote(String alarmNote) {
+        this.alarmNote = alarmNote;
+    }
     // ---------- Builder subclass ---------- //
     public static class AlarmBuilder  {
         private Alarm alarm = new Alarm();
@@ -52,6 +60,11 @@ public class Alarm extends StandardModel<Alarm> {
             return this;
         }
 
+        public AlarmBuilder setAlarmNote(String alarmNote) {
+            alarm.setAlarmNote(alarmNote);
+            return this; 
+        }
+
         public Alarm getAlarm() {
             Alarm temp = this.alarm;
             this.alarm = new Alarm();
@@ -66,6 +79,7 @@ public class Alarm extends StandardModel<Alarm> {
         if (this.id != null) document.put("_id", new ObjectId(this.id));
         if (this.name != null) document.put("name", this.name);
         if (this.serviceId != null) document.put("serviceId", new ObjectId(this.serviceId));
+        if (this.alarmNote != null) document.put("alarmNote", new ObjectId(this.alarmNote));
         return document;
     }
 
@@ -75,6 +89,7 @@ public class Alarm extends StandardModel<Alarm> {
         if (document.containsKey("_id")) alarm.id = document.getObjectId("_id").toHexString();
         if (document.containsKey("name")) alarm.name = document.getString("name");
         if (document.containsKey("serviceId")) alarm.serviceId = document.getObjectId("serviceId").toHexString();
+        if (document.containsKey("alarmNote")) alarm.alarmNote = document.getObjectId("alarmNote").toHexString();
         return alarm;
     }
 

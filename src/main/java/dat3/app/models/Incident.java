@@ -3,7 +3,6 @@ package dat3.app.models;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import javax.print.Doc;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,10 +12,11 @@ public class Incident extends StandardModel<Incident> {
     private String header = null;
     private String acknowledgedBy = null;
     private Long creationDate = null;
+    private Long caseNumber = null;
     private String id = null;
-    private List<String> users = null;
-    private List<String> alarms = null;
-    private List<String> calls = null;
+    private List<String> userIds = null;
+    private List<String> alarmIds = null;
+    private List<String> callIds = null;
     private String incidentNote = null;
     private List<Event> eventLog = null;
 
@@ -48,6 +48,12 @@ public class Incident extends StandardModel<Incident> {
     public Long getCreationDate() {
         return creationDate;
     }
+    public Long getCaseNumber() {
+        return caseNumber;
+    }
+    public void setCaseNumber(Long caseNumber) {
+        this.caseNumber = caseNumber;
+    }
     public void setCreationDate(Long creationDate) {
         this.creationDate = creationDate;
     }
@@ -57,23 +63,23 @@ public class Incident extends StandardModel<Incident> {
     public void setId(String id) {
         this.id = id;
     }
-    public List<String> getUsers() {
-        return users;
+    public List<String> getUserIds() {
+        return userIds;
     }
-    public void setUsers(List<String> users) {
-        this.users = users;
+    public void setUserIds(List<String> users) {
+        this.userIds = users;
     }
-    public List<String> getAlarms() {
-        return alarms;
+    public List<String> getAlarmIds() {
+        return alarmIds;
     }
-    public void setAlarms(List<String> alarms) {
-        this.alarms = alarms;
+    public void setAlarmIds(List<String> alarms) {
+        this.alarmIds = alarms;
     }
-    public List<String> getCalls() {
-        return calls;
+    public List<String> getCallIds() {
+        return callIds;
     }
-    public void setCalls(List<String> calls) {
-        this.calls = calls;
+    public void setCallIds(List<String> calls) {
+        this.callIds = calls;
     }
     public String getIncidentNote() {
         return incidentNote;
@@ -111,20 +117,24 @@ public class Incident extends StandardModel<Incident> {
             incident.setCreationDate(creationDate);
             return this;
         }
+        public IncidentBuilder setCaseNumber(Long caseNumber) {
+            incident.setCaseNumber(caseNumber);
+            return this;
+        }
         public IncidentBuilder setId(String id) {
             incident.setId(id);
             return this;
         }
-        public IncidentBuilder setUsers(List<String> users) {
-            incident.setUsers(users);
+        public IncidentBuilder setUserIds(List<String> users) {
+            incident.setUserIds(users);
             return this;
         }
-        public IncidentBuilder setAlarms(List<String> alarms) {
-            incident.setAlarms(alarms);
+        public IncidentBuilder setAlarmIds(List<String> alarms) {
+            incident.setAlarmIds(alarms);
             return this;
         }
-        public IncidentBuilder setCalls(List<String> calls) {
-            incident.setCalls(calls);
+        public IncidentBuilder setCallIds(List<String> calls) {
+            incident.setCallIds(calls);
             return this;
         }
         public IncidentBuilder setIncidentNote(String incidentNote) {
@@ -150,25 +160,26 @@ public class Incident extends StandardModel<Incident> {
         if (this.header != null) document.append("header", this.header);
         if (this.acknowledgedBy != null) document.append("acknowledgedBy", new ObjectId(this.acknowledgedBy));
         if (this.creationDate != null) document.append("creationDate", this.creationDate);
+        if (this.caseNumber != null) document.append("caseNumber", this.caseNumber);
         if (this.id != null) document.append("_id", new ObjectId(this.id));
         if (this.incidentNote != null) document.append("incidentNote", this.incidentNote);
-        if (this.users != null) {
+        if (this.userIds != null) {
             List<ObjectId> ids = new ArrayList<>();
-            this.users.forEach((String hexString) -> {
+            this.userIds.forEach((String hexString) -> {
                 ids.add(new ObjectId(hexString));
             });
             document.append("users", ids);
         }
-        if (this.alarms != null) {
+        if (this.alarmIds != null) {
             List<ObjectId> ids = new ArrayList<>();
-            this.alarms.forEach((String hexString) -> {
+            this.alarmIds.forEach((String hexString) -> {
                 ids.add(new ObjectId(hexString));
             });
             document.append("alarms", ids);
         }
-        if (this.calls != null) {
+        if (this.callIds != null) {
             List<ObjectId> ids = new ArrayList<>();
-            this.calls.forEach((String hexString) -> {
+            this.callIds.forEach((String hexString) -> {
                 ids.add(new ObjectId(hexString));
             });
             document.append("calls", ids);
@@ -190,25 +201,26 @@ public class Incident extends StandardModel<Incident> {
         if (document.containsKey("header")) incident.header = document.getString("header");
         if (document.containsKey("acknowledgedBy")) incident.acknowledgedBy = document.getObjectId("acknowledgedBy").toHexString();
         if (document.containsKey("creationDate")) incident.creationDate = document.getLong("creationDate");
+        if (document.containsKey("caseNumber")) incident.caseNumber = document.getLong("caseNumber");
         if (document.containsKey("_id")) incident.id = document.getObjectId("_id").toHexString();
         if (document.containsKey("incidentNote")) incident.incidentNote = document.getString("incidentNote");
         
         if (document.containsKey("users")) {
-            incident.users = new ArrayList<>();
+            incident.userIds = new ArrayList<>();
             document.getList("users", ObjectId.class).forEach((ObjectId id) -> {
-                incident.users.add(id.toHexString());
+                incident.userIds.add(id.toHexString());
             });
         }
         if (document.containsKey("alarms")) {
-            incident.alarms = new ArrayList<>();
+            incident.alarmIds = new ArrayList<>();
             document.getList("alarms", ObjectId.class).forEach((ObjectId id) -> {
-                incident.alarms.add(id.toHexString());
+                incident.alarmIds.add(id.toHexString());
             });;
         }
         if (document.containsKey("calls")) {
-            incident.calls = new ArrayList<>();
+            incident.callIds = new ArrayList<>();
             document.getList("calls", ObjectId.class).forEach((ObjectId id) -> {
-                incident.calls.add(id.toHexString());
+                incident.callIds.add(id.toHexString());
             });
         }
         if (document.containsKey("eventLog")) {
@@ -220,71 +232,4 @@ public class Incident extends StandardModel<Incident> {
         
         return incident;
     }
-    // ---------- Object Methods ---------- //
-    // public Document toDocumentFormatted() {
-    //     Document document = new Document();
-    //     if (this.priority != null) document.append("Priority", this.priority);
-    //     if (this.acknowledgedBy != null) document.append("AcknowledgedBy", this.GetAcknowledgedBy());
-    //     if (this.creationDate != null) document.append("Date", this.creationDate);
-    //     if (this._id != null) document.append("ID", this._id);
-    //     if (this.users != null) document.append("Users", this.GetUsers());
-    //     if (this.alarms != null) document.append("Alarms", this.GetAlarms());
-    //     if (this.eventLog!= null) document.append("Eventlog", this.GetEventLog());
-    //     return document;
-    // }
-    // private User GetAcknowledgedBy() {
-    //     ProjectSettings settings = ProjectSettings.getProjectSettings();
-    //     MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
-    //     MongoCollection<Document> userCollection = db.getCollection("user");
-    //     Document filter = new Document();
-    //     filter.put("ObjectID", this.acknowledgedBy);
-    //     Document userDocument = userCollection.find(filter).first();
-    //     return new Gson().fromJson(userDocument.toJson(), User.class);
-    // }
-    // // private ArrayList<User> GetUsers() {
-    //     ArrayList<User> userList = new ArrayList<>();
-    //     ProjectSettings settings = ProjectSettings.getProjectSettings();
-    //     MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
-    //     MongoCollection<Document> userCollection = db.getCollection("user");
-
-    //     for (ObjectId userID: this.users) {
-    //         Document filter = new Document();
-    //         filter.put("ObjectID", userID);
-    //         Document userDocument = userCollection.find(filter).first();
-    //         userList.add(new Gson().fromJson(userDocument.toJson(), User.class));
-    //     }
-
-    //     return userList;
-    // }
-
-    // private ArrayList<Alarm> GetAlarms() {
-    //     ArrayList<Alarm> alarmList = new ArrayList<>();
-    //     ProjectSettings settings = ProjectSettings.getProjectSettings();
-    //     MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
-    //     MongoCollection<Document> alarmCollection = db.getCollection("Alarm");
-
-    //     for (ObjectId alarmID: this.alarms) {
-    //         Document filter = new Document();
-    //         filter.put("ObjectID", alarmID);
-    //         Document alarmDocument = alarmCollection.find(filter).first();
-    //         alarmList.add(new Gson().fromJson(alarmDocument.toJson(), Alarm.class));
-    //     }
-
-    //     return alarmList;
-    // }
-    // private ArrayList<Event> GetEventLog() {
-    //     ArrayList<Event> eventList = new ArrayList<>();
-    //     ProjectSettings settings = ProjectSettings.getProjectSettings();
-    //     MongoDatabase db = MongoClients.create(settings.getDbConnectionString()).getDatabase(settings.getDbName());
-    //     MongoCollection<Document> eventCollection = db.getCollection("event");
-
-    //     for (ObjectId eventID: this.eventLog) {
-    //         Document filter = new Document();
-    //         filter.put("ObjectID", eventID);
-    //         Document eventDocument = eventCollection.find(filter).first();
-    //         eventList.add(new Gson().fromJson(eventDocument.toJson(), Event.class));
-    //     }
-
-    //     return eventList;
-    // }
 }
