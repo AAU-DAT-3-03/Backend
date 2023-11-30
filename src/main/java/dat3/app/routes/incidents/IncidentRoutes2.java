@@ -1,6 +1,7 @@
 package dat3.app.routes.incidents;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -10,15 +11,19 @@ import dat3.app.server.Auth;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import com.google.gson.Gson;
+import com.mongodb.client.ClientSession;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.models.Incident;
-import dat3.app.server.Auth;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
+import dat3.app.utility.MongoUtility;
 
 public abstract class IncidentRoutes2 {
     public static void get(HttpExchange exchange) {
@@ -45,8 +50,27 @@ public abstract class IncidentRoutes2 {
             incident.setEventLog(eventLog);
         }
 
-
-        // add start and end filtering.
+        Long end = documentFilter.getLong("end");
+        Long start = documentFilter.getLong("start");
+        result.removeIf((Incident incident) -> {
+            if (end == null && start == null) return false;
+            if (end == null && start != null) {
+                try {
+                    return incident.getCreationDate() < start; 
+                } catch (Exception exception) { return false; }
+            }
+            if (end != null && start == null) {
+                try {
+                    return incident.getCreationDate() > end; 
+                } catch (Exception exception) { return false; }
+            }
+            if (end != null && start != null) {
+                try {
+                    return incident.getCreationDate() < start || incident.getCreationDate() > end;
+                } catch (Exception exception) { return false; }
+            }
+            return false;
+        });
 
         Response response = new Response();
         response.setMsg(result);
@@ -97,14 +121,19 @@ public abstract class IncidentRoutes2 {
             return;
         }
 
-        Incident toUpdate = parseBody(exchange);
-        if (toUpdate == null || toUpdate.getId() == null) {
+        IncidentPut toUpdate = parseBodyPut(exchange);
+        if (toUpdate == null || toUpdate.getId() == null || toUpdate.getUsers() != null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
-
+        
         Incident filter = new Incident();
         filter.setId(toUpdate.getId());
+        toUpdate.setId(null);   
+
+        // Change the toUpdate such that it contains the users that are specified by addUsers, removeUsers, addCalls, removeCalls.
+        updateCallsAndUsers(filter, toUpdate);
+        
         UpdateResult result = ExchangeUtility.defaultPutOperation(filter, toUpdate, "incidents");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
@@ -121,7 +150,6 @@ public abstract class IncidentRoutes2 {
         if (result.getModifiedCount() == 0) {
             response.setMsg("Did not modify any objects.");
             response.setStatusCode(1);
-            return;
         } else {
             response.setMsg("Modified object successfully.");
             response.setStatusCode(0);
@@ -130,6 +158,60 @@ public abstract class IncidentRoutes2 {
         try {
             response.sendResponse(exchange);
         } catch (IOException e) {}
+    }
+
+    private static void updateCallsAndUsers(Incident filter, IncidentPut toUpdate) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
+                System.out.println("Filter: " + new Gson().toJson(filter));
+                Incident incident = filter.findOne(incidentCollection, session);
+                System.out.println("Found: " + new Gson().toJson(incident));
+
+                // Doesn't check if the user id is ACTUALLY a user...
+                if (toUpdate.getAddCalls() != null) {
+                    List<String> calls = incident.getCalls();
+                    if (calls == null) calls = new ArrayList<>();
+                    for (String userId : toUpdate.getAddCalls()) {
+                        if (!calls.contains(userId)) calls.add(userId); 
+                    }
+                    incident.setCalls(calls);
+                }
+
+                if (toUpdate.getRemoveCalls() != null) {
+                    List<String> calls = incident.getCalls();
+                    if (calls == null) calls = new ArrayList<>();
+                    for (String userId : toUpdate.getRemoveCalls()) {
+                        calls.remove(userId); 
+                    }
+                    incident.setCalls(calls);
+                }
+                
+                if (toUpdate.getAddUsers() != null) {
+                    List<String> users = incident.getUsers();
+                    if (users == null) users = new ArrayList<>();
+                    for (String userId : toUpdate.getAddUsers()) {
+                        if (!users.contains(userId)) users.add(userId); 
+                    }
+                    incident.setUsers(users);
+                }
+
+                if (toUpdate.getRemoveUsers() != null) {
+                    List<String> users = incident.getUsers();
+                    if (users == null) users = new ArrayList<>();
+                    for (String userId : toUpdate.getRemoveUsers()) {
+                        users.remove(userId); 
+                    }
+                    incident.setUsers(users);
+                }
+                
+                toUpdate.setCalls(incident.getCalls());
+                toUpdate.setUsers(incident.getUsers());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
     }
 
     public static void post(HttpExchange exchange) {
@@ -165,6 +247,14 @@ public abstract class IncidentRoutes2 {
         } catch (IOException e) {}
     }
 
+    private static IncidentPut parseBodyPut(HttpExchange exchange) {
+        try {
+            return ExchangeUtility.parseJsonBody(exchange, 1000, IncidentPut.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static Incident parseBody(HttpExchange exchange) {
         try {
             return ExchangeUtility.parseJsonBody(exchange, 1000, Incident.class);
@@ -179,7 +269,17 @@ public abstract class IncidentRoutes2 {
             String[] tuples = exchange.getRequestURI().getQuery().split("&");
             for (String tuple : tuples) {
                 String[] pair = tuple.split("=");
+                
+                if (pair[0].equals("end")) {
+                    document.put("end", Long.parseLong(pair[1]));
+                    continue;
+                }
 
+                if (pair[0].equals("start")) {
+                    document.put("start", Long.parseLong(pair[1]));
+                    continue;
+                }
+                
                 if (pair[0].equals("priority")) {
                     document.put("priority", Integer.parseInt(pair[1]));
                     continue;
@@ -229,5 +329,36 @@ public abstract class IncidentRoutes2 {
         } catch (Exception e) {
             return null;
         }
+    }
+}
+
+class IncidentPut extends Incident {
+    private List<String> addUsers;
+    private List<String> removeUsers;
+    private List<String> addCalls;
+    private List<String> removeCalls;
+    public List<String> getAddUsers() {
+        return addUsers;
+    }
+    public void setAddUsers(List<String> addUsers) {
+        this.addUsers = addUsers;
+    }
+    public List<String> getRemoveUsers() {
+        return removeUsers;
+    }
+    public void setRemoveUsers(List<String> removeUsers) {
+        this.removeUsers = removeUsers;
+    }
+    public List<String> getAddCalls() {
+        return addCalls;
+    }
+    public void setAddCalls(List<String> addCalls) {
+        this.addCalls = addCalls;
+    }
+    public List<String> getRemoveCalls() {
+        return removeCalls;
+    }
+    public void setRemoveCalls(List<String> removeCalls) {
+        this.removeCalls = removeCalls;
     }
 }
