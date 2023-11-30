@@ -13,10 +13,6 @@ import dat3.app.server.Auth;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import com.google.gson.Gson;
-import com.mongodb.client.ClientSession;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -52,8 +48,30 @@ public abstract class IncidentRoutes2 {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
-        List<IncidentPublic> resultPublic = new ArrayList<>();
         
+        Long end = documentFilter.getLong("end");
+        Long start = documentFilter.getLong("start");
+        result.removeIf((Incident incident) -> {
+            if (end == null && start == null) return false;
+            if (end == null && start != null) {
+                try {
+                    return incident.getCreationDate() < start; 
+                } catch (Exception exception) { return true; }
+            }
+            if (end != null && start == null) {
+                try {
+                    return incident.getCreationDate() > end; 
+                } catch (Exception exception) { return true; }
+            }
+            if (end != null && start != null) {
+                try {
+                    return incident.getCreationDate() < start || incident.getCreationDate() > end;
+                } catch (Exception exception) { return true; }
+            }
+            return true;
+        });
+        
+        List<IncidentPublic> resultPublic = new ArrayList<>();
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
@@ -106,27 +124,6 @@ public abstract class IncidentRoutes2 {
             List<Event> eventLog = ExchangeUtility.defaultGetOperation(eventFilter, "events");
             incident.setEventLog(eventLog);
         }
-        Long end = documentFilter.getLong("end");
-        Long start = documentFilter.getLong("start");
-        result.removeIf((Incident incident) -> {
-            if (end == null && start == null) return false;
-            if (end == null && start != null) {
-                try {
-                    return incident.getCreationDate() < start; 
-                } catch (Exception exception) { return true; }
-            }
-            if (end != null && start == null) {
-                try {
-                    return incident.getCreationDate() > end; 
-                } catch (Exception exception) { return true; }
-            }
-            if (end != null && start != null) {
-                try {
-                    return incident.getCreationDate() < start || incident.getCreationDate() > end;
-                } catch (Exception exception) { return true; }
-            }
-            return true;
-        });
 
         Response response = new Response();
         response.setMsg(resultPublic);
@@ -178,7 +175,7 @@ public abstract class IncidentRoutes2 {
         }
 
         IncidentPut toUpdate = parseBodyPut(exchange);
-        if (toUpdate == null || toUpdate.getId() == null || toUpdate.getUsers() != null || toUpdate.getCaseNumber() != null) {
+        if (toUpdate == null || toUpdate.getId() == null || toUpdate.getUserIds() != null || toUpdate.getCaseNumber() != null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
@@ -220,49 +217,47 @@ public abstract class IncidentRoutes2 {
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
-                System.out.println("Filter: " + new Gson().toJson(filter));
                 Incident incident = filter.findOne(incidentCollection, session);
-                System.out.println("Found: " + new Gson().toJson(incident));
 
                 // Doesn't check if the user id is ACTUALLY a user...
                 if (toUpdate.getAddCalls() != null) {
-                    List<String> calls = incident.getCalls();
+                    List<String> calls = incident.getCallIds();
                     if (calls == null) calls = new ArrayList<>();
                     for (String userId : toUpdate.getAddCalls()) {
                         if (!calls.contains(userId)) calls.add(userId); 
                     }
-                    incident.setCalls(calls);
+                    incident.setCallIds(calls);
                 }
 
                 if (toUpdate.getRemoveCalls() != null) {
-                    List<String> calls = incident.getCalls();
+                    List<String> calls = incident.getCallIds();
                     if (calls == null) calls = new ArrayList<>();
                     for (String userId : toUpdate.getRemoveCalls()) {
                         calls.remove(userId); 
                     }
-                    incident.setCalls(calls);
+                    incident.setCallIds(calls);
                 }
                 
                 if (toUpdate.getAddUsers() != null) {
-                    List<String> users = incident.getUsers();
+                    List<String> users = incident.getUserIds();
                     if (users == null) users = new ArrayList<>();
                     for (String userId : toUpdate.getAddUsers()) {
                         if (!users.contains(userId)) users.add(userId); 
                     }
-                    incident.setUsers(users);
+                    incident.setUserIds(users);
                 }
 
                 if (toUpdate.getRemoveUsers() != null) {
-                    List<String> users = incident.getUsers();
+                    List<String> users = incident.getUserIds();
                     if (users == null) users = new ArrayList<>();
                     for (String userId : toUpdate.getRemoveUsers()) {
                         users.remove(userId); 
                     }
-                    incident.setUsers(users);
+                    incident.setUserIds(users);
                 }
                 
-                toUpdate.setCalls(incident.getCalls());
-                toUpdate.setUsers(incident.getUsers());
+                toUpdate.setCallIds(incident.getCallIds());
+                toUpdate.setUserIds(incident.getUserIds());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -322,7 +317,6 @@ public abstract class IncidentRoutes2 {
         try {
             return ExchangeUtility.parseJsonBody(exchange, 1000, Incident.class);
         } catch (Exception e) {
-            AlarmBuilder alarmBuilder = new AlarmBuilder();
             return null;
         }
     }
