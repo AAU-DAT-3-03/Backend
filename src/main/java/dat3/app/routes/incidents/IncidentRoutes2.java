@@ -57,19 +57,19 @@ public abstract class IncidentRoutes2 {
             if (end == null && start != null) {
                 try {
                     return incident.getCreationDate() < start; 
-                } catch (Exception exception) { return false; }
+                } catch (Exception exception) { return true; }
             }
             if (end != null && start == null) {
                 try {
                     return incident.getCreationDate() > end; 
-                } catch (Exception exception) { return false; }
+                } catch (Exception exception) { return true; }
             }
             if (end != null && start != null) {
                 try {
                     return incident.getCreationDate() < start || incident.getCreationDate() > end;
-                } catch (Exception exception) { return false; }
+                } catch (Exception exception) { return true; }
             }
-            return false;
+            return true;
         });
 
         Response response = new Response();
