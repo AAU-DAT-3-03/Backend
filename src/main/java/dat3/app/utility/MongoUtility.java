@@ -13,10 +13,13 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 import dat3.app.ProjectSettings;
+import dat3.app.models.Alarm;
 import dat3.app.models.Company;
+import dat3.app.models.Misc;
 import dat3.app.models.Model;
 import dat3.app.models.Service;
 import dat3.app.models.User;
+import dat3.app.models.Alarm.AlarmBuilder;
 import dat3.app.models.Incident.IncidentBuilder;
 import dat3.app.models.StandardModel;
 import dat3.app.models.User.UserBuilder;
@@ -31,28 +34,46 @@ public abstract class MongoUtility {
         MongoDatabase db = getDatabase(client);
         db.drop(session);
         UserBuilder userBuilder = new UserBuilder();
+        MongoCollection<Document> miscColection = getCollection(client, "misc");
         MongoCollection<Document> userCollection = getCollection(client, "users");
         MongoCollection<Document> incidentCollection = getCollection(client, "incidents");
         MongoCollection<Document> companyCollection = getCollection(client, "companies");
         MongoCollection<Document> servicesCollection = getCollection(client, "services");
-
+        MongoCollection<Document> alarmCollection = getCollection(client, "alarms");
+        
+        if (new Misc().findOne(miscColection, session) == null) {
+            Misc misc = new Misc();
+            misc.setCaseNumber(10l);
+            misc.insertOne(miscColection, session);
+        }
+        
         for (Company company : TestData.randomCompanies()) {
             company.insertOne(companyCollection, session);
         }
+        
         List<Company> companies = MongoUtility.iterableToList(new Company().findMany(companyCollection, session));
         for (Service service : TestData.randomServices()) {
             service.setCompanyId(companies.get(TestData.randomIntExcl(companies.size())).getId());
             service.insertOne(servicesCollection, session);
         }
+        
+        List<Service> services = MongoUtility.iterableToList(new Service().findMany(servicesCollection, session));
+        for (Service service : services) {
+            for (int i = 0; i < TestData.randomIntExcl(5); i++) {
+                Alarm alarm = TestData.getRandomAlarm();
+                alarm.setServiceId(service.getId());
+                alarm.insertOne(alarmCollection, session);
+            }
+        }
 
         for (User user : TestData.personalizedUsers()) {
             user.insertOne(userCollection, session);
         }
+        
         for (User user : TestData.randomValidUsers()) {
             user.insertOne(userCollection, session);
         }
-
-
+        
         List<User> users = iterableToList(userBuilder.getUser().findMany(userCollection, session));
         Iterator<String> headers = TestData.randomIncidentnames().iterator();
         IncidentBuilder incidentBuilder = new IncidentBuilder();
@@ -67,17 +88,27 @@ public abstract class MongoUtility {
                 userIds.add(userToAdd.getId());
                 if (TestData.randomBoolean()) calls.add(userToAdd.getId());
             }
-
+            
+            Long caseNumber = Misc.getCaseNumberAndIncrement();
+            
+            AlarmBuilder alarmBuilder = new AlarmBuilder();
+            // Gets all the alarms from a random service. 
+            List<Alarm> alarms = MongoUtility.iterableToList(alarmBuilder.setServiceId(services.get(TestData.randomIntExcl(services.size())).getId()).getAlarm().findMany(alarmCollection, session));
+            List<String> alarmIds = new ArrayList<>();
+            alarms.forEach((Alarm alarm) -> {
+                if (TestData.randomBoolean()) alarmIds.add(alarm.getId());
+            });
             incidentBuilder
                 .setAcknowledgedBy(acknowledgedBy)
-                .setAlarms(null)
-                .setCalls(calls)
+                .setAlarmIds(alarmIds)
+                .setCallIds(calls)
                 .setCreationDate(System.currentTimeMillis())
+                .setCaseNumber(caseNumber)
                 .setHeader(headers.hasNext() ? headers.next() : null)
                 .setIncidentNote(acknowledgedBy != null ? "Data" : null)
                 .setPriority(TestData.randomIntExcl(4) + 1)
                 .setResolved(acknowledgedBy != null ? TestData.randomIntExcl(3) == 0 : false)
-                .setUsers(userIds)
+                .setUserIds(userIds)
                 .getIncident().insertOne(incidentCollection, session);
         }
 

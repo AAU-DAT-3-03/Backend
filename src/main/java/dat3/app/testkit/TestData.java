@@ -6,10 +6,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import dat3.app.models.Alarm;
 import dat3.app.models.Company;
 import dat3.app.models.Incident;
 import dat3.app.models.Service;
 import dat3.app.models.User;
+import dat3.app.models.Alarm.AlarmBuilder;
 import dat3.app.models.Company.CompanyBuilder;
 import dat3.app.models.Service.ServiceBuilder;
 import dat3.app.models.User.UserBuilder;
@@ -197,6 +199,13 @@ public class TestData {
         "settled",
     };
 
+    private static String[] alarmHeaders = new String[] {
+        "OOM-killed 3 times",
+        "Lost 345 connections in 1 minute",
+        "Core temp. above 90 degree rule",
+        "Container restarted 6 times",
+    };
+
     public static List<User> personalizedUsers() {
         String[] names = new String[] {
             "mads.byriel",
@@ -237,6 +246,10 @@ public class TestData {
         return shuffleList(unshuffledValidEmails(), 10);
     }
 
+    public static List<Alarm> randomAlarms() {
+        return shuffleList(unshuffledAlarms(), 10);
+    }
+    
     public static List<String> randomValidNames() {
         return shuffleList(unshuffledValidNames(), 10);
     }
@@ -255,6 +268,12 @@ public class TestData {
 
     public static List<Service> randomServices() {
         return shuffleList(unshuffledServices(), 10);
+    }
+    
+    public static Alarm getRandomAlarm() {
+        AlarmBuilder builder = new AlarmBuilder();
+        String alarmName = alarmHeaders[randomIntExcl(alarmHeaders.length)];
+        return builder.setName(alarmName).getAlarm();
     }
 
     public static <T> List<T> shuffleList(List<T> list, int randomness) {
@@ -293,6 +312,15 @@ public class TestData {
         return validEmails;
     }
 
+    public static List<Alarm> unshuffledAlarms() {
+        AlarmBuilder builder = new AlarmBuilder();
+        List<Alarm> alarms = new ArrayList<>();
+        for (String alarmName : alarmHeaders) {
+            alarms.add(builder.setName(alarmName).getAlarm());
+        }
+        return alarms;
+    }
+    
     public static List<Service> unshuffledServices() {
         ServiceBuilder builder = new ServiceBuilder();
         List<Service> services = new ArrayList<>();
