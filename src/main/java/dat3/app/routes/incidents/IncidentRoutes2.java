@@ -102,6 +102,7 @@ public abstract class IncidentRoutes2 {
                     });
                     toDisplay.setAcknowledgedBy(incident.getAcknowledgedBy());
                     toDisplay.setAlarmsPublic(alarms);
+                    toDisplay.setCompanyId(incident.getCompanyId());
                     toDisplay.setCallsPublic(calls);
                     toDisplay.setCreationDate(incident.getCreationDate());
                     toDisplay.setCaseNumber(incident.getCaseNumber());

@@ -20,7 +20,9 @@ import dat3.app.models.Model;
 import dat3.app.models.Service;
 import dat3.app.models.User;
 import dat3.app.models.Alarm.AlarmBuilder;
+import dat3.app.models.Company.CompanyBuilder;
 import dat3.app.models.Incident.IncidentBuilder;
+import dat3.app.models.Service.ServiceBuilder;
 import dat3.app.models.StandardModel;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.testkit.TestData;
@@ -92,16 +94,23 @@ public abstract class MongoUtility {
             Long caseNumber = Misc.getCaseNumberAndIncrement();
             
             AlarmBuilder alarmBuilder = new AlarmBuilder();
-            // Gets all the alarms from a random service. 
             List<Alarm> alarms = MongoUtility.iterableToList(alarmBuilder.setServiceId(services.get(TestData.randomIntExcl(services.size())).getId()).getAlarm().findMany(alarmCollection, session));
+            if (alarms.size() == 0) continue;
+            Company company = alarms.size() > 0 ? findCompanyFromAlarm(client, session, servicesCollection, companyCollection, alarms.get(0)) : null; 
             List<String> alarmIds = new ArrayList<>();
+
             alarms.forEach((Alarm alarm) -> {
-                if (TestData.randomBoolean()) alarmIds.add(alarm.getId());
+                if (alarmIds.size() == 0) {
+                    alarmIds.add(alarm.getId());
+                }
+                else if (TestData.randomBoolean()) alarmIds.add(alarm.getId());
             });
+
             incidentBuilder
                 .setAcknowledgedBy(acknowledgedBy)
                 .setAlarmIds(alarmIds)
                 .setCallIds(calls)
+                .setCompanyId(company != null ? company.getId() : null)
                 .setCreationDate(System.currentTimeMillis())
                 .setCaseNumber(caseNumber)
                 .setHeader(headers.hasNext() ? headers.next() : null)
@@ -114,6 +123,18 @@ public abstract class MongoUtility {
 
         session.close();
         client.close();
+    }
+
+    private static Company findCompanyFromAlarm(MongoClient client, ClientSession session, MongoCollection<Document> serviceCollection, MongoCollection<Document> companyCollection, Alarm alarm) {
+        ServiceBuilder serviceBuilder = new ServiceBuilder();
+        CompanyBuilder companyBuilder = new CompanyBuilder();
+        try {
+            Service service = serviceBuilder.setId(alarm.getServiceId()).getService().findOne(serviceCollection, session);
+            Company company = companyBuilder.setId(service.getCompanyId()).getCompany().findOne(companyCollection, session);
+            return  company;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static MongoClient getClient() {
