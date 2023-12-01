@@ -5,14 +5,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import dat3.app.models.Alarm;
-import dat3.app.models.Company;
 import dat3.app.models.Event;
 import dat3.app.models.Event.EventBuilder;
 import dat3.app.models.Incident.IncidentBuilder;
 import dat3.app.models.Incident.IncidentPublic;
+import dat3.app.models.Incident.PutBody;
+import dat3.app.models.Incident.MergeBody;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.server.Auth;
+
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -26,7 +27,6 @@ import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.models.Incident;
 import dat3.app.models.Misc;
-import dat3.app.models.User;
 import dat3.app.models.Alarm.AlarmBuilder;
 import dat3.app.models.Company.CompanyBuilder;
 import dat3.app.server.Response;
@@ -52,34 +52,16 @@ public abstract class IncidentRoutes2 {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
-        
+
         Long end = documentFilter.getLong("end");
         Long start = documentFilter.getLong("start");
-        result.removeIf((Incident incident) -> {
-            if (end == null && start == null) return false;
-            if (end == null && start != null) {
-                try {
-                    return incident.getCreationDate() < start; 
-                } catch (Exception exception) { return true; }
-            }
-            if (end != null && start == null) {
-                try {
-                    return incident.getCreationDate() > end; 
-                } catch (Exception exception) { return true; }
-            }
-            if (end != null && start != null) {
-                try {
-                    return incident.getCreationDate() < start || incident.getCreationDate() > end;
-                } catch (Exception exception) { return true; }
-            }
-            return true;
-        });
-        
+        result = Incident.filterByPeriod(result, start, end);
+
         List<IncidentPublic> resultPublic = new ArrayList<>();
         result.forEach((Incident incident) -> {
             resultPublic.add(incident.toPublic());
         });
-        
+
         for (Incident incident : result) {
             Event eventFilter = new EventBuilder().setAffectedObjectId(incident.getId()).getEvent();
             List<Event> eventLog = ExchangeUtility.defaultGetOperation(eventFilter, "events");
@@ -91,7 +73,9 @@ public abstract class IncidentRoutes2 {
         response.setStatusCode(0);
         try {
             response.sendResponse(exchange);
-        } catch (Exception e) {e.printStackTrace();}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void delete(HttpExchange exchange) {
@@ -100,7 +84,7 @@ public abstract class IncidentRoutes2 {
             return;
         }
 
-        Incident filter = parseBody(exchange);
+        Incident filter = Incident.parseBody(exchange);
         if (filter == null || filter.getId() == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
@@ -126,7 +110,8 @@ public abstract class IncidentRoutes2 {
 
         try {
             response.sendResponse(exchange);
-        } catch (IOException e) {}
+        } catch (IOException e) {
+        }
     }
 
     public static void put(HttpExchange exchange) {
@@ -135,28 +120,31 @@ public abstract class IncidentRoutes2 {
             return;
         }
 
-        IncidentPut toUpdate = parseBodyPut(exchange);
-        if (toUpdate == null || toUpdate.getId() == null || toUpdate.getUserIds() != null || toUpdate.getCaseNumber() != null) {
+        PutBody toUpdate = Incident.parseBodyPut(exchange);
+        if (toUpdate == null || toUpdate.getId() == null || toUpdate.getUserIds() != null
+                || toUpdate.getCaseNumber() != null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
-        
+
         Incident filter = new Incident();
         filter.setId(toUpdate.getId());
-        toUpdate.setId(null);   
+        toUpdate.setId(null);
 
-        // Change the toUpdate such that it contains the users that are specified by addUsers, removeUsers, addCalls, removeCalls.
-        updateCallsAndUsers(filter, toUpdate);
-        
+        // Change the toUpdate such that it contains the users that are specified by
+        // addUsers, removeUsers, addCalls, removeCalls.
+        Incident.updateCallsAndUsers(filter, toUpdate);
+
         UpdateResult result = ExchangeUtility.defaultPutOperation(filter, toUpdate, "incidents");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
             return;
         }
         try {
-            Event event = new EventBuilder().setAffectedObjectId(toUpdate.getId()).setMessage("temp message").setDate(new Date().getTime()).setUserId(Auth.auth(exchange).getId()).getEvent();
+            Event event = new EventBuilder().setAffectedObjectId(toUpdate.getId()).setMessage("temp message")
+                    .setDate(new Date().getTime()).setUserId(Auth.auth(exchange).getId()).getEvent();
             ExchangeUtility.defaultPostOperation(event, "events");
-        } catch(Exception e) {
+        } catch (Exception e) {
             System.out.println("Couldnt log an event for incident" + toUpdate.getId());
         }
 
@@ -171,58 +159,7 @@ public abstract class IncidentRoutes2 {
 
         try {
             response.sendResponse(exchange);
-        } catch (IOException e) {}
-    }
-
-    private static void updateCallsAndUsers(Incident filter, IncidentPut toUpdate) {
-        try (MongoClient client = MongoUtility.getClient()) {
-            try (ClientSession session = client.startSession()) {
-                MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
-                Incident incident = filter.findOne(incidentCollection, session);
-
-                // Doesn't check if the user id is ACTUALLY a user...
-                if (toUpdate.getAddCalls() != null) {
-                    List<String> calls = incident.getCallIds();
-                    if (calls == null) calls = new ArrayList<>();
-                    for (String userId : toUpdate.getAddCalls()) {
-                        if (!calls.contains(userId)) calls.add(userId); 
-                    }
-                    incident.setCallIds(calls);
-                }
-
-                if (toUpdate.getRemoveCalls() != null) {
-                    List<String> calls = incident.getCallIds();
-                    if (calls == null) calls = new ArrayList<>();
-                    for (String userId : toUpdate.getRemoveCalls()) {
-                        calls.remove(userId); 
-                    }
-                    incident.setCallIds(calls);
-                }
-                
-                if (toUpdate.getAddUsers() != null) {
-                    List<String> users = incident.getUserIds();
-                    if (users == null) users = new ArrayList<>();
-                    for (String userId : toUpdate.getAddUsers()) {
-                        if (!users.contains(userId)) users.add(userId); 
-                    }
-                    incident.setUserIds(users);
-                }
-
-                if (toUpdate.getRemoveUsers() != null) {
-                    List<String> users = incident.getUserIds();
-                    if (users == null) users = new ArrayList<>();
-                    for (String userId : toUpdate.getRemoveUsers()) {
-                        users.remove(userId); 
-                    }
-                    incident.setUserIds(users);
-                }
-                
-                toUpdate.setCallIds(incident.getCallIds());
-                toUpdate.setUserIds(incident.getUserIds());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
+        } catch (IOException e) {
         }
     }
 
@@ -231,8 +168,8 @@ public abstract class IncidentRoutes2 {
             ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
-        
-        Incident filter = parseBody(exchange);
+
+        Incident filter = Incident.parseBody(exchange);
         if (filter == null || filter.getId() != null || filter.getCaseNumber() != null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
@@ -263,7 +200,8 @@ public abstract class IncidentRoutes2 {
 
         try {
             response.sendResponse(exchange);
-        } catch (IOException e) {}
+        } catch (IOException e) {
+        }
     }
 
     public static void merge(HttpExchange exchange) {
@@ -271,8 +209,8 @@ public abstract class IncidentRoutes2 {
             ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
-        
-        MergeBody mergeBody = parseMergeBody(exchange);
+
+        MergeBody mergeBody = Incident.parseMergeBody(exchange);
         if (mergeBody.getFirst() == null || mergeBody.getSecond() == null) {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
@@ -284,10 +222,12 @@ public abstract class IncidentRoutes2 {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
 
                 IncidentBuilder incidentBuilder = new IncidentBuilder();
-                Incident first = incidentBuilder.setId(mergeBody.getFirst()).getIncident().findOne(incidentCollection, session);
-                Incident second = incidentBuilder.setId(mergeBody.getSecond()).getIncident().findOne(incidentCollection, session);
+                Incident first = incidentBuilder.setId(mergeBody.getFirst()).getIncident().findOne(incidentCollection,
+                        session);
+                Incident second = incidentBuilder.setId(mergeBody.getSecond()).getIncident().findOne(incidentCollection,
+                        session);
 
-                Incident merged = mergeIncidents(first, second);
+                Incident merged = first.mergeIncident(second);
 
                 first.setResolved(true);
                 second.setResolved(true);
@@ -296,7 +236,8 @@ public abstract class IncidentRoutes2 {
 
                 merged.insertOne(incidentCollection, session);
                 mergedIncident = merged.findOne(incidentCollection, session);
-                if (mergedIncident == null) throw new Exception("New incident wasn't inserted correctly.");
+                if (mergedIncident == null)
+                    throw new Exception("New incident wasn't inserted correctly.");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -305,13 +246,14 @@ public abstract class IncidentRoutes2 {
         }
 
         IncidentPublic mergedIncidentPublic = toPublic(mergedIncident);
-        
+
         Response response = new Response();
         response.setMsg(mergedIncidentPublic);
         response.setStatusCode(0);
         try {
             response.sendResponse(exchange);
-        } catch (IOException e) {}
+        } catch (IOException e) {
+        }
     }
 
     private static IncidentPublic toPublic(Incident incident) {
@@ -326,21 +268,25 @@ public abstract class IncidentRoutes2 {
 
                 IncidentPublic pub = new IncidentPublic();
 
-                pub.setAcknowledgedByPublic(userBuilder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session));
+                pub.setAcknowledgedByPublic(
+                        userBuilder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session));
                 pub.setAlarmsPublic(new ArrayList<>());
                 incident.getAlarmIds().forEach((String id) -> {
                     try {
                         pub.getAlarmsPublic().add(alarmBuilder.setId(id).getAlarm().findOne(alarmCollection, session));
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                 });
                 pub.setCallsPublic(new ArrayList<>());
                 incident.getCallIds().forEach((String id) -> {
                     try {
                         pub.getCallsPublic().add(userBuilder.setId(id).getUser().findOne(userCollection, session));
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                 });
                 pub.setCaseNumber(incident.getCaseNumber());
-                pub.setCompanyPublic(companyBuilder.setId(incident.getCompanyId()).getCompany().findOne(companyCollection, session));
+                pub.setCompanyPublic(
+                        companyBuilder.setId(incident.getCompanyId()).getCompany().findOne(companyCollection, session));
                 pub.setCreationDate(incident.getCreationDate());
                 pub.setHeader(incident.getHeader());
                 pub.setId(incident.getId());
@@ -351,7 +297,8 @@ public abstract class IncidentRoutes2 {
                 incident.getUserIds().forEach((String id) -> {
                     try {
                         pub.getUsersPublic().add(userBuilder.setId(id).getUser().findOne(userCollection, session));
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                 });
 
                 return pub;
@@ -362,62 +309,13 @@ public abstract class IncidentRoutes2 {
         }
     }
 
-    private static Incident mergeIncidents(Incident first, Incident second) {
-        Incident merged = first.clone();
-        if (merged == null) return null;
-
-        if (merged.getAcknowledgedBy() == null) merged.setAcknowledgedBy(second.getAcknowledgedBy());
-        
-        Long caseNumber = Misc.getCaseNumberAndIncrement();
-        if (caseNumber == null) return null;
-        merged.setCaseNumber(caseNumber);
-
-        second.getAlarmIds().forEach((String id) -> {
-            if (!merged.getAlarmIds().contains(id)) merged.getAlarmIds().add(id);
-        });
-        second.getCallIds().forEach((String id) -> {
-            if (!merged.getCallIds().contains(id)) merged.getCallIds().add(id);
-        });
-        second.getUserIds().forEach((String id) -> {
-            if (!merged.getUserIds().contains(id)) merged.getUserIds().add(id);
-        });
-        
-        merged.setIncidentNote(merged.getIncidentNote() != null ? merged.getIncidentNote() : "" + "\n" + second.getIncidentNote() != null ? second.getIncidentNote() : "");
-
-        return merged;
-    }
-
-    private static MergeBody parseMergeBody(HttpExchange exchange) {
-        try {
-            return ExchangeUtility.parseJsonBody(exchange, 1000, MergeBody.class);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static IncidentPut parseBodyPut(HttpExchange exchange) {
-        try {
-            return ExchangeUtility.parseJsonBody(exchange, 1000, IncidentPut.class);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static Incident parseBody(HttpExchange exchange) {
-        try {
-            return ExchangeUtility.parseJsonBody(exchange, 1000, Incident.class);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     private static Document parseQueryString(HttpExchange exchange) {
         try {
             Document document = new Document();
             String[] tuples = exchange.getRequestURI().getQuery().split("&");
             for (String tuple : tuples) {
                 String[] pair = tuple.split("=");
-                
+
                 if (pair[0].equals("end")) {
                     document.put("end", Long.parseLong(pair[1]));
                     continue;
@@ -427,7 +325,7 @@ public abstract class IncidentRoutes2 {
                     document.put("start", Long.parseLong(pair[1]));
                     continue;
                 }
-                
+
                 if (pair[0].equals("priority")) {
                     document.put("priority", Integer.parseInt(pair[1]));
                     continue;
@@ -459,7 +357,8 @@ public abstract class IncidentRoutes2 {
                 }
 
                 if (pair[0].equals("id")) {
-                    if (pair[1].equals("*")) return new Document();
+                    if (pair[1].equals("*"))
+                        return new Document();
 
                     document.put("_id", new ObjectId(pair[1]));
                     continue;
@@ -483,51 +382,4 @@ public abstract class IncidentRoutes2 {
             return null;
         }
     }
-}
-
-class IncidentPut extends Incident {
-    private List<String> addUsers;
-    private List<String> removeUsers;
-    private List<String> addCalls;
-    private List<String> removeCalls;
-    public List<String> getAddUsers() {
-        return addUsers;
-    }
-    public void setAddUsers(List<String> addUsers) {
-        this.addUsers = addUsers;
-    }
-    public List<String> getRemoveUsers() {
-        return removeUsers;
-    }
-    public void setRemoveUsers(List<String> removeUsers) {
-        this.removeUsers = removeUsers;
-    }
-    public List<String> getAddCalls() {
-        return addCalls;
-    }
-    public void setAddCalls(List<String> addCalls) {
-        this.addCalls = addCalls;
-    }
-    public List<String> getRemoveCalls() {
-        return removeCalls;
-    }
-    public void setRemoveCalls(List<String> removeCalls) {
-        this.removeCalls = removeCalls;
-    }
-}
-class MergeBody {
-    private String first;
-    private String second;
-    public String getFirst() {
-        return first;
-    }
-    public void setFirst(String first) {
-        this.first = first;
-    }
-    public String getSecond() {
-        return second;
-    }
-    public void setSecond(String second) {
-        this.second = second;
-    } 
 }
