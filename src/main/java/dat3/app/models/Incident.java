@@ -14,6 +14,7 @@ public class Incident extends StandardModel<Incident> {
     private Long creationDate = null;
     private Long caseNumber = null;
     private String id = null;
+    private String companyId = null;
     private List<String> userIds = null;
     private List<String> alarmIds = null;
     private List<String> callIds = null;
@@ -62,6 +63,12 @@ public class Incident extends StandardModel<Incident> {
     }
     public void setId(String id) {
         this.id = id;
+    }
+    public String getCompanyId() {
+        return companyId;
+    }
+    public void setCompanyId(String companyId) {
+        this.companyId = companyId;
     }
     public List<String> getUserIds() {
         return userIds;
@@ -125,6 +132,10 @@ public class Incident extends StandardModel<Incident> {
             incident.setId(id);
             return this;
         }
+        public IncidentBuilder setCompanyId(String id) {
+            incident.setCompanyId(id);
+            return this;
+        }
         public IncidentBuilder setUserIds(List<String> users) {
             incident.setUserIds(users);
             return this;
@@ -162,6 +173,7 @@ public class Incident extends StandardModel<Incident> {
         if (this.creationDate != null) document.append("creationDate", this.creationDate);
         if (this.caseNumber != null) document.append("caseNumber", this.caseNumber);
         if (this.id != null) document.append("_id", new ObjectId(this.id));
+        if (this.companyId != null) document.append("companyId", new ObjectId(this.companyId));
         if (this.incidentNote != null) document.append("incidentNote", this.incidentNote);
         if (this.userIds != null) {
             List<ObjectId> ids = new ArrayList<>();
@@ -203,6 +215,7 @@ public class Incident extends StandardModel<Incident> {
         if (document.containsKey("creationDate")) incident.creationDate = document.getLong("creationDate");
         if (document.containsKey("caseNumber")) incident.caseNumber = document.getLong("caseNumber");
         if (document.containsKey("_id")) incident.id = document.getObjectId("_id").toHexString();
+        if (document.containsKey("companyId")) incident.companyId = document.getObjectId("companyId").toHexString();
         if (document.containsKey("incidentNote")) incident.incidentNote = document.getString("incidentNote");
         
         if (document.containsKey("users")) {
