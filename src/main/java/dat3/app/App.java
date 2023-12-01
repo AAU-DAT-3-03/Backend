@@ -65,6 +65,7 @@ public class App {
         server.addDeleteRoute("/incidents", IncidentRoutes2::delete);
         server.addPutRoute("/incidents", IncidentRoutes2::put);
         server.addPostRoute("/incidents", IncidentRoutes2::post);
+        server.addPostRoute("/merge", IncidentRoutes2::merge);
 
         // Users
         server.addGetRoute("/users", UserRoutes2::get);

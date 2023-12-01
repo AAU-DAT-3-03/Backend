@@ -6,8 +6,11 @@ import java.util.Date;
 import java.util.List;
 
 import dat3.app.models.Alarm;
+import dat3.app.models.Company;
 import dat3.app.models.Event;
 import dat3.app.models.Event.EventBuilder;
+import dat3.app.models.Incident.IncidentBuilder;
+import dat3.app.models.Incident.IncidentPublic;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.server.Auth;
 import org.bson.Document;
@@ -25,6 +28,7 @@ import dat3.app.models.Incident;
 import dat3.app.models.Misc;
 import dat3.app.models.User;
 import dat3.app.models.Alarm.AlarmBuilder;
+import dat3.app.models.Company.CompanyBuilder;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
 import dat3.app.utility.MongoUtility;
@@ -72,52 +76,9 @@ public abstract class IncidentRoutes2 {
         });
         
         List<IncidentPublic> resultPublic = new ArrayList<>();
-        try (MongoClient client = MongoUtility.getClient()) {
-            try (ClientSession session = client.startSession()) {
-                MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
-                MongoCollection<Document> alarmCollection = MongoUtility.getCollection(client, "alarms");
-
-                result.forEach((Incident incident) -> {
-                    IncidentPublic toDisplay = new IncidentPublic();
-                    List<User> calls = new ArrayList<>();
-                    List<User> users = new ArrayList<>();
-                    List<Alarm> alarms = new ArrayList<>();
-                    incident.getCallIds().forEach((String id) -> {
-                        UserBuilder builder = new UserBuilder();
-                        try {
-                            calls.add(builder.setId(id).getUser().findOne(userCollection, session));
-                        } catch (Exception e) {}
-                    });
-                    incident.getAlarmIds().forEach((String id) -> {
-                        AlarmBuilder builder = new AlarmBuilder();
-                        try {
-                            alarms.add(builder.setId(id).getAlarm().findOne(alarmCollection, session));
-                        } catch (Exception e) {}
-                    });
-                    incident.getUserIds().forEach((String id) -> {
-                        UserBuilder builder = new UserBuilder();
-                        try {
-                            users.add(builder.setId(id).getUser().findOne(userCollection, session));
-                        } catch (Exception e) {}
-                    });
-                    toDisplay.setAcknowledgedBy(incident.getAcknowledgedBy());
-                    toDisplay.setAlarmsPublic(alarms);
-                    toDisplay.setCallsPublic(calls);
-                    toDisplay.setCreationDate(incident.getCreationDate());
-                    toDisplay.setCaseNumber(incident.getCaseNumber());
-                    toDisplay.setHeader(incident.getHeader());
-                    toDisplay.setId(incident.getId());
-                    toDisplay.setIncidentNote(incident.getIncidentNote());
-                    toDisplay.setPriority(incident.getPriority());
-                    toDisplay.setResolved(incident.getResolved());
-                    toDisplay.setUsersPublic(users);
-
-                    resultPublic.add(toDisplay);
-                });
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        result.forEach((Incident incident) -> {
+            resultPublic.add(incident.toPublic());
+        });
         
         for (Incident incident : result) {
             Event eventFilter = new EventBuilder().setAffectedObjectId(incident.getId()).getEvent();
@@ -305,6 +266,135 @@ public abstract class IncidentRoutes2 {
         } catch (IOException e) {}
     }
 
+    public static void merge(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+        
+        MergeBody mergeBody = parseMergeBody(exchange);
+        if (mergeBody.getFirst() == null || mergeBody.getSecond() == null) {
+            ExchangeUtility.invalidQueryResponse(exchange);
+            return;
+        }
+
+        Incident mergedIncident;
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
+
+                IncidentBuilder incidentBuilder = new IncidentBuilder();
+                Incident first = incidentBuilder.setId(mergeBody.getFirst()).getIncident().findOne(incidentCollection, session);
+                Incident second = incidentBuilder.setId(mergeBody.getSecond()).getIncident().findOne(incidentCollection, session);
+
+                Incident merged = mergeIncidents(first, second);
+
+                first.setResolved(true);
+                second.setResolved(true);
+                first.updateOne(incidentCollection, session, incidentBuilder.setId(first.getId()).getIncident());
+                second.updateOne(incidentCollection, session, incidentBuilder.setId(second.getId()).getIncident());
+
+                merged.insertOne(incidentCollection, session);
+                mergedIncident = merged.findOne(incidentCollection, session);
+                if (mergedIncident == null) throw new Exception("New incident wasn't inserted correctly.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ExchangeUtility.queryExecutionErrorResponse(exchange);
+            return;
+        }
+
+        IncidentPublic mergedIncidentPublic = toPublic(mergedIncident);
+        
+        Response response = new Response();
+        response.setMsg(mergedIncidentPublic);
+        response.setStatusCode(0);
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {}
+    }
+
+    private static IncidentPublic toPublic(Incident incident) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
+                MongoCollection<Document> companyCollection = MongoUtility.getCollection(client, "companies");
+                MongoCollection<Document> alarmCollection = MongoUtility.getCollection(client, "alarms");
+                UserBuilder userBuilder = new UserBuilder();
+                CompanyBuilder companyBuilder = new CompanyBuilder();
+                AlarmBuilder alarmBuilder = new AlarmBuilder();
+
+                IncidentPublic pub = new IncidentPublic();
+
+                pub.setAcknowledgedByPublic(userBuilder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session));
+                pub.setAlarmsPublic(new ArrayList<>());
+                incident.getAlarmIds().forEach((String id) -> {
+                    try {
+                        pub.getAlarmsPublic().add(alarmBuilder.setId(id).getAlarm().findOne(alarmCollection, session));
+                    } catch (Exception e) {}
+                });
+                pub.setCallsPublic(new ArrayList<>());
+                incident.getCallIds().forEach((String id) -> {
+                    try {
+                        pub.getCallsPublic().add(userBuilder.setId(id).getUser().findOne(userCollection, session));
+                    } catch (Exception e) {}
+                });
+                pub.setCaseNumber(incident.getCaseNumber());
+                pub.setCompanyPublic(companyBuilder.setId(incident.getCompanyId()).getCompany().findOne(companyCollection, session));
+                pub.setCreationDate(incident.getCreationDate());
+                pub.setHeader(incident.getHeader());
+                pub.setId(incident.getId());
+                pub.setIncidentNote(incident.getIncidentNote());
+                pub.setPriority(incident.getPriority());
+                pub.setResolved(incident.getResolved());
+                pub.setUsersPublic(new ArrayList<>());
+                incident.getUserIds().forEach((String id) -> {
+                    try {
+                        pub.getUsersPublic().add(userBuilder.setId(id).getUser().findOne(userCollection, session));
+                    } catch (Exception e) {}
+                });
+
+                return pub;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static Incident mergeIncidents(Incident first, Incident second) {
+        Incident merged = first.clone();
+        if (merged == null) return null;
+
+        if (merged.getAcknowledgedBy() == null) merged.setAcknowledgedBy(second.getAcknowledgedBy());
+        
+        Long caseNumber = Misc.getCaseNumberAndIncrement();
+        if (caseNumber == null) return null;
+        merged.setCaseNumber(caseNumber);
+
+        second.getAlarmIds().forEach((String id) -> {
+            if (!merged.getAlarmIds().contains(id)) merged.getAlarmIds().add(id);
+        });
+        second.getCallIds().forEach((String id) -> {
+            if (!merged.getCallIds().contains(id)) merged.getCallIds().add(id);
+        });
+        second.getUserIds().forEach((String id) -> {
+            if (!merged.getUserIds().contains(id)) merged.getUserIds().add(id);
+        });
+        
+        merged.setIncidentNote(merged.getIncidentNote() != null ? merged.getIncidentNote() : "" + "\n" + second.getIncidentNote() != null ? second.getIncidentNote() : "");
+
+        return merged;
+    }
+
+    private static MergeBody parseMergeBody(HttpExchange exchange) {
+        try {
+            return ExchangeUtility.parseJsonBody(exchange, 1000, MergeBody.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static IncidentPut parseBodyPut(HttpExchange exchange) {
         try {
             return ExchangeUtility.parseJsonBody(exchange, 1000, IncidentPut.class);
@@ -425,27 +515,19 @@ class IncidentPut extends Incident {
         this.removeCalls = removeCalls;
     }
 }
-class IncidentPublic extends Incident {
-    private List<User> calls;
-    private List<Alarm> alarms;
-    private List<User> users;
-
-    public List<User> getCallsPublic() {
-        return calls;
+class MergeBody {
+    private String first;
+    private String second;
+    public String getFirst() {
+        return first;
     }
-    public void setCallsPublic(List<User> calls) {
-        this.calls = calls;
+    public void setFirst(String first) {
+        this.first = first;
     }
-    public List<Alarm> getAlarmsPublic() {
-        return alarms;
+    public String getSecond() {
+        return second;
     }
-    public void setAlarmsPublic(List<Alarm> alarms) {
-        this.alarms = alarms;
-    }
-    public List<User> getUsersPublic() {
-        return users;
-    }
-    public void setUsersPublic(List<User> users) {
-        this.users = users;
-    }
-} 
+    public void setSecond(String second) {
+        this.second = second;
+    } 
+}
