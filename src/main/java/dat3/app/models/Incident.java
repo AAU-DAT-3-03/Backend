@@ -3,6 +3,15 @@ package dat3.app.models;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import com.mongodb.client.ClientSession;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+
+import dat3.app.models.Alarm.AlarmBuilder;
+import dat3.app.models.Company.CompanyBuilder;
+import dat3.app.models.User.UserBuilder;
+import dat3.app.utility.MongoUtility;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -244,5 +253,139 @@ public class Incident extends StandardModel<Incident> {
         }
         
         return incident;
+    }
+    // ---------- Object Methods ---------- //
+    @Override
+    public Incident clone() {
+        IncidentBuilder builder = new IncidentBuilder();
+        
+        Long caseNumber = Misc.getCaseNumberAndIncrement();
+        if (caseNumber == null) return null;
+        
+        List<String> newAlarmIds = new ArrayList<>();
+        alarmIds.forEach((String id) -> {
+            newAlarmIds.add(id);
+        });
+
+        List<String> newCallIds = new ArrayList<>();
+        callIds.forEach((String id) -> {
+            newCallIds.add(id);
+        });
+        
+        List<String> newUserIds = new ArrayList<>();
+        userIds.forEach((String id) -> {
+            newUserIds.add(id);
+        });
+        
+        builder.setAcknowledgedBy(acknowledgedBy)
+               .setAlarmIds(newAlarmIds) 
+               .setCallIds(newCallIds)
+               .setCompanyId(companyId)
+               .setCreationDate(creationDate)
+               .setHeader(header)
+               .setIncidentNote(incidentNote)
+               .setPriority(priority)
+               .setResolved(resolved)
+               .setUserIds(newUserIds);
+        return builder.getIncident();
+    }
+    public IncidentPublic toPublic() {
+        return Incident.toPublic(this);
+    }
+    // ---------- Static Methods ---------- //
+    private static IncidentPublic toPublic(Incident incident) {
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> userCollection = MongoUtility.getCollection(client, "users");
+                MongoCollection<Document> companyCollection = MongoUtility.getCollection(client, "companies");
+                MongoCollection<Document> alarmCollection = MongoUtility.getCollection(client, "alarms");
+                UserBuilder userBuilder = new UserBuilder();
+                CompanyBuilder companyBuilder = new CompanyBuilder();
+                AlarmBuilder alarmBuilder = new AlarmBuilder();
+
+                IncidentPublic pub = new IncidentPublic();
+
+                pub.setAcknowledgedByPublic(userBuilder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session));
+                pub.setAlarmsPublic(new ArrayList<>());
+                incident.getAlarmIds().forEach((String id) -> {
+                    try {
+                        pub.getAlarmsPublic().add(alarmBuilder.setId(id).getAlarm().findOne(alarmCollection, session));
+                    } catch (Exception e) {}
+                });
+                pub.setCallsPublic(new ArrayList<>());
+                incident.getCallIds().forEach((String id) -> {
+                    try {
+                        pub.getCallsPublic().add(userBuilder.setId(id).getUser().findOne(userCollection, session));
+                    } catch (Exception e) {}
+                });
+                pub.setCaseNumber(incident.getCaseNumber());
+                pub.setCompanyPublic(companyBuilder.setId(incident.getCompanyId()).getCompany().findOne(companyCollection, session));
+                pub.setCreationDate(incident.getCreationDate());
+                pub.setHeader(incident.getHeader());
+                pub.setId(incident.getId());
+                pub.setIncidentNote(incident.getIncidentNote());
+                pub.setPriority(incident.getPriority());
+                pub.setResolved(incident.getResolved());
+                pub.setUsersPublic(new ArrayList<>());
+                incident.getUserIds().forEach((String id) -> {
+                    try {
+                        pub.getUsersPublic().add(userBuilder.setId(id).getUser().findOne(userCollection, session));
+                    } catch (Exception e) {}
+                });
+
+                return pub;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    // ---------- Static Classes ---------- //
+    public static class IncidentPublic extends Incident {
+        private List<User> calls;
+        private List<Alarm> alarms;
+        private List<User> users;
+        private Company companyPublic;
+        private User acknowledgedByPublic;
+
+        public Company getCompanyPublic() {
+            return companyPublic;
+        }
+
+        public void setCompanyPublic(Company companyPublic) {
+            this.companyPublic = companyPublic;
+        }
+
+        public User getAcknowledgedByPublic() {
+            return acknowledgedByPublic;
+        }
+
+        public void setAcknowledgedByPublic(User acknowledgedByPublic) {
+            this.acknowledgedByPublic = acknowledgedByPublic;
+        }
+
+        public List<User> getCallsPublic() {
+            return calls;
+        }
+
+        public void setCallsPublic(List<User> calls) {
+            this.calls = calls;
+        }
+
+        public List<Alarm> getAlarmsPublic() {
+            return alarms;
+        }
+
+        public void setAlarmsPublic(List<Alarm> alarms) {
+            this.alarms = alarms;
+        }
+
+        public List<User> getUsersPublic() {
+            return users;
+        }
+
+        public void setUsersPublic(List<User> users) {
+            this.users = users;
+        }
     }
 }

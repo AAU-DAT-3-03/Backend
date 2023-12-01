@@ -91,7 +91,6 @@ public abstract class MongoUtility {
                 if (TestData.randomBoolean()) calls.add(userToAdd.getId());
             }
             
-            Long caseNumber = Misc.getCaseNumberAndIncrement();
             
             AlarmBuilder alarmBuilder = new AlarmBuilder();
             List<Alarm> alarms = MongoUtility.iterableToList(alarmBuilder.setServiceId(services.get(TestData.randomIntExcl(services.size())).getId()).getAlarm().findMany(alarmCollection, session));
@@ -99,6 +98,8 @@ public abstract class MongoUtility {
             Company company = alarms.size() > 0 ? findCompanyFromAlarm(client, session, servicesCollection, companyCollection, alarms.get(0)) : null; 
             List<String> alarmIds = new ArrayList<>();
 
+            Long caseNumber = Misc.getCaseNumberAndIncrement();
+            
             alarms.forEach((Alarm alarm) -> {
                 if (alarmIds.size() == 0) {
                     alarmIds.add(alarm.getId());
