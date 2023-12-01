@@ -299,7 +299,6 @@ public class Incident extends StandardModel<Incident> {
             document.getList("alarms", ObjectId.class).forEach((ObjectId id) -> {
                 incident.alarmIds.add(id.toHexString());
             });
-            ;
         }
         if (document.containsKey("calls")) {
             incident.callIds = new ArrayList<>();
