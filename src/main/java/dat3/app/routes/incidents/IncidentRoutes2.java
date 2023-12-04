@@ -135,7 +135,7 @@ public abstract class IncidentRoutes2 {
             System.out.println("Couldn't find incident in DB for eventlog");
         }
         String eventLogMessage = "Error";
-        if(change.containsKey("priority") && incidentBeforeChange != null) eventLogMessage = "Priority changed from: " + incidentBeforeChange.getPriority().toString() + " to: " + toUpdate.getPriority().toString();
+        if(change.containsKey("priority") && incidentBeforeChange != null) eventLogMessage = "Priority changed from: " + incidentBeforeChange.getPriority().toString() + " to " + toUpdate.getPriority().toString();
         if(change.containsKey("resolved") && incidentBeforeChange != null) eventLogMessage = "Incident marked as resolved";
         if(change.containsKey("header") && incidentBeforeChange != null) eventLogMessage = "Header changed from: " + incidentBeforeChange.getHeader() + " to: " + toUpdate.getHeader();
         if(change.containsKey("acknowledgedBy") && incidentBeforeChange != null) eventLogMessage = "Incident marked as acknowledged";
@@ -151,7 +151,7 @@ public abstract class IncidentRoutes2 {
             eventLogMessage += ".";
         }
         if(toUpdate.getRemoveUsers() != null && incidentBeforeChange != null) {
-            eventLogMessage = "removed users: ";
+            eventLogMessage = "Removed users: ";
             for (String removeUserId: toUpdate.getRemoveUsers()) {
                 User userFilter = new UserBuilder().setId(removeUserId).getUser();
                 eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName();
@@ -275,6 +275,7 @@ public abstract class IncidentRoutes2 {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
                 MongoCollection<Document> eventCollection = MongoUtility.getCollection(client, "events");
+                MongoCollection<Document> companyCollection = MongoUtility.getCollection(client, "companies");
 
                 IncidentBuilder incidentBuilder = new IncidentBuilder();
                 Incident first = incidentBuilder.setId(mergeBody.getFirst()).getIncident().findOne(incidentCollection,
@@ -302,7 +303,7 @@ public abstract class IncidentRoutes2 {
                         event.setAffectedObjectId(mergedIncident.getId());
                         event.insertOne(eventCollection, session);
                     }
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                 }
                 // Get all events from second incident and copy over to merged incident
                 try {
@@ -315,12 +316,19 @@ public abstract class IncidentRoutes2 {
                     }
                 } catch (Exception e) {
                 }
-                Event newEventFirst = new EventBuilder().setAffectedObjectId(first.getId()).setUserId(user.getId()).setMessage("Incident merged with " + second.getId()).setUserName(user.getName()).getEvent();
-                Event newEventSecond = new EventBuilder().setAffectedObjectId(second.getId()).setUserId(user.getId()).setMessage("Incident merged with " + first.getId()).setUserName(user.getName()).getEvent();
+                String eventCompanyId = mergedIncident.getCompanyId();
+                String eventCompanyName = new CompanyBuilder().setId(eventCompanyId).getCompany().findOne(companyCollection, session).getName();
+                String firstCaseNumber = first.getCaseNumber().toString();
+                String secondCaseNumber = second.getCaseNumber().toString();
+                String firstCaseMessage = "Incident merged with " + eventCompanyName + " #" + firstCaseNumber;
+                String secondCaseMessage = "Incident merged with " + eventCompanyName + " #" + secondCaseNumber;
+                Long time = new Date().getTime();
+                Event newEventFirst = new EventBuilder().setAffectedObjectId(first.getId()).setUserId(user.getId()).setMessage(firstCaseMessage).setUserName(user.getName()).setDate(time).getEvent();
+                Event newEventSecond = new EventBuilder().setAffectedObjectId(second.getId()).setUserId(user.getId()).setMessage(secondCaseMessage).setUserName(user.getName()).setDate(time).getEvent();
                 newEventFirst.insertOne(eventCollection, session);
                 newEventSecond.insertOne(eventCollection, session);
-                String mergedMessage = "Incident created by merging " + first.getId() + " and " + second.getId();
-                Event newEventMerged = new EventBuilder().setAffectedObjectId(mergedIncident.getId()).setUserId(user.getId()).setUserName(user.getName()).setMessage(mergedMessage).getEvent();
+                String mergedMessage = "Incident created by merging " + firstCaseMessage + " and " + secondCaseMessage;
+                Event newEventMerged = new EventBuilder().setAffectedObjectId(mergedIncident.getId()).setUserId(user.getId()).setUserName(user.getName()).setMessage(mergedMessage).setDate(time).getEvent();
                 newEventMerged.insertOne(eventCollection, session);
             }
         } catch (Exception e) {
