@@ -171,7 +171,7 @@ public abstract class IncidentRoutes2 {
             eventLogMessage += ".";
         }
         if(toUpdate.getRemoveCalls() != null && incidentBeforeChange != null) {
-            eventLogMessage = "Removed called users: ";
+            eventLogMessage = "Removed users from call list: ";
             for (String removeUserId: toUpdate.getRemoveCalls()) {
                 User userFilter = new UserBuilder().setId(removeUserId).getUser();
                 eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName();
