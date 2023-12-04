@@ -144,8 +144,7 @@ public abstract class IncidentRoutes2 {
             eventLogMessage = "Added users: ";
             for (String addUserId: toUpdate.getAddUsers()) {
                 User userFilter = new UserBuilder().setId(addUserId).getUser();
-                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName();
-                eventLogMessage += ", ";
+                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName() + ", ";
             }
             eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
             eventLogMessage += ".";
@@ -154,8 +153,7 @@ public abstract class IncidentRoutes2 {
             eventLogMessage = "Removed users: ";
             for (String removeUserId: toUpdate.getRemoveUsers()) {
                 User userFilter = new UserBuilder().setId(removeUserId).getUser();
-                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName();
-                eventLogMessage += ", ";
+                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName() + ", ";
             }
             eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
             eventLogMessage += ".";
@@ -164,8 +162,7 @@ public abstract class IncidentRoutes2 {
             eventLogMessage = "Called users: ";
             for (String addUserId: toUpdate.getAddCalls()) {
                 User userFilter = new UserBuilder().setId(addUserId).getUser();
-                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName();
-                eventLogMessage += ", ";
+                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName() + ", ";
             }
             eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
             eventLogMessage += ".";
@@ -174,8 +171,7 @@ public abstract class IncidentRoutes2 {
             eventLogMessage = "Removed users from call list: ";
             for (String removeUserId: toUpdate.getRemoveCalls()) {
                 User userFilter = new UserBuilder().setId(removeUserId).getUser();
-                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName();
-                eventLogMessage += ", ";
+                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName() + ", ";
             }
             eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
             eventLogMessage += ".";
