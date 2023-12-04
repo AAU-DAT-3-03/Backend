@@ -7,6 +7,7 @@ public class Event extends StandardModel<Event>{
     private String _id = null;
     private Long date = null;
     private String userId = null;
+    private String userName = null;
     private String message = null;
     private String affectedObjectId = null;
     @Override
@@ -28,6 +29,12 @@ public class Event extends StandardModel<Event>{
     }
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+    public String getUserName() {
+        return this.userName;
+    }
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
     public String getMessage() {
         return this.message;
@@ -55,12 +62,16 @@ public class Event extends StandardModel<Event>{
             this.event.setUserId(userId);
             return this;
         }
+        public EventBuilder setUserName(String userName) {
+            this.event.setUserName(userName);
+            return this;
+        }
         public EventBuilder setMessage(String message) {
             this.event.setMessage(message);
             return this;
         }
         public EventBuilder setAffectedObjectId(String affectedObjectId) {
-            this.event.affectedObjectId = affectedObjectId;
+            this.event.setAffectedObjectId(affectedObjectId);
             return this;
         }
         public Event getEvent() {
@@ -76,6 +87,7 @@ public class Event extends StandardModel<Event>{
         if (this._id != null) document.append("_id", new ObjectId(this._id));
         if (this.date != null) document.append("date", this.date);
         if (this.userId != null) document.append("userId", new ObjectId(this.userId));
+        if (this.userName != null) document.append("userName", this.userName);
         if (this.message != null) document.append("message", this.message);
         if (this.affectedObjectId != null) document.append("affectedObjectId", new ObjectId(this.affectedObjectId));
         return document;
@@ -86,6 +98,7 @@ public class Event extends StandardModel<Event>{
         if (document.containsKey("_id")) event._id = document.getObjectId("_id").toHexString();
         if (document.containsKey("date")) event.date = document.getLong("date");
         if (document.containsKey("userId")) event.userId = document.getObjectId("userId").toHexString();
+        if (document.containsKey("userName")) event.userName = document.getString("userName");
         if (document.containsKey("message")) event.message = document.getString("message");
         if (document.containsKey("affectedObjectId")) event.affectedObjectId = document.getObjectId("affectedObjectId").toHexString();
         return event;

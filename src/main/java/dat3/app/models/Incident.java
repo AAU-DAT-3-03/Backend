@@ -13,6 +13,8 @@ import dat3.app.models.Company.CompanyBuilder;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.utility.ExchangeUtility;
 import dat3.app.utility.MongoUtility;
+import dat3.app.models.Event;
+import dat3.app.models.Event.EventBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +32,6 @@ public class Incident extends StandardModel<Incident> {
     private List<String> alarmIds = null;
     private List<String> callIds = null;
     private String incidentNote = null;
-    private List<Event> eventLog = null;
 
     // ---------- Getters & Setters ---------- //
     public Integer getPriority() {
@@ -129,14 +130,6 @@ public class Incident extends StandardModel<Incident> {
         this.incidentNote = incidentNote;
     }
 
-    public List<Event> getEventLog() {
-        return this.eventLog;
-    }
-
-    public void setEventLog(List<Event> eventLog) {
-        this.eventLog = eventLog;
-    }
-
     // ---------- Builder subclass ---------- //
     public static class IncidentBuilder {
         private Incident incident = new Incident();
@@ -201,11 +194,6 @@ public class Incident extends StandardModel<Incident> {
             return this;
         }
 
-        public IncidentBuilder setEventLog(List<Event> eventLog) {
-            this.incident.setEventLog(eventLog);
-            return this;
-        }
-
         public Incident getIncident() {
             Incident temp = this.incident;
             this.incident = new Incident();
@@ -256,13 +244,6 @@ public class Incident extends StandardModel<Incident> {
             });
             document.append("calls", ids);
         }
-        if (this.eventLog != null) {
-            List<Document> eventLogList = new ArrayList<>();
-            for (Event event : this.eventLog) {
-                eventLogList.add(event.toDocument());
-            }
-            document.append("eventLog", eventLogList);
-        }
         return document;
     }
 
@@ -304,12 +285,6 @@ public class Incident extends StandardModel<Incident> {
             incident.callIds = new ArrayList<>();
             document.getList("calls", ObjectId.class).forEach((ObjectId id) -> {
                 incident.callIds.add(id.toHexString());
-            });
-        }
-        if (document.containsKey("eventLog")) {
-            incident.eventLog = new ArrayList<>();
-            document.getList("eventLog", Event.class).forEach((Event event) -> {
-                incident.eventLog.add(event);
             });
         }
 
@@ -547,7 +522,15 @@ public class Incident extends StandardModel<Incident> {
                     } catch (Exception e) {
                     }
                 });
-
+                //
+                List<Event> eventLog = new ArrayList<>();
+                try {
+                    Event eventFilter = new EventBuilder().setAffectedObjectId(incident.getId()).getEvent();
+                    eventLog = ExchangeUtility.defaultGetOperation(eventFilter, "events");
+                } catch (Exception e) {
+                }
+                pub.setEventLog(eventLog);
+                //
                 return pub;
             }
         } catch (Exception e) {
@@ -623,6 +606,7 @@ public class Incident extends StandardModel<Incident> {
         private List<User> users;
         private Company companyPublic;
         private User acknowledgedByPublic;
+        private List<Event> eventLog;
 
         public Company getCompanyPublic() {
             return companyPublic;
@@ -663,5 +647,7 @@ public class Incident extends StandardModel<Incident> {
         public void setUsersPublic(List<User> users) {
             this.users = users;
         }
+        public List<Event> getEventLog() { return eventLog; }
+        public void setEventLog(List<Event> eventLog) { this.eventLog = eventLog; }
     }
 }
