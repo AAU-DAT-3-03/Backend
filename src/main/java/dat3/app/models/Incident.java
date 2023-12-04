@@ -393,6 +393,9 @@ public class Incident extends StandardModel<Incident> {
         if (merged == null)
             return null;
 
+        if (first.priority != null && second.priority != null)
+            merged.priority = first.priority < second.priority ? first.priority : second.priority;
+
         if (merged.getAcknowledgedBy() == null)
             merged.setAcknowledgedBy(second.getAcknowledgedBy());
 
