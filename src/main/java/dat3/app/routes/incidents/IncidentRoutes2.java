@@ -35,10 +35,13 @@ import dat3.app.utility.MongoUtility;
 
 public abstract class IncidentRoutes2 {
     public static void get(HttpExchange exchange) {
+        /*
         if (Auth.auth(exchange) == null) {
+
             ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
+        */
 
         Document documentFilter = parseQueryString(exchange);
         Incident filter = new Incident().fromDocument(documentFilter);

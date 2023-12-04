@@ -548,7 +548,7 @@ public class Incident extends StandardModel<Incident> {
                     } catch (Exception e) {
                     }
                 });
-
+                pub.setEventLog(incident.getEventLog());
                 return pub;
             }
         } catch (Exception e) {
