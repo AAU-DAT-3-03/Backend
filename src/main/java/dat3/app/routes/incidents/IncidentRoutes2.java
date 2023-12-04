@@ -11,6 +11,7 @@ import dat3.app.models.Incident.IncidentBuilder;
 import dat3.app.models.Incident.IncidentPublic;
 import dat3.app.models.Incident.PutBody;
 import dat3.app.models.Incident.MergeBody;
+import dat3.app.models.User;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.server.Auth;
 
@@ -127,9 +128,65 @@ public abstract class IncidentRoutes2 {
             ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
+        Document change = toUpdate.toDocument();
 
         Incident filter = new Incident();
         filter.setId(toUpdate.getId());
+
+        // fetches incident before it changes for the eventlog
+        Incident incidentBeforeChange = null;
+        try {
+            incidentBeforeChange = ExchangeUtility.defaultGetOperation(filter, "incidents").get(0);
+        } catch(Exception e) {
+            System.out.println("Couldn't find incident in DB for eventlog");
+        }
+        String eventLogMessage = "Error";
+        if(change.containsKey("priority") && incidentBeforeChange != null) eventLogMessage = "Priority changed from:" + incidentBeforeChange.getPriority().toString() + "to:" + toUpdate.getPriority().toString();
+        if(change.containsKey("resolved") && incidentBeforeChange != null) eventLogMessage = "Incident marked as resolved";
+        if(change.containsKey("header") && incidentBeforeChange != null) eventLogMessage = "Header changed from:" + incidentBeforeChange.getHeader() + "to:" + toUpdate.getHeader();
+        if(change.containsKey("acknowledgedBy") && incidentBeforeChange != null) eventLogMessage = "Incident marked as acknowledged";
+        if(change.containsKey("incidentNote") && incidentBeforeChange != null) eventLogMessage = "Note changed from:" + incidentBeforeChange.getIncidentNote() + "to:" + toUpdate.getIncidentNote();
+        if(change.containsKey("addUsers") && incidentBeforeChange != null) {
+            eventLogMessage = "Added users: ";
+            for (String addUserId: toUpdate.getAddUsers()) {
+                User userFilter = new UserBuilder().setId(addUserId).getUser();
+                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName();
+                eventLogMessage += ", ";
+            }
+            eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
+            eventLogMessage += ".";
+        }
+        if(change.containsKey("removeUsers") && incidentBeforeChange != null) {
+            eventLogMessage = "removed users: ";
+            for (String removeUserId: toUpdate.getRemoveUsers()) {
+                User userFilter = new UserBuilder().setId(removeUserId).getUser();
+                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName();
+                eventLogMessage += ", ";
+            }
+            eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
+            eventLogMessage += ".";
+        }
+        if(change.containsKey("addCalls") && incidentBeforeChange != null) {
+            eventLogMessage = "Called users: ";
+            for (String addUserId: toUpdate.getAddCalls()) {
+                User userFilter = new UserBuilder().setId(addUserId).getUser();
+                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName();
+                eventLogMessage += ", ";
+            }
+            eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
+            eventLogMessage += ".";
+        }
+        if(change.containsKey("removeCalls") && incidentBeforeChange != null) {
+            eventLogMessage = "Removed called users: ";
+            for (String removeUserId: toUpdate.getRemoveCalls()) {
+                User userFilter = new UserBuilder().setId(removeUserId).getUser();
+                eventLogMessage += ExchangeUtility.defaultGetOperation(userFilter, "users").get(0).getName();
+                eventLogMessage += ", ";
+            }
+            eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
+            eventLogMessage += ".";
+        }
+
         toUpdate.setId(null);
 
         // Change the toUpdate such that it contains the users that are specified by
@@ -142,7 +199,7 @@ public abstract class IncidentRoutes2 {
             return;
         }
         try {
-            Event event = new EventBuilder().setAffectedObjectId(toUpdate.getId()).setMessage("temp message")
+            Event event = new EventBuilder().setAffectedObjectId(filter.getId()).setMessage(eventLogMessage)
                     .setDate(new Date().getTime()).setUserId(Auth.auth(exchange).getId()).getEvent();
             ExchangeUtility.defaultPostOperation(event, "events");
         } catch (Exception e) {
