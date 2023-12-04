@@ -140,7 +140,7 @@ public abstract class IncidentRoutes2 {
         if(change.containsKey("header") && incidentBeforeChange != null) eventLogMessage = "Header changed from: " + incidentBeforeChange.getHeader() + " to: " + toUpdate.getHeader();
         if(change.containsKey("acknowledgedBy") && incidentBeforeChange != null) eventLogMessage = "Incident marked as acknowledged";
         if(change.containsKey("incidentNote") && incidentBeforeChange != null) eventLogMessage = "Note changed from: " + incidentBeforeChange.getIncidentNote() + " to: " + toUpdate.getIncidentNote();
-        if(change.containsKey("addUsers") && incidentBeforeChange != null) {
+        if(toUpdate.getAddUsers() != null && incidentBeforeChange != null) {
             eventLogMessage = "Added users: ";
             for (String addUserId: toUpdate.getAddUsers()) {
                 User userFilter = new UserBuilder().setId(addUserId).getUser();
@@ -150,7 +150,7 @@ public abstract class IncidentRoutes2 {
             eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
             eventLogMessage += ".";
         }
-        if(change.containsKey("removeUsers") && incidentBeforeChange != null) {
+        if(toUpdate.getRemoveUsers() != null && incidentBeforeChange != null) {
             eventLogMessage = "removed users: ";
             for (String removeUserId: toUpdate.getRemoveUsers()) {
                 User userFilter = new UserBuilder().setId(removeUserId).getUser();
@@ -160,7 +160,7 @@ public abstract class IncidentRoutes2 {
             eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
             eventLogMessage += ".";
         }
-        if(change.containsKey("addCalls") && incidentBeforeChange != null) {
+        if(toUpdate.getAddCalls() != null && incidentBeforeChange != null) {
             eventLogMessage = "Called users: ";
             for (String addUserId: toUpdate.getAddCalls()) {
                 User userFilter = new UserBuilder().setId(addUserId).getUser();
@@ -170,7 +170,7 @@ public abstract class IncidentRoutes2 {
             eventLogMessage = eventLogMessage.substring(0, eventLogMessage.length()-2);
             eventLogMessage += ".";
         }
-        if(change.containsKey("removeCalls") && incidentBeforeChange != null) {
+        if(toUpdate.getRemoveCalls() != null && incidentBeforeChange != null) {
             eventLogMessage = "Removed called users: ";
             for (String removeUserId: toUpdate.getRemoveCalls()) {
                 User userFilter = new UserBuilder().setId(removeUserId).getUser();
@@ -258,7 +258,8 @@ public abstract class IncidentRoutes2 {
     }
 
     public static void merge(HttpExchange exchange) {
-        if (Auth.auth(exchange) == null) {
+        User user = Auth.auth(exchange);
+        if (user == null) {
             ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
@@ -273,6 +274,7 @@ public abstract class IncidentRoutes2 {
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
+                MongoCollection<Document> eventCollection = MongoUtility.getCollection(client, "events");
 
                 IncidentBuilder incidentBuilder = new IncidentBuilder();
                 Incident first = incidentBuilder.setId(mergeBody.getFirst()).getIncident().findOne(incidentCollection,
@@ -291,6 +293,35 @@ public abstract class IncidentRoutes2 {
                 mergedIncident = merged.findOne(incidentCollection, session);
                 if (mergedIncident == null)
                     throw new Exception("New incident wasn't inserted correctly.");
+                // Get all events from first incident and copy over to merged incident
+                try {
+                    Event eventFilter = new EventBuilder().setAffectedObjectId(first.getId()).getEvent();
+                    List<Event> eventLog = ExchangeUtility.defaultGetOperation(eventFilter, "events");
+                    for (Event event : eventLog) {
+                        event.setId(null);
+                        event.setAffectedObjectId(mergedIncident.getId());
+                        event.insertOne(eventCollection, session);
+                    }
+                } catch (Exception e) {
+                }
+                // Get all events from second incident and copy over to merged incident
+                try {
+                    Event eventFilter = new EventBuilder().setAffectedObjectId(second.getId()).getEvent();
+                    List<Event> eventLog = ExchangeUtility.defaultGetOperation(eventFilter, "events");
+                    for (Event event : eventLog) {
+                        event.setId(null);
+                        event.setAffectedObjectId(mergedIncident.getId());
+                        event.insertOne(eventCollection, session);
+                    }
+                } catch (Exception e) {
+                }
+                Event newEventFirst = new EventBuilder().setAffectedObjectId(first.getId()).setUserId(user.getId()).setMessage("Incident merged with " + second.getId()).setUserName(user.getName()).getEvent();
+                Event newEventSecond = new EventBuilder().setAffectedObjectId(second.getId()).setUserId(user.getId()).setMessage("Incident merged with " + first.getId()).setUserName(user.getName()).getEvent();
+                newEventFirst.insertOne(eventCollection, session);
+                newEventSecond.insertOne(eventCollection, session);
+                String mergedMessage = "Incident created by merging " + first.getId() + " and " + second.getId();
+                Event newEventMerged = new EventBuilder().setAffectedObjectId(mergedIncident.getId()).setUserId(user.getId()).setUserName(user.getName()).setMessage(mergedMessage).getEvent();
+                newEventMerged.insertOne(eventCollection, session);
             }
         } catch (Exception e) {
             e.printStackTrace();
