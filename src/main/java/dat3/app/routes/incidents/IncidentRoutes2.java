@@ -135,11 +135,11 @@ public abstract class IncidentRoutes2 {
             System.out.println("Couldn't find incident in DB for eventlog");
         }
         String eventLogMessage = "Error";
-        if(change.containsKey("priority") && incidentBeforeChange != null) eventLogMessage = "Priority changed from:" + incidentBeforeChange.getPriority().toString() + "to:" + toUpdate.getPriority().toString();
+        if(change.containsKey("priority") && incidentBeforeChange != null) eventLogMessage = "Priority changed from:" + incidentBeforeChange.getPriority().toString() + " to: " + toUpdate.getPriority().toString();
         if(change.containsKey("resolved") && incidentBeforeChange != null) eventLogMessage = "Incident marked as resolved";
-        if(change.containsKey("header") && incidentBeforeChange != null) eventLogMessage = "Header changed from:" + incidentBeforeChange.getHeader() + "to:" + toUpdate.getHeader();
+        if(change.containsKey("header") && incidentBeforeChange != null) eventLogMessage = "Header changed from:" + incidentBeforeChange.getHeader() + " to: " + toUpdate.getHeader();
         if(change.containsKey("acknowledgedBy") && incidentBeforeChange != null) eventLogMessage = "Incident marked as acknowledged";
-        if(change.containsKey("incidentNote") && incidentBeforeChange != null) eventLogMessage = "Note changed from:" + incidentBeforeChange.getIncidentNote() + "to:" + toUpdate.getIncidentNote();
+        if(change.containsKey("incidentNote") && incidentBeforeChange != null) eventLogMessage = "Note changed from:" + incidentBeforeChange.getIncidentNote() + " to: " + toUpdate.getIncidentNote();
         if(change.containsKey("addUsers") && incidentBeforeChange != null) {
             eventLogMessage = "Added users: ";
             for (String addUserId: toUpdate.getAddUsers()) {
@@ -193,8 +193,9 @@ public abstract class IncidentRoutes2 {
             return;
         }
         try {
+            User user = Auth.auth(exchange);
             Event event = new EventBuilder().setAffectedObjectId(filter.getId()).setMessage(eventLogMessage)
-                    .setDate(new Date().getTime()).setUserId(Auth.auth(exchange).getId()).getEvent();
+                    .setDate(new Date().getTime()).setUserId(user.getId()).setUserName(user.getName()).getEvent();
             ExchangeUtility.defaultPostOperation(event, "events");
         } catch (Exception e) {
             System.out.println("Couldnt log an event for incident" + toUpdate.getId());
