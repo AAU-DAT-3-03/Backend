@@ -59,12 +59,6 @@ public abstract class IncidentRoutes2 {
         Long start = documentFilter.getLong("start");
         result = Incident.filterByPeriod(result, start, end);
 
-        for (Incident incident : result) {
-            Event eventFilter = new EventBuilder().setAffectedObjectId(incident.getId()).getEvent();
-            List<Event> eventLog = ExchangeUtility.defaultGetOperation(eventFilter, "events");
-            incident.setEventLog(eventLog);
-        }
-
         List<IncidentPublic> resultPublic = new ArrayList<>();
         result.forEach((Incident incident) -> {
             resultPublic.add(incident.toPublic());
