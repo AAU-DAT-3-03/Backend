@@ -548,6 +548,7 @@ public class Incident extends StandardModel<Incident> {
         private List<String> removeUsers;
         private List<String> addCalls;
         private List<String> removeCalls;
+        private String priorityNote;
 
         public List<String> getAddUsers() {
             return addUsers;
@@ -580,6 +581,8 @@ public class Incident extends StandardModel<Incident> {
         public void setRemoveCalls(List<String> removeCalls) {
             this.removeCalls = removeCalls;
         }
+        public String getPriorityNote() {return priorityNote;}
+        public void setPriorityNote(String priorityNote) {this.priorityNote = priorityNote;}
     }
 
     public static class MergeBody {

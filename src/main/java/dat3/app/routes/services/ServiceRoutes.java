@@ -6,239 +6,163 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import com.mongodb.client.ClientSession;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.sun.net.httpserver.HttpExchange;
 
 import dat3.app.models.Service;
-import dat3.app.models.Service.ServiceBuilder;
+import dat3.app.server.Auth;
 import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
-import dat3.app.utility.MongoUtility;
 
-public abstract class ServiceRoutes {
-    public static void getService(HttpExchange exchange) {
-
-        Document document = parseQueryString(exchange);
-        if (document == null) {
-            Response response = new Response();
-            response.setMsg("Invalid query string.");
-            response.setStatusCode(1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e) {}
+public class ServiceRoutes {
+    public static void get(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
-        Service service = new Service().fromDocument(document);
-        try (MongoClient client = MongoUtility.getClient()) {
-            try (ClientSession session = client.startSession()) {
-                MongoCollection<Document> serviceCollection = MongoUtility.getCollection(client, "services");
-                List<Service> services = MongoUtility.iterableToList(service.findMany(serviceCollection, session));
-                
-                Response response = new Response();
-                response.setMsg(services);
-                response.setStatusCode(0);
-                response.sendResponse(exchange);
-            }
-        } catch (Exception e) {
-            Response response = new Response();
-            response.setMsg("Something went wrong.");
-            response.setStatusCode(1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e1) {}
+
+        Document documentFilter = parseQueryString(exchange);
+        Service filter = new Service().fromDocument(documentFilter);
+        if (filter == null) {
+            ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
+
+        List<Service> result = ExchangeUtility.defaultGetOperation(filter, "services");
+        if (result == null) {
+            ExchangeUtility.queryExecutionErrorResponse(exchange);
+            return;
+        }
+
+        Response response = new Response();
+        response.setMsg(result);
+        response.setStatusCode(0);
+        try {
+            response.sendResponse(exchange);
+        } catch (Exception e) {}
     }
 
-    public static void deleteService(HttpExchange exchange) {
-        Service service;
+    public static void delete(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
+        Service filter = parseBody(exchange);
+        if (filter == null || filter.getId() == null) {
+            ExchangeUtility.invalidQueryResponse(exchange);
+            return;
+        }
+
+        DeleteResult result = ExchangeUtility.defaultDeleteOperation(filter, "services");
+        if (result == null) {
+            ExchangeUtility.queryExecutionErrorResponse(exchange);
+            return;
+        }
+
+        Response response = new Response();
+        if (result.getDeletedCount() == 0) {
+            response.setMsg("Did not delete any objects.");
+            response.setStatusCode(1);
+            return;
+        } else {
+            response.setMsg("Deleted object successfully.");
+            response.setStatusCode(0);
+        }
+
         try {
-            service = ExchangeUtility.parseJsonBody(exchange, 1000, Service.class);
-        } catch (Exception e) {
-            Response response = new Response();
-            response.setMsg("Couldn't parse json body.");
-            response.setStatusCode(1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e1) {}
-            return;
-        }
-
-        try (MongoClient client = MongoUtility.getClient()) {
-            try (ClientSession session = client.startSession()) {
-                MongoCollection<Document> serviceCollection = MongoUtility.getCollection(client, "services");
-                if (service.getId() == null) {
-                    Response response = new Response();
-                    response.setMsg("Invalid body data. Body needs an id.");
-                    response.setStatusCode(1);
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                }
-
-                DeleteResult result = service.deleteOne(serviceCollection, session);
-
-                if (result.getDeletedCount() > 0) {
-                    Response response = new Response();
-                    response.setMsg("Deleted service.");
-                    response.setStatusCode(0);
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                } else {
-                    Response response = new Response();
-                    response.setMsg("Deleted 0 services.");
-                    response.setStatusCode(1);
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                }
-            }
-        } catch (Exception e) {
-            Response response = new Response();
-            response.setMsg("Something went wrong.");
-            response.setStatusCode(1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e1) {}
-            return;
-        }
+            response.sendResponse(exchange);
+        } catch (IOException e) {}
     }
 
-    public static void putService(HttpExchange exchange) {
-        Service service;
+    public static void put(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
+            return;
+        }
+
+        Service toUpdate = parseBody(exchange);
+        if (toUpdate == null || toUpdate.getId() == null) {
+            ExchangeUtility.invalidQueryResponse(exchange);
+            return;
+        }
+
+        Service filter = new Service();
+        filter.setId(toUpdate.getId());
+        UpdateResult result = ExchangeUtility.defaultPutOperation(filter, toUpdate, "services");
+        if (result == null) {
+            ExchangeUtility.queryExecutionErrorResponse(exchange);
+            return;
+        }
+
+        Response response = new Response();
+        if (result.getModifiedCount() == 0) {
+            response.setMsg("Did not modify any objects.");
+            response.setStatusCode(1);
+            return;
+        } else {
+            response.setMsg("Modified object successfully.");
+            response.setStatusCode(0);
+        }
+
         try {
-            service = ExchangeUtility.parseJsonBody(exchange, 1000, Service.class);
-        } catch (Exception e) {
-            Response response = new Response();
-            response.setMsg("Couldn't parse json body.");
-            response.setStatusCode(1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e1) {}
+            response.sendResponse(exchange);
+        } catch (IOException e) {}
+    }
+    
+    public static void post(HttpExchange exchange) {
+        if (Auth.auth(exchange) == null) {
+            ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
 
-        try (MongoClient client = MongoUtility.getClient()) {
-            try (ClientSession session = client.startSession()) {
-                MongoCollection<Document> serviceCollection = MongoUtility.getCollection(client, "services");
-                if (service.getId() == null) {
-                    Response response = new Response();
-                    response.setMsg("Invalid body data, an id must be specified.");
-                    response.setStatusCode(1);
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                }
-
-                ServiceBuilder builder = new ServiceBuilder();
-                UpdateResult result = service.updateOne(serviceCollection, session, builder.setId(service.getId()).getService());
-
-                if (result.getModifiedCount() > 0) {
-                    Response response = new Response();
-                    response.setMsg("Modified service.");
-                    response.setStatusCode(0);
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                } else {
-                    Response response = new Response();
-                    response.setMsg("Modified 0 services.");
-                    response.setStatusCode(1);
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                }
-            }
-        } catch (Exception e) {
-            Response response = new Response();
-            response.setMsg("Something went wrong.");
-            response.setStatusCode(1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e1) {}
+        Service filter = parseBody(exchange);
+        if (filter == null || filter.getId() != null) {
+            ExchangeUtility.invalidQueryResponse(exchange);
             return;
         }
+
+        InsertOneResult result = ExchangeUtility.defaultPostOperation(filter, "services");
+        if (result == null) {
+            ExchangeUtility.queryExecutionErrorResponse(exchange);
+            return;
+        }
+
+        Response response = new Response();
+        if (!result.wasAcknowledged()) {
+            response.setMsg("Did not insert any objects.");
+            response.setStatusCode(1);
+            return;
+        } else {
+            response.setMsg("Inserted object successfully.");
+            response.setStatusCode(0);
+        }
+
+        try {
+            response.sendResponse(exchange);
+        } catch (IOException e) {}
     }
 
-    public static void postService(HttpExchange exchange) {
-        Service service;
+    private static Service parseBody(HttpExchange exchange) {
         try {
-            service = ExchangeUtility.parseJsonBody(exchange, 1000, Service.class);
+            return ExchangeUtility.parseJsonBody(exchange, 1000, Service.class);
         } catch (Exception e) {
-            Response response = new Response();
-            response.setMsg("Couldn't parse json body.");
-            response.setStatusCode(1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e1) {}
-            return;
-        }
-
-        try (MongoClient client = MongoUtility.getClient()) {
-            try (ClientSession session = client.startSession()) {
-                MongoCollection<Document> serviceCollection = MongoUtility.getCollection(client, "services");
-                if (service.getId() != null) {
-                    Response response = new Response();
-                    response.setMsg("Invalid body data, an id cannot be specified at creation.");
-                    response.setStatusCode(1);
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                }
-
-                InsertOneResult result = service.insertOne(serviceCollection, session);
-
-                if (result.wasAcknowledged()) {
-                    Response response = new Response();
-                    response.setMsg("Created service.");
-                    response.setStatusCode(0);
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                } else {
-                    Response response = new Response();
-                    response.setMsg("Created 0 services.");
-                    response.setStatusCode(1);
-                    try {
-                        response.sendResponse(exchange);
-                    } catch (IOException e1) {}
-                    return;
-                }
-            }
-        } catch (Exception e) {
-            Response response = new Response();
-            response.setMsg("Something went wrong.");
-            response.setStatusCode(1);
-            try {
-                response.sendResponse(exchange);
-            } catch (IOException e1) {}
-            return;
+            return null;
         }
     }
 
     private static Document parseQueryString(HttpExchange exchange) {
         try {
             Document document = new Document();
-            String[] pairs = exchange.getRequestURI().getQuery().split("&");
-            for (String string : pairs) {
-                String[] pair = string.split("=");
+            String[] tuples = exchange.getRequestURI().getQuery().split("&");
+            for (String tuple : tuples) {
+                String[] pair = tuple.split("=");
 
                 if (pair[0].equals("id")) {
                     if (pair[1].equals("*")) return new Document();
+
                     document.put("_id", new ObjectId(pair[1]));
                     continue;
                 }

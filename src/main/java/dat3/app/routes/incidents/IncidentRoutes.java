@@ -34,7 +34,7 @@ import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
 import dat3.app.utility.MongoUtility;
 
-public abstract class IncidentRoutes2 {
+public abstract class IncidentRoutes {
     public static void get(HttpExchange exchange) {
         if (Auth.auth(exchange) == null) {
 
@@ -135,7 +135,7 @@ public abstract class IncidentRoutes2 {
             System.out.println("Couldn't find incident in DB for eventlog");
         }
         String eventLogMessage = "Error";
-        if(change.containsKey("priority") && incidentBeforeChange != null) eventLogMessage = "Priority changed from: " + incidentBeforeChange.getPriority().toString() + " to " + toUpdate.getPriority().toString();
+        if(change.containsKey("priority") && incidentBeforeChange != null) eventLogMessage = "Priority changed from: " + incidentBeforeChange.getPriority().toString() + " to " + toUpdate.getPriority().toString() + ".\n Reason for change: " + toUpdate.getPriorityNote();
         if(change.containsKey("resolved") && incidentBeforeChange != null) eventLogMessage = "Incident marked as resolved";
         if(change.containsKey("header") && incidentBeforeChange != null) eventLogMessage = "Header changed from: " + incidentBeforeChange.getHeader() + " to: " + toUpdate.getHeader();
         if(change.containsKey("acknowledgedBy") && incidentBeforeChange != null) eventLogMessage = "Incident marked as acknowledged";
