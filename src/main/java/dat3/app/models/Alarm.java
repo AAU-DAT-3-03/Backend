@@ -79,7 +79,7 @@ public class Alarm extends StandardModel<Alarm> {
         if (this.id != null) document.put("_id", new ObjectId(this.id));
         if (this.name != null) document.put("name", this.name);
         if (this.serviceId != null) document.put("serviceId", new ObjectId(this.serviceId));
-        if (this.alarmNote != null) document.put("alarmNote", new ObjectId(this.alarmNote));
+        if (this.alarmNote != null) document.put("alarmNote", this.alarmNote);
         return document;
     }
 
@@ -89,11 +89,18 @@ public class Alarm extends StandardModel<Alarm> {
         if (document.containsKey("_id")) alarm.id = document.getObjectId("_id").toHexString();
         if (document.containsKey("name")) alarm.name = document.getString("name");
         if (document.containsKey("serviceId")) alarm.serviceId = document.getObjectId("serviceId").toHexString();
-        if (document.containsKey("alarmNote")) alarm.alarmNote = document.getObjectId("alarmNote").toHexString();
+        if (document.containsKey("alarmNote")) alarm.alarmNote = document.getString("alarmNote");
         return alarm;
     }
 
     // ---------- Static Methods ---------- //
+    public static boolean AlarmEquals(Alarm alarm1, Alarm alarm2) {
+        if (!alarm1.alarmNote.equals(alarm2.alarmNote)) return false;
+        if (!alarm1.id.equals(alarm2.id)) return false;
+        if (!alarm1.name.equals(alarm2.name)) return false;
+        if (!alarm1.serviceId.equals(alarm2.serviceId)) return false;
+        return true;
+    }
     
     // ---------- Object Methods ---------- //
 }

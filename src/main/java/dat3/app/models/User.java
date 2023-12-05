@@ -111,7 +111,7 @@ public class User extends StandardModel<User> {
         public User getUser() {
             User temp = this.user;
             this.user = new User();
-            return temp;            
+            return temp;
         }
     }
 
@@ -119,26 +119,52 @@ public class User extends StandardModel<User> {
     @Override
     public Document toDocument() {
         Document document = new Document();
-        if (this.id != null) document.put("_id", new ObjectId(this.id));
-        if (this.email != null) document.put("email", this.email);
-        if (this.password != null) document.put("password", this.password);
-        if (this.name != null) document.put("name", this.name);
-        if (this.phoneNumber != null) document.put("phoneNumber", this.phoneNumber);
-        if (this.onCall != null) document.put("onCall", this.onCall);
-        if (this.onDuty != null) document.put("onDuty", this.onDuty);
+        if (this.id != null)
+            document.put("_id", new ObjectId(this.id));
+        if (this.email != null)
+            document.put("email", this.email);
+        if (this.password != null)
+            document.put("password", this.password);
+        if (this.name != null)
+            document.put("name", this.name);
+        if (this.phoneNumber != null)
+            document.put("phoneNumber", this.phoneNumber);
+        if (this.onCall != null)
+            document.put("onCall", this.onCall);
+        if (this.onDuty != null)
+            document.put("onDuty", this.onDuty);
         return document;
     }
 
     @Override
     public User fromDocument(Document document) {
         User user = new User();
-        if (document.containsKey("_id")) user.id = document.getObjectId("_id").toHexString();
-        if (document.containsKey("email")) user.email = document.getString("email");
-        if (document.containsKey("password")) user.password = document.getString("password");
-        if (document.containsKey("name")) user.name = document.getString("name");
-        if (document.containsKey("phoneNumber")) user.phoneNumber = document.getString("phoneNumber");
-        if (document.containsKey("onCall")) user.onCall = document.getBoolean("onCall");
-        if (document.containsKey("onDuty")) user.onDuty = document.getBoolean("onDuty");
+        if (document.containsKey("_id"))
+            user.id = document.getObjectId("_id").toHexString();
+        if (document.containsKey("email"))
+            user.email = document.getString("email");
+        if (document.containsKey("password"))
+            user.password = document.getString("password");
+        if (document.containsKey("name"))
+            user.name = document.getString("name");
+        if (document.containsKey("phoneNumber"))
+            user.phoneNumber = document.getString("phoneNumber");
+        if (document.containsKey("onCall"))
+            user.onCall = document.getBoolean("onCall");
+        if (document.containsKey("onDuty"))
+            user.onDuty = document.getBoolean("onDuty");
         return user;
+    }
+
+    // ---------- Static Methods ---------- //
+    public static boolean UserEquals(User user1, User user2) {
+        try {
+            return user1.getEmail().equals(user2.getEmail()) && user1.getName().equals(user2.getName())
+                    && user1.getOnCall().equals(user2.getOnCall()) && user1.getOnDuty().equals(user2.getOnDuty())
+                    && user1.getPassword().equals(user2.getPassword())
+                    && user1.getPhoneNumber().equals(user2.getPhoneNumber());
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

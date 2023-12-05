@@ -63,6 +63,11 @@ public class Company extends StandardModel<Company> {
     }    
 
     // ---------- Static Methods ---------- //
+    public static boolean CompanyEquals(Company company1, Company company2) {
+        if (!company1.id.equals(company2.id)) return false;
+        if (!company1.name.equals(company2.name)) return false;
+        return true;
+    }
 
     // ---------- Object Methods ---------- //
 }

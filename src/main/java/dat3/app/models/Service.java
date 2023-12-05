@@ -79,7 +79,12 @@ public class Service extends StandardModel<Service> {
     }
 
     // ---------- Static Methods ---------- //
-    
+    public static boolean ServiceEquals(Service service1, Service service2) {
+        if (!service1.companyId.equals(service2.companyId)) return false;
+        if (!service1.id.equals(service2.id)) return false;
+        if (!service1.name.equals(service2.name)) return false;
+        return true;
+    }
 
     // ---------- Object Methods ---------- //
 

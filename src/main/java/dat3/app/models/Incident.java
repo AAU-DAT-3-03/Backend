@@ -13,7 +13,6 @@ import dat3.app.models.Company.CompanyBuilder;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.utility.ExchangeUtility;
 import dat3.app.utility.MongoUtility;
-import dat3.app.models.Event;
 import dat3.app.models.Event.EventBuilder;
 
 import java.util.ArrayList;
@@ -337,6 +336,52 @@ public class Incident extends StandardModel<Incident> {
     }
 
     // ---------- Static Methods ---------- //
+    public static boolean IncidentEquals(Incident incident1, Incident incident2) {
+        try {
+            if (incident1.alarmIds != null) {
+                for (int i = 0; i < incident1.getAlarmIds().size(); i++) {
+                    String id1 = incident1.getAlarmIds().get(i);
+                    String id2 = incident2.getAlarmIds().get(i);
+                    if (!id1.equals(id2))
+                        return false;
+                }
+            }
+            else if (incident1.alarmIds == null && incident2.alarmIds != null) return false;
+            
+            if (incident1.callIds != null) {
+                for (int i = 0; i < incident1.getCallIds().size(); i++) {
+                    String id1 = incident1.getCallIds().get(i);
+                    String id2 = incident2.getCallIds().get(i);
+                    if (!id1.equals(id2))
+                        return false;
+                }
+            }
+            else if (incident1.callIds == null && incident2.callIds != null) return false;
+
+            if (incident1.userIds != null) {
+                for (int i = 0; i < incident1.getUserIds().size(); i++) {
+                    String id1 = incident1.getUserIds().get(i);
+                    String id2 = incident2.getUserIds().get(i);
+                    if (!id1.equals(id2))
+                        return false;
+                }
+            }
+            else if (incident1.userIds == null && incident2.userIds != null) return false;
+            
+            if (!incident1.getAcknowledgedBy().equals(incident2.getAcknowledgedBy())) return false;
+            if (!incident1.getCaseNumber().equals(incident2.getCaseNumber())) return false;
+            if (!incident1.getCompanyId().equals(incident2.getCompanyId())) return false;
+            if (!incident1.getCreationDate().equals(incident2.getCreationDate())) return false;
+            if (!incident1.getHeader().equals(incident2.getHeader())) return false;
+            if (!incident1.getId().equals(incident2.getId())) return false;
+            if (!incident1.getIncidentNote().equals(incident2.getIncidentNote())) return false;
+            if (!incident1.getPriority().equals(incident2.getPriority())) return false;
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
     public static MergeBody parseMergeBody(HttpExchange exchange) {
         try {
             return ExchangeUtility.parseJsonBody(exchange, 1000, MergeBody.class);
@@ -417,9 +462,12 @@ public class Incident extends StandardModel<Incident> {
                 merged.getUserIds().add(id);
         });
 
-        merged.setIncidentNote(merged.getIncidentNote() != null ? merged.getIncidentNote()
-                : "" + "\n" + second.getIncidentNote() != null ? second.getIncidentNote() : "");
-
+        String incidentNote = "";
+        if (merged.getIncidentNote() != null) incidentNote += merged.getIncidentNote();
+        incidentNote += "\n";
+        if (second.getIncidentNote() != null) incidentNote += second.getIncidentNote();
+        merged.setIncidentNote(incidentNote);
+        
         return merged;
     }
 

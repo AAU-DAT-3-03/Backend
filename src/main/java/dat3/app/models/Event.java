@@ -103,4 +103,14 @@ public class Event extends StandardModel<Event>{
         if (document.containsKey("affectedObjectId")) event.affectedObjectId = document.getObjectId("affectedObjectId").toHexString();
         return event;
     }
+
+    public static boolean EventEquals(Event event1, Event event2) {
+        if (!event1._id.equals(event2._id)) return false;
+        if (!event1.affectedObjectId.equals(event2.affectedObjectId)) return false;
+        if (!event1.date.equals(event2.date)) return false;
+        if (!event1.message.equals(event2.message)) return false;
+        if (!event1.userId.equals(event2.userId)) return false;
+        if (!event1.userName.equals(event2.userName)) return false;
+        return true;
+    }
 }
