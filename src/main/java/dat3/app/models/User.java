@@ -9,6 +9,7 @@ public class User extends StandardModel<User> {
     private String password = null;
     private String name = null;
     private String phoneNumber = null;
+    private String team = null;
     private Boolean onCall = null;
     private Boolean onDuty = null;
 
@@ -51,6 +52,14 @@ public class User extends StandardModel<User> {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
     }
 
     public Boolean getOnCall() {
@@ -108,6 +117,11 @@ public class User extends StandardModel<User> {
             return this;
         }
 
+        public UserBuilder setTeam(String team) {
+            user.setTeam(team);
+            return this;
+        }
+
         public User getUser() {
             User temp = this.user;
             this.user = new User();
@@ -129,6 +143,8 @@ public class User extends StandardModel<User> {
             document.put("name", this.name);
         if (this.phoneNumber != null)
             document.put("phoneNumber", this.phoneNumber);
+        if (this.team != null)
+            document.put("team", this.team);
         if (this.onCall != null)
             document.put("onCall", this.onCall);
         if (this.onDuty != null)
@@ -149,6 +165,8 @@ public class User extends StandardModel<User> {
             user.name = document.getString("name");
         if (document.containsKey("phoneNumber"))
             user.phoneNumber = document.getString("phoneNumber");
+        if (document.containsKey("team"))
+            user.team = document.getString("team");
         if (document.containsKey("onCall"))
             user.onCall = document.getBoolean("onCall");
         if (document.containsKey("onDuty"))

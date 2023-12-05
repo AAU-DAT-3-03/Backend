@@ -206,6 +206,14 @@ public class TestData {
         "Container restarted 6 times",
     };
 
+    private static String[] teams = new String[] {
+        "Service Desk",
+        "Cloud Native Development", 
+        "Cloud Native Maintenance",
+        "Database",
+        "Drift",
+    };
+
     public static List<User> personalizedUsers() {
         String[] names = new String[] {
             "mads.byriel",
@@ -289,6 +297,10 @@ public class TestData {
         return list;
     }
 
+    public static List<String> shuffledTeams() {
+        return shuffleList(Arrays.asList(teams), 10);
+    }
+    
     public static List<Company> unshuffledCompanies() {
         List<Company> companies = new ArrayList<>();
         CompanyBuilder builder = new CompanyBuilder();
@@ -346,7 +358,6 @@ public class TestData {
     public static List<User> unshuffledValidUsers() {
         UserBuilder builder = new UserBuilder();
         List<User> users = new ArrayList<>();
-
         Iterator<String> namesIterator = unshuffledValidNames().iterator();
         Iterator<String> phoneNumbers = unshuffledValidPhoneNumbers().iterator();
 
@@ -361,6 +372,7 @@ public class TestData {
                 .setPhoneNumber(number)
                 .setOnCall(randomBoolean())
                 .setOnDuty(randomBoolean())
+                .setTeam(teams[randomIntExcl(teams.length)])
                 .getUser());
         }
 
