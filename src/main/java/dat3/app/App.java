@@ -1,29 +1,13 @@
 package dat3.app;
 
 import java.io.IOException;
-import java.util.List;
 
-import org.bson.Document;
-
-import com.google.gson.Gson;
-import com.mongodb.client.ClientSession;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-
-import dat3.app.models.Incident;
-import dat3.app.models.User;
 import dat3.app.routes.companies.CompanyRoutes;
-import dat3.app.routes.companies.CompanyRoutes;
-import dat3.app.routes.incidents.IncidentRoutes2;
+import dat3.app.routes.incidents.IncidentRoutes;
 import dat3.app.routes.services.ServiceRoutes;
-import dat3.app.routes.services.ServiceRoutes2;
 import dat3.app.routes.users.UserRoutes;
-import dat3.app.routes.users.UserRoutes2;
 import dat3.app.server.DBNotFound;
 import dat3.app.server.Server;
-import dat3.app.testkit.TestData;
 import dat3.app.utility.MongoUtility;
 
 public class App {
@@ -55,22 +39,22 @@ public class App {
         server.addPostRoute("/companies", CompanyRoutes::post);
 
         // Services
-        server.addGetRoute("/services", ServiceRoutes2::get);
-        server.addDeleteRoute("/services", ServiceRoutes2::delete);
-        server.addPutRoute("/services", ServiceRoutes2::put);
-        server.addPostRoute("/services", ServiceRoutes2::post);
+        server.addGetRoute("/services", ServiceRoutes::get);
+        server.addDeleteRoute("/services", ServiceRoutes::delete);
+        server.addPutRoute("/services", ServiceRoutes::put);
+        server.addPostRoute("/services", ServiceRoutes::post);
 
         // Incidents
-        server.addGetRoute("/incidents", IncidentRoutes2::get);
-        server.addDeleteRoute("/incidents", IncidentRoutes2::delete);
-        server.addPutRoute("/incidents", IncidentRoutes2::put);
-        server.addPostRoute("/incidents", IncidentRoutes2::post);
-        server.addPostRoute("/merge", IncidentRoutes2::merge);
+        server.addGetRoute("/incidents", IncidentRoutes::get);
+        server.addDeleteRoute("/incidents", IncidentRoutes::delete);
+        server.addPutRoute("/incidents", IncidentRoutes::put);
+        server.addPostRoute("/incidents", IncidentRoutes::post);
+        server.addPostRoute("/merge", IncidentRoutes::merge);
 
         // Users
-        server.addGetRoute("/users", UserRoutes2::get);
-        server.addPutRoute("/users", UserRoutes2::put);
-        server.addDeleteRoute("/users", UserRoutes2::delete);
+        server.addGetRoute("/users", UserRoutes::get);
+        server.addPutRoute("/users", UserRoutes::put);
+        server.addDeleteRoute("/users", UserRoutes::delete);
 
         try {
             server.startServer();
