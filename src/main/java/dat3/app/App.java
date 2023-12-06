@@ -1,9 +1,16 @@
 package dat3.app;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.FirebaseOptions.Builder;
 
 import dat3.app.routes.companies.CompanyRoutes;
 import dat3.app.routes.incidents.IncidentRoutes;
+import dat3.app.routes.notifications.NotificationRoutes;
 import dat3.app.routes.services.ServiceRoutes;
 import dat3.app.routes.users.UserRoutes;
 import dat3.app.server.DBNotFound;
@@ -18,7 +25,17 @@ public class App {
             System.out.println("Exception caught when wiping and repopulating database");
             return;
         }
-        
+
+        try {
+            FirebaseOptions options = FirebaseOptions.builder()
+                .setCredentials(GoogleCredentials.fromStream(new FileInputStream(ProjectSettings.getProjectSettings().getCertificationPath())))
+                .build();
+
+            FirebaseApp.initializeApp(options);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         ProjectSettings projectSettings = ProjectSettings.getProjectSettings();
         if (projectSettings == null) return;
 
@@ -56,6 +73,10 @@ public class App {
         server.addPutRoute("/users", UserRoutes::put);
         server.addDeleteRoute("/users", UserRoutes::delete);
 
+        // Notifications
+        server.addPostRoute("/notification", NotificationRoutes::addRegistrationToken);
+        server.addGetRoute("/sendNotifications", NotificationRoutes::sendNotifications);
+        
         try {
             server.startServer();
         } catch (IOException ioe) {

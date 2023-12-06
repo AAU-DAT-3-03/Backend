@@ -12,6 +12,7 @@ public class ProjectSettings {
     private int port = 80;
     private String dbConnectionString = "mongodb://localhost:27017";
     private String dbName = "p3";
+    private String certificationPath = "/home/ubuntu/firebasecert.json";
 
     private ProjectSettings() {}; // Disable the default public() constructor.
 
@@ -22,6 +23,14 @@ public class ProjectSettings {
         } catch (JsonSyntaxException | JsonIOException | FileNotFoundException e) {
             return new ProjectSettings();
         }
+    }
+
+    public String getCertificationPath() {
+        return certificationPath;
+    }
+
+    public void setCertificationPath(String certificationPath) {
+        this.certificationPath = certificationPath; 
     }
 
     public String getHostname() {
