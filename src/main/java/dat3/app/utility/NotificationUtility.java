@@ -1,28 +1,22 @@
 package dat3.app.utility;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.bson.Document;
 
-import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 
 import dat3.app.models.User;
-import dat3.app.server.Response;
 
 public class NotificationUtility {
     public static void sendNotifications() {
-        // Create a list containing up to 500 registration tokens.
-        // These registration tokens come from the client FCM SDKs.
         List<String> registrationTokens = getAllRegistrationTokens();
 
         if (registrationTokens == null || registrationTokens.size() == 0) return;
@@ -37,6 +31,7 @@ public class NotificationUtility {
                                 .setTitle("Incident Alarm")
                                 .setBody("Something has happened! Please check it out.")
                                 .build())
+                        .putData("type", "alarm")
                         .setToken(token)
                         .build();
             } catch (Exception e) {
