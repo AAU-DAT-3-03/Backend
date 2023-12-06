@@ -69,11 +69,25 @@ public class Misc extends StandardModel<Misc> {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> miscCollection = MongoUtility.getCollection(client, "misc");       
                 MiscBuilder miscBuilder = new MiscBuilder();
-                Long caseNumber = miscBuilder.getMisc().findOne(miscCollection, session).getCaseNumber();
+                Misc misc = miscBuilder.getMisc().findOne(miscCollection, session);
+
+                Long caseNumber = null;
+                if (misc == null || misc.getId() == null || misc.getCaseNumber() == null) {
+                    miscCollection.drop();
+                    misc = new Misc();
+                    misc.setCaseNumber(1l);
+                    misc.insertOne(miscCollection, session);
+                    caseNumber = 1l;
+                }
+                else {
+                    caseNumber = misc.getCaseNumber();
+                }
+                
                 miscBuilder.setCaseNumber(caseNumber + 1).getMisc().updateOne(miscCollection, session, null);
                 return caseNumber;
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }

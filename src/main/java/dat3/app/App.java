@@ -15,14 +15,14 @@ import dat3.app.routes.services.ServiceRoutes;
 import dat3.app.routes.users.UserRoutes;
 import dat3.app.server.DBNotFound;
 import dat3.app.server.Server;
+import dat3.app.testkit.TestData2;
 import dat3.app.utility.MongoUtility;
 
 public class App {
     public static void main(String[] args) {
         try {
-            MongoUtility.wipeDatabaseWithMock();
+            TestData2.SetupDatabase();
         } catch (Exception e) {
-            System.out.println("Exception caught when wiping and repopulating database");
             return;
         }
 
