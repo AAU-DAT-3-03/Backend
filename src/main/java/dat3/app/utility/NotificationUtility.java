@@ -16,6 +16,7 @@ import com.mongodb.client.result.InsertOneResult;
 
 import dat3.app.models.Incident;
 import dat3.app.models.User;
+import dat3.app.models.Incident.IncidentPublic;
 import dat3.app.testkit.TestData2;
 
 public class NotificationUtility {
@@ -30,6 +31,11 @@ public class NotificationUtility {
         generatedIncident.setUserIds(new ArrayList<>());
         generatedIncident.setCreationDate(System.currentTimeMillis());
         generatedIncident.setAcknowledgedBy(null);
+        generatedIncident.setPriority(4);
+        for (int i = generatedIncident.getAlarmIds().size() - 1; 0 < i; i--) {
+            if (i == 0) continue;
+            generatedIncident.getAlarmIds().remove(i);
+        }
         
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
@@ -44,6 +50,8 @@ public class NotificationUtility {
             e.printStackTrace();
             return false;
         }
+
+        IncidentPublic incidentPublic = generatedIncident.toPublic();
         
         int count = 0;
         for (String token : registrationTokens) {
@@ -52,7 +60,7 @@ public class NotificationUtility {
                 message = Message.builder()
                         .setNotification(Notification.builder()
                                 .setTitle("Incident Alarm")
-                                .setBody("Something has happened! Please check it out.")
+                                .setBody(incidentPublic.getCompanyPublic() + " #" + incidentPublic.getCaseNumber() + ": " + incidentPublic.getAlarmsPublic().get(0).getAlarmNote())
                                 .build())
                         .putData("type", "alarm")
                         .putData("incidentId", generatedIncident.getId())
