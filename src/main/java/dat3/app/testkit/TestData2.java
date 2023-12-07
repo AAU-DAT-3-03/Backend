@@ -202,9 +202,10 @@ public abstract class TestData2 {
             incident.setAcknowledgedBy(acknowledgedBy);
             incident.setCaseNumber(Misc.getCaseNumberAndIncrement());
             incident.setCompanyId(companyId);
+            incident.setCreationDate(System.currentTimeMillis() - random.nextInt(86400000 * 365));
             incident.setHeader("Header");
             incident.setIncidentNote("");
-            incident.setPriority(random.nextInt(5));
+            incident.setPriority(random.nextInt(4) + 1);
             incident.setResolved(random.nextInt(3) == 0);
 
             incidents.add(incident);
