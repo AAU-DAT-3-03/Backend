@@ -12,16 +12,39 @@ import com.google.firebase.messaging.Notification;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.result.InsertOneResult;
 
+import dat3.app.models.Incident;
 import dat3.app.models.User;
+import dat3.app.testkit.TestData2;
 
 public class NotificationUtility {
-    public static void sendNotifications() {
+    public static boolean sendNotifications() {
         List<String> registrationTokens = getAllRegistrationTokens();
 
-        if (registrationTokens == null || registrationTokens.size() == 0) return;
+        if (registrationTokens == null || registrationTokens.size() == 0) return false;
 
-
+        Incident generatedIncident = TestData2.generateIncidents(1).get(0);
+        generatedIncident.setResolved(false);
+        generatedIncident.setCallIds(new ArrayList<>());
+        generatedIncident.setUserIds(new ArrayList<>());
+        generatedIncident.setCreationDate(System.currentTimeMillis());
+        generatedIncident.setAcknowledgedBy(null);
+        
+        try (MongoClient client = MongoUtility.getClient()) {
+            try (ClientSession session = client.startSession()) {
+                MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
+                InsertOneResult result = generatedIncident.insertOne(incidentCollection, session); 
+                Incident filter = new Incident();
+                filter.setId(result.getInsertedId().asObjectId().getValue().toHexString());
+                generatedIncident = filter.findOne(incidentCollection, session);
+                if (generatedIncident == null) throw new Exception("Couldn't find generated incident in database.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        
         int count = 0;
         for (String token : registrationTokens) {
             Message message;
@@ -32,13 +55,13 @@ public class NotificationUtility {
                                 .setBody("Something has happened! Please check it out.")
                                 .build())
                         .putData("type", "alarm")
+                        .putData("incidentId", generatedIncident.getId())
                         .setToken(token)
                         .build();
             } catch (Exception e) {
                 System.out.println("Failed while building notification message.");
                 continue;
             }
-
 
             // Send a message to the device corresponding to the provided
             // registration token.
@@ -48,9 +71,12 @@ public class NotificationUtility {
                 count++;
             } catch (FirebaseMessagingException e) {
                 e.printStackTrace();
+                return false;
             }
         };
-        System.out.println("Sent " + count + " messages.");
+
+        System.out.println("Sent " + count + " messages.\n");
+        return true;
     }
 
     private static List<String> getAllRegistrationTokens() {
