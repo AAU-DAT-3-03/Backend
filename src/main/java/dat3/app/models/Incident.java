@@ -592,11 +592,11 @@ public class Incident extends StandardModel<Incident> {
 
     // ---------- Static Classes ---------- //
     public static class PutBody extends Incident {
-        private List<String> addUsers;
-        private List<String> removeUsers;
-        private List<String> addCalls;
-        private List<String> removeCalls;
-        private String priorityNote;
+        private List<String> addUsers = null;
+        private List<String> removeUsers = null;
+        private List<String> addCalls = null;
+        private List<String> removeCalls = null;
+        private String priorityNote = null;
 
         public List<String> getAddUsers() {
             return addUsers;

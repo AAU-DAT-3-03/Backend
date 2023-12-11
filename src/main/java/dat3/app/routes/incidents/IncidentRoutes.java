@@ -123,7 +123,6 @@ public abstract class IncidentRoutes {
             return;
         }
         Document change = toUpdate.toDocument();
-
         Incident filter = new Incident();
         filter.setId(toUpdate.getId());
 
@@ -135,7 +134,7 @@ public abstract class IncidentRoutes {
             System.out.println("Couldn't find incident in DB for eventlog");
         }
         String eventLogMessage = "Error";
-        if(change.containsKey("priority") && change.containsKey("priorityNote") && incidentBeforeChange != null) eventLogMessage = "Priority changed from: " + incidentBeforeChange.getPriority().toString() + " to " + toUpdate.getPriority().toString() + ".\nReason for change: " + toUpdate.getPriorityNote();
+        if(change.containsKey("priority") && toUpdate.getPriorityNote() != null && incidentBeforeChange != null) eventLogMessage = "Priority changed from: " + incidentBeforeChange.getPriority().toString() + " to " + toUpdate.getPriority().toString() + ".\nReason for change: " + toUpdate.getPriorityNote();
         if(change.containsKey("resolved") && incidentBeforeChange != null) eventLogMessage = "Incident marked as resolved";
         if(change.containsKey("header") && incidentBeforeChange != null) eventLogMessage = "Header changed from: " + incidentBeforeChange.getHeader() + " to: " + toUpdate.getHeader();
         if(change.containsKey("acknowledgedBy") && incidentBeforeChange != null) eventLogMessage = "Incident marked as acknowledged";
