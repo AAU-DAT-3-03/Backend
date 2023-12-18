@@ -10,6 +10,10 @@ import dat3.app.server.Auth.AuthResponse;
 import dat3.app.server.Auth.ResponseCode;
 
 public abstract class Routes {
+    /**
+     * Useless index page. Simply displays the projectsettings for the sake of testing the ProjectSettings class when deployed on the server.  
+     * @param exchange
+     */
     public static void index(HttpExchange exchange) {
         Response response = new Response();
 

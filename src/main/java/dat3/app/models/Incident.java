@@ -471,13 +471,17 @@ public class Incident extends StandardModel<Incident> {
         return merged;
     }
 
+    /**
+     * Updates the toUpdate object, such that it contains the list userIds and callIds actually contain all the new ids and can be updated on the DB.
+     * @param filter The filter for the object to update. 
+     * @param toUpdate The unparsed body data from put request. 
+     */
     public static void updateCallsAndUsers(Incident filter, PutBody toUpdate) {
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
                 Incident incident = filter.findOne(incidentCollection, session);
 
-                // Doesn't check if the user id is ACTUALLY a user...
                 if (toUpdate.getAddCalls() != null) {
                     List<String> calls = incident.getCallIds();
                     if (calls == null)

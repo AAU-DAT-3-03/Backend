@@ -18,14 +18,19 @@ import dat3.app.utility.MongoUtility;
 import dat3.app.utility.NotificationUtility;
 
 public class NotificationRoutes {
+    /**
+     * Endpoint POST /notification
+     * Sets the registration token sent to the authorized (logged in) user. 
+     * @param exchange The HttpExchange object for the client-server communication
+     */
     public static void addRegistrationToken(HttpExchange exchange) {
         User user = Auth.auth(exchange);
-        
         if (user == null) {
             ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
 
+        // Class GSON uses for parsing body data to object
         RegistationTokenJSON jsonClass;
         try {
             jsonClass = ExchangeUtility.parseJsonBody(exchange, 1000, RegistationTokenJSON.class);
@@ -35,6 +40,8 @@ public class NotificationRoutes {
             return;
         }
 
+        // Retrieve the registration token for sending notification and update the user, their id being the filter.
+        // The registration token of the user is then updated. 
         user.setRegistrationToken(jsonClass.registrationToken);
         User filter = new User();
         filter.setId(user.getId());
@@ -50,7 +57,7 @@ public class NotificationRoutes {
 
                 Response response = new Response();
                 response.setMsg("Successfully set registration token.");
-                response.setStatusCode(0);                
+                response.setStatusCode(0); 
                 response.sendResponse(exchange);
             }
         } catch (Exception e) {
@@ -60,6 +67,11 @@ public class NotificationRoutes {
         }
     }
 
+    /**
+     * Sends a notification to all users, purely exists for debugging and testing purposes. (Used at user test)
+     * Endpoint GET /sendNotifcations
+     * @param exchange The HttpExchange that is tied to the current client communication
+     */
     public static void sendNotifications(HttpExchange exchange) {
         NotificationUtility.sendNotifications();
 
@@ -73,6 +85,9 @@ public class NotificationRoutes {
         }
     }
 
+    /**
+     * Class used by GSON to parse body data from json to object. 
+     */
     public static class RegistationTokenJSON {
         private String registrationToken;
 

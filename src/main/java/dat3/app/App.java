@@ -18,12 +18,15 @@ import dat3.app.testkit.TestData2;
 
 public class App {
     public static void main(String[] args) {
+        // Initialize the database with some dummy data.
         try {
             TestData2.SetupDatabase();
         } catch (Exception e) {
             return;
         }
 
+        // Initialization of firebase application, does some stuff such that we can send notifications basically.
+        // Docs say it's done like this.
         try {
             FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(new FileInputStream(ProjectSettings.getProjectSettings().getCertificationPath())))
@@ -34,11 +37,14 @@ public class App {
             e.printStackTrace();
         }
 
+        // Reads the project setttings file. Shouldn't be possible for it to be null.
         ProjectSettings projectSettings = ProjectSettings.getProjectSettings();
         if (projectSettings == null) return;
 
+        // Initializes the server with default/specified hostname and port. 
         Server server = new Server(projectSettings.getHostname(), projectSettings.getPort());
         
+        // Set up the routes:
         // Index page
         server.addGetRoute("/", Routes::index);
         
@@ -55,26 +61,20 @@ public class App {
 
         // Services
         server.addGetRoute("/services", ServiceRoutes::get);
-        server.addDeleteRoute("/services", ServiceRoutes::delete);
-        server.addPutRoute("/services", ServiceRoutes::put);
-        server.addPostRoute("/services", ServiceRoutes::post);
 
         // Incidents
         server.addGetRoute("/incidents", IncidentRoutes::get);
-        server.addDeleteRoute("/incidents", IncidentRoutes::delete);
         server.addPutRoute("/incidents", IncidentRoutes::put);
-        server.addPostRoute("/incidents", IncidentRoutes::post);
         server.addPostRoute("/merge", IncidentRoutes::merge);
 
         // Users
         server.addGetRoute("/users", UserRoutes::get);
-        server.addPutRoute("/users", UserRoutes::put);
-        server.addDeleteRoute("/users", UserRoutes::delete);
 
         // Notifications
         server.addPostRoute("/notification", NotificationRoutes::addRegistrationToken);
         server.addGetRoute("/sendNotifications", NotificationRoutes::sendNotifications);
         
+        // Finally, start the server. If an error occurs in starting the server then crash and burn. 
         try {
             server.startServer();
         } catch (IOException ioe) {
@@ -82,6 +82,8 @@ public class App {
         } catch (DBNotFound dbe) {
             dbe.printStackTrace();
             System.out.println("Database wasn't found.");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

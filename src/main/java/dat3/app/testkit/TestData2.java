@@ -85,6 +85,10 @@ public abstract class TestData2 {
             "Service Desk",
     };
 
+    /**
+     * Generates a list of companies by exhausting the list of company names. 
+     * @return Returns a list of companies. 
+     */
     public static List<Company> generateCompanies() {
         List<Company> companies = new ArrayList<>();
 
@@ -97,6 +101,12 @@ public abstract class TestData2 {
         return companies;
     }
 
+    /**
+     * Generates the specified amount of services, all associated with the given company.
+     * @param size The size of the generated output.
+     * @param companyId The id of the company with which the services will be associated.
+     * @return Returns a list of generated services.
+     */
     public static List<Service> generateServices(int size, String companyId) {
         List<Service> services = new ArrayList<>();
 
@@ -110,6 +120,12 @@ public abstract class TestData2 {
         return services;
     }
 
+    /**
+     * Generates the specified amount of alarms, all associated with the given service.
+     * @param size The size of the generated output.
+     * @param serviceId The id of the service with which the alarms will be associated.
+     * @return Returns a list of generated alarms.
+     */
     public static List<Alarm> generateAlarms(int size, String serviceId) {
         List<Alarm> alarms = new ArrayList<>();
 
@@ -124,9 +140,15 @@ public abstract class TestData2 {
         return alarms;
     }
 
+    /**
+     * Tries to generate the specified amount of incidents. However, it may not be able to if a company has no alarms. 
+     * @param size The wished size of the output.
+     * @return Returns a list of incidents. 
+     */
     public static List<Incident> generateIncidents(int size) {
         List<Incident> incidents = new ArrayList<>();
 
+        // Connect to the database and retrieve all users, alarms, companies and services. 
         List<User> users;
         List<Alarm> alarms;
         List<Company> companies;
@@ -167,21 +189,32 @@ public abstract class TestData2 {
         }
 
         for (int i = 0; i < size; i++) {
+            // Pick a random company, create an incident by getting alarms from this company. 
+            String companyId = companies.get(random.nextInt(companies.size())).getId();
+
             List<String> alarmIds = new ArrayList<>();
 
-            String companyId = companies.get(random.nextInt(companies.size())).getId();
+            // Get all alarms from a company, and assign the first alarm found to the incident.
+            // Subsequent alarms will have a 1/3 probability of being picked. 
             List<Alarm> alarmsFromCompany = filterAlarmsByCompany(companyId, services, alarms);
-            for (Alarm alarm : alarmsFromCompany) {
+            for (int k = 0; k < alarmsFromCompany.size(); i++) {
+                Alarm alarm = alarmsFromCompany.get(k);
+                if (k == 0) {
+                    alarmIds.add(alarm.getId());
+                    continue;
+                }
                 if (random.nextInt(3) == 0)
                     alarmIds.add(alarm.getId());
             }
 
+            // If there are no alarms (company has no alarms) skip this company. 
             if (alarmIds.size() == 0)
                 continue;
 
+            // Pick some random users, the first picked is the one who acknowledges the incident. 
+            // Give a 2/3 probability of the picked user to also be present on the list of called people.
             List<String> userIds = new ArrayList<>();
             List<String> callIds = new ArrayList<>();
-
             String acknowledgedBy = null;
             for (int j = 0; j < random.nextInt(5); j++) {
                 User userToAdd = users.get(random.nextInt(users.size()));
@@ -194,14 +227,17 @@ public abstract class TestData2 {
                     callIds.add(userToAdd.getId());
             }
 
+            // Set all the data that was just processed. 
             Incident incident = new Incident();
             incident.setAlarmIds(alarmIds);
             incident.setCallIds(callIds);
             incident.setUserIds(userIds);
-
             incident.setAcknowledgedBy(acknowledgedBy);
-            incident.setCaseNumber(Misc.getCaseNumberAndIncrement());
             incident.setCompanyId(companyId);
+
+            // Set case number, and random creation date max one year back. 
+            // Set priority to 1-4 and give it 1/3 probility of being resolved. 
+            incident.setCaseNumber(Misc.getCaseNumberAndIncrement());
             incident.setCreationDate(System.currentTimeMillis() - random.nextInt(86400000 * 365));
             incident.setHeader("Header");
             incident.setIncidentNote("");
@@ -214,7 +250,14 @@ public abstract class TestData2 {
         return incidents;
     }
 
-    private static List<Alarm> filterAlarmsByCompany(String companyId, List<Service> services, List<Alarm> alarms) {
+    /**
+     * Gets all alarms by finding services associated with company id, then finding alarms associated with service id.
+     * @param companyId Id of the company to filter by.
+     * @param services All the services.
+     * @param alarms All the alarms.
+     * @return Returns the alarms which are associated with a company through a service. 
+     */
+    private static List<Alarm> filterAlarmsByCompany(String companyId, List<Service> services, List<Alarm> alarms) {        
         List<Alarm> filteredAlarms = new ArrayList<>();
         List<Service> filteredServices = new ArrayList<>();
 
@@ -233,6 +276,10 @@ public abstract class TestData2 {
         return filteredAlarms;
     }
 
+    /**
+     * Generates a set amount of users, by exhausting the list of names, emails, password and phonenumber, and generating some random values for other fields.
+     * @return Returns a list of semi-random users.
+     */
     public static List<User> generateUsers() {
         List<User> users = new ArrayList<>();
 
@@ -252,6 +299,10 @@ public abstract class TestData2 {
         return users;
     }
 
+    /**
+     * Wipes the database and repopulates it with new dummy data.
+     * @throws Exception Throws an exception if something goes wrong during setup. 
+     */
     public static void SetupDatabase() throws Exception {
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
@@ -267,10 +318,13 @@ public abstract class TestData2 {
                 for (Company company : generateCompanies()) {
                     company.insertOne(companyCollection, session);
                 }
+                // Get companies from the database, since they must be inserted 
+                // first (above) to generate an id by MongoDB
                 for (Company companyWithId : companyBuilder.getCompany().findMany(companyCollection, session)) {
                     for (Service service : generateServices(2, companyWithId.getId())) {
                         service.insertOne(serviceCollection, session);
                     }
+                    // Same as above, must have an id, therefore service is inserted first 
                     for (Service serviceWithId : serviceBuilder.setCompanyId(companyWithId.getId()).getService()
                             .findMany(serviceCollection, session)) {
                         for (Alarm alarm : generateAlarms(3, serviceWithId.getId())) {
@@ -285,12 +339,13 @@ public abstract class TestData2 {
                     incident.insertOne(incidentCollection, session);
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }
 
+/**
+ * Class simply for encapsulating some user information.
+ */
 class UserInfo {
     private String name;
     private String email;
@@ -337,6 +392,9 @@ class UserInfo {
     }
 }
 
+/**
+ * Class simply for encapsulating some company information.
+ */
 class CompanyInfo {
     private String name;
     private String[] serviceNames;

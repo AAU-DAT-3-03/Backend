@@ -108,6 +108,9 @@ public class AuthToken extends StandardModel<AuthToken> {
     }
 
     // ---------- Static Methods ---------- //
+    /**
+     * @return Returns a new random unix timestamp within 365 days.
+     */
     public static Long getNewExpirationDate() {
         return System.currentTimeMillis() + 1314000000;  // One year.
     }

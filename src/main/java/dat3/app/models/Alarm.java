@@ -101,6 +101,4 @@ public class Alarm extends StandardModel<Alarm> {
         if (!alarm1.serviceId.equals(alarm2.serviceId)) return false;
         return true;
     }
-    
-    // ---------- Object Methods ---------- //
 }
