@@ -3,20 +3,15 @@ package dat3.app.server;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import dat3.app.mongo.MongoConnection;
-
 public class Server {
     private String adress;
     private int port;
-    private MongoConnection connection;
 
     private Map<String, CallRequest> pathToFunction;
 

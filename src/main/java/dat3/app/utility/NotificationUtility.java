@@ -44,7 +44,7 @@ public class NotificationUtility {
                 Incident filter = new Incident();
                 filter.setId(result.getInsertedId().asObjectId().getValue().toHexString());
                 generatedIncident = filter.findOne(incidentCollection, session);
-                if (generatedIncident == null) throw new Exception("Couldn't find generated incident in database.");
+                if (generatedIncident == null || generatedIncident.getId() == null) throw new Exception("Couldn't find generated incident in database.");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -60,7 +60,7 @@ public class NotificationUtility {
                 message = Message.builder()
                         .setNotification(Notification.builder()
                                 .setTitle("Incident Alarm")
-                                .setBody(incidentPublic.getCompanyPublic() + " #" + incidentPublic.getCaseNumber() + ": " + incidentPublic.getAlarmsPublic().get(0).getAlarmNote())
+                                .setBody(incidentPublic.getCompanyPublic().getName() + " #" + incidentPublic.getCaseNumber() + " - " + incidentPublic.getAlarmsPublic().get(0).getName())
                                 .build())
                         .putData("type", "alarm")
                         .putData("incidentId", generatedIncident.getId())
@@ -71,8 +71,7 @@ public class NotificationUtility {
                 continue;
             }
 
-            // Send a message to the device corresponding to the provided
-            // registration token.
+            // Send a message to the device corresponding to the provided registration token.
             try {
                 String response = FirebaseMessaging.getInstance().send(message);
                 System.out.println("Successfully sent message: " + response);

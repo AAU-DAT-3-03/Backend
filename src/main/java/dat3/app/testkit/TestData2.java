@@ -33,8 +33,8 @@ public abstract class TestData2 {
             new UserInfo("Sandra Rosenbeck", "sandrarosenbeck@gmail.com", "sandrarosenbeck123", "30103243"),
             new UserInfo("Mads Guldbæk", "madsguldbæk@gmail.com", "madsguldbæk123", "30746012"),
             new UserInfo("Joakim Byg", "jby@netic.dk", "joakimbyg123", "30883321"),
-            new UserInfo("Allan Højgaard Jensen", "ahj@netic.dk", "allanhøjgaardjensen123", "30203376"),
-            new UserInfo("Claus Efternavn", "clausefternavn", "clausefternavn123", "54875621"),
+            new UserInfo("Allan Højgaard Jensen", "ahj@netic.dk", "123", "30203376"),
+            new UserInfo("Claus", "claus@netic.dk", "123", "54875621"),
             new UserInfo("Orla Pedersen", "orlapedersen@cs.aau.dk", "orlapedersen123", "90351250"),
             new UserInfo("Lars Larsen", "larslarsen@gmail.com", "larslarsen123", "69306820"),
             new UserInfo("Andreas Hummelmose", "andreashummelmose@gmail.com", "andreashummelmose123", "96849736"),
@@ -281,7 +281,7 @@ public abstract class TestData2 {
                 for (User user : generateUsers()) {
                     user.insertOne(userCollection, session);
                 }
-                for (Incident incident : generateIncidents(10)) {
+                for (Incident incident : generateIncidents(15)) {
                     incident.insertOne(incidentCollection, session);
                 }
             }
