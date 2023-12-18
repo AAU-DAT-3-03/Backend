@@ -92,7 +92,7 @@ public abstract class IncidentRoutes {
             return;
         }
         Event eventFilter = new EventBuilder().setAffectedObjectId(filter.getId()).getEvent();
-        DeleteResult eventLogResult = ExchangeUtility.defaultDeleteOperation(eventFilter, "events");
+        ExchangeUtility.defaultDeleteOperation(eventFilter, "events");
 
         Response response = new Response();
         if (result.getDeletedCount() == 0) {

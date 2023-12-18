@@ -6,7 +6,6 @@ import java.io.IOException;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.FirebaseOptions.Builder;
 
 import dat3.app.routes.companies.CompanyRoutes;
 import dat3.app.routes.incidents.IncidentRoutes;
@@ -16,7 +15,6 @@ import dat3.app.routes.users.UserRoutes;
 import dat3.app.server.DBNotFound;
 import dat3.app.server.Server;
 import dat3.app.testkit.TestData2;
-import dat3.app.utility.MongoUtility;
 
 public class App {
     public static void main(String[] args) {

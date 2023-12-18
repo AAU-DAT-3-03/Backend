@@ -8,7 +8,6 @@ import java.util.Random;
 
 import dat3.app.models.Alarm;
 import dat3.app.models.Company;
-import dat3.app.models.Incident;
 import dat3.app.models.Service;
 import dat3.app.models.User;
 import dat3.app.models.Alarm.AlarmBuilder;
