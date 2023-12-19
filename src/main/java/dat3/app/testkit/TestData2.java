@@ -200,7 +200,7 @@ public abstract class TestData2 {
             // Get all alarms from a company, and assign the first alarm found to the incident.
             // Subsequent alarms will have a 1/3 probability of being picked. 
             List<Alarm> alarmsFromCompany = filterAlarmsByCompany(companyId, services, alarms);
-            for (int k = 0; k < alarmsFromCompany.size(); i++) {
+            for (int k = 0; k < alarmsFromCompany.size(); k++) {
                 Alarm alarm = alarmsFromCompany.get(k);
                 if (k == 0) {
                     alarmIds.add(alarm.getId());
