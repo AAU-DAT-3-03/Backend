@@ -222,6 +222,8 @@ public class Incident extends StandardModel<Incident> {
             document.append("companyId", new ObjectId(this.companyId));
         if (this.incidentNote != null)
             document.append("incidentNote", this.incidentNote);
+            
+        // Convert each value in the to an ObjectId and store it in the document
         if (this.userIds != null) {
             List<ObjectId> ids = new ArrayList<>();
             this.userIds.forEach((String hexString) -> {
@@ -229,6 +231,7 @@ public class Incident extends StandardModel<Incident> {
             });
             document.append("users", ids);
         }
+        // Convert each value in the to an ObjectId and store it in the document
         if (this.alarmIds != null) {
             List<ObjectId> ids = new ArrayList<>();
             this.alarmIds.forEach((String hexString) -> {
@@ -236,6 +239,7 @@ public class Incident extends StandardModel<Incident> {
             });
             document.append("alarms", ids);
         }
+        // Convert each value in the to an ObjectId and store it in the document
         if (this.callIds != null) {
             List<ObjectId> ids = new ArrayList<>();
             this.callIds.forEach((String hexString) -> {
@@ -268,18 +272,21 @@ public class Incident extends StandardModel<Incident> {
         if (document.containsKey("incidentNote"))
             incident.incidentNote = document.getString("incidentNote");
 
+        // Each ObjectId value needs to be converted to a String representation.
         if (document.containsKey("users")) {
             incident.userIds = new ArrayList<>();
             document.getList("users", ObjectId.class).forEach((ObjectId id) -> {
                 incident.userIds.add(id.toHexString());
             });
         }
+        // Each ObjectId value needs to be converted to a String representation.
         if (document.containsKey("alarms")) {
             incident.alarmIds = new ArrayList<>();
             document.getList("alarms", ObjectId.class).forEach((ObjectId id) -> {
                 incident.alarmIds.add(id.toHexString());
             });
         }
+        // Each ObjectId value needs to be converted to a String representation.
         if (document.containsKey("calls")) {
             incident.callIds = new ArrayList<>();
             document.getList("calls", ObjectId.class).forEach((ObjectId id) -> {
@@ -293,11 +300,8 @@ public class Incident extends StandardModel<Incident> {
     // ---------- Object Methods ---------- //
     @Override
     public Incident clone() {
+        // Does not copy id and caseNumber, since these are unique and are not the responsibility of clone.
         IncidentBuilder builder = new IncidentBuilder();
-
-        Long caseNumber = Misc.getCaseNumberAndIncrement();
-        if (caseNumber == null)
-            return null;
 
         List<String> newAlarmIds = new ArrayList<>();
         alarmIds.forEach((String id) -> {
@@ -327,6 +331,13 @@ public class Incident extends StandardModel<Incident> {
         return builder.getIncident();
     }
 
+    /**
+     * Difference between IncidentPublic and Incident is that IncidentPublic has additional fields that instead of just showing the ids of users, it actually has a 
+     * list of the users, such that the front-end doesn't have to make that many GET requests (for each id present on the sent object). The toPublic method gets
+     * all the ids on behalf of the front-end and stores the objects retrieved in this new encapsulating class, which extends the incident class. This class is only 
+     * used to be parsed to json and sent, and should never be stored on the database even though it is a StandardModel. 
+     * @return Returns the encapsulating object IncidentPublic. 
+     */
     public IncidentPublic toPublic() {
         return Incident.toPublic(this);
     }
@@ -376,12 +387,19 @@ public class Incident extends StandardModel<Incident> {
             if (!incident1.getId().equals(incident2.getId())) return false;
             if (!incident1.getIncidentNote().equals(incident2.getIncidentNote())) return false;
             if (!incident1.getPriority().equals(incident2.getPriority())) return false;
+            
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
+
+    /**
+     * Parses the body data of a merge request to MergeBody. 
+     * @param exchange The exchange used.
+     * @return Returns the MergeBody object that was parsed. This may be null in case of errors.
+     */
     public static MergeBody parseMergeBody(HttpExchange exchange) {
         try {
             return ExchangeUtility.parseJsonBody(exchange, 1000, MergeBody.class);
@@ -390,6 +408,11 @@ public class Incident extends StandardModel<Incident> {
         }
     }
 
+    /**
+     * Parses the body data of a put request to PutBody. 
+     * @param exchange The exchange used.
+     * @return Returns the PutBody object that was parsed. This may be null in case of errors.
+     */
     public static PutBody parseBodyPut(HttpExchange exchange) {
         try {
             return ExchangeUtility.parseJsonBody(exchange, 1000, PutBody.class);
@@ -398,14 +421,13 @@ public class Incident extends StandardModel<Incident> {
         }
     }
 
-    public static Incident parseBody(HttpExchange exchange) {
-        try {
-            return ExchangeUtility.parseJsonBody(exchange, 1000, Incident.class);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
+    /**
+     * Creates a new list of elements from the given list that are within the specified period.
+     * @param incidents The reference list.
+     * @param start Period start.
+     * @param end Period end.
+     * @return Returns a new list of incidents that are within the period.
+     */
     public static List<Incident> filterByPeriod(List<Incident> incidents, Long start, Long end) {
         List<Incident> result = new ArrayList<>();
         incidents.forEach((Incident incident) -> {
@@ -433,35 +455,48 @@ public class Incident extends StandardModel<Incident> {
         return result;
     }
 
+    /**
+     * Merges two incidents. This does not change the incidents on the database, but returns a finished incident object that represents the merge between two incidents.
+     * @param first The first incident.
+     * @param second The second incident.
+     * @return Returns the merged incident. 
+     */
     private static Incident mergeIncidents(Incident first, Incident second) {
         Incident merged = first.clone();
         if (merged == null)
             return null;
 
+        // Should prioritized the lowest priority.  
         if (first.priority != null && second.priority != null)
             merged.priority = first.priority < second.priority ? first.priority : second.priority;
 
+        // If first isn't acknowledged, then pick the second
         if (merged.getAcknowledgedBy() == null)
             merged.setAcknowledgedBy(second.getAcknowledgedBy());
 
+        // Generate a new caseNumber.
         Long caseNumber = Misc.getCaseNumberAndIncrement();
         if (caseNumber == null)
             return null;
         merged.setCaseNumber(caseNumber);
 
+        // Copy the ids over, avoiding doubles.
         second.getAlarmIds().forEach((String id) -> {
             if (!merged.getAlarmIds().contains(id))
                 merged.getAlarmIds().add(id);
         });
+        // Copy the ids over, avoiding doubles.
         second.getCallIds().forEach((String id) -> {
             if (!merged.getCallIds().contains(id))
                 merged.getCallIds().add(id);
         });
+        // Copy the ids over, avoiding doubles.
         second.getUserIds().forEach((String id) -> {
             if (!merged.getUserIds().contains(id))
                 merged.getUserIds().add(id);
         });
 
+        // Mege the incident notes by simply putting a newline between them.
         String incidentNote = "";
         if (merged.getIncidentNote() != null) incidentNote += merged.getIncidentNote();
         incidentNote += "\n";
@@ -471,13 +506,20 @@ public class Incident extends StandardModel<Incident> {
         return merged;
     }
 
+    /**
+     * Updates the toUpdate object, such that it contains all the ids. This is done by getting the object from the database, and adding each non-repeating id to the toUpdate object.
+     * @param filter The filter for the object to update. 
+     * @param toUpdate The unparsed body data from put request. 
+     */
     public static void updateCallsAndUsers(Incident filter, PutBody toUpdate) {
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
-                Incident incident = filter.findOne(incidentCollection, session);
+                Incident incident = filter.findOne(incidentCollection, session); // Get the incident from the database.
 
-                // Doesn't check if the user id is ACTUALLY a user...
+                // If we need to update the calls
+                
+                // From the object retrieved from the database (incident) copy all the non-repeating calls in the toUpdate.getAddCalls (calls to add)
                 if (toUpdate.getAddCalls() != null) {
                     List<String> calls = incident.getCallIds();
                     if (calls == null)
@@ -489,6 +531,7 @@ public class Incident extends StandardModel<Incident> {
                     incident.setCallIds(calls);
                 }
 
+                // From the object retrieved from the database (incident) remove all the repeating calls in the toUpdate.getRemoveCalls (calls to remove)
                 if (toUpdate.getRemoveCalls() != null) {
                     List<String> calls = incident.getCallIds();
                     if (calls == null)
@@ -499,6 +542,9 @@ public class Incident extends StandardModel<Incident> {
                     incident.setCallIds(calls);
                 }
 
+                // If we need to update the users
+
+                // From the object retrieved from the database (incident) copy all the non-repeating users in the toUpdate.getAddUsers (users to add)
                 if (toUpdate.getAddUsers() != null) {
                     List<String> users = incident.getUserIds();
                     if (users == null)
@@ -510,6 +556,7 @@ public class Incident extends StandardModel<Incident> {
                     incident.setUserIds(users);
                 }
 
+                // From the object retrieved from the database (incident) remove all the repeating users in the toUpdate.getRemoveUsers (users to remove)
                 if (toUpdate.getRemoveUsers() != null) {
                     List<String> users = incident.getUserIds();
                     if (users == null)
@@ -520,6 +567,8 @@ public class Incident extends StandardModel<Incident> {
                     incident.setUserIds(users);
                 }
 
+                // Set the toUpdate object to the full list of callIds and userIds, such that we can 
+                // easily replace the list on the database, with this new list (which is copied from the database and modified)
                 toUpdate.setCallIds(incident.getCallIds());
                 toUpdate.setUserIds(incident.getUserIds());
             }
@@ -529,6 +578,14 @@ public class Incident extends StandardModel<Incident> {
         }
     }
 
+    /**
+     * Difference between IncidentPublic and Incident is that IncidentPublic has additional fields that instead of just showing the ids of users, it actually has a 
+     * list of the users, such that the front-end doesn't have to make that many GET requests (for each id present on the sent object). The toPublic method gets
+     * all the ids on behalf of the front-end and stores the objects retrieved in this new encapsulating class, which extends the incident class. This class is only 
+     * used to be parsed to json and sent, and should never be stored on the database even though it is a StandardModel. 
+     * @param incident 
+     * @return Returns the encapsulating object IncidentPublic.
+     */
     private static IncidentPublic toPublic(Incident incident) {
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
@@ -539,10 +596,14 @@ public class Incident extends StandardModel<Incident> {
                 CompanyBuilder companyBuilder = new CompanyBuilder();
                 AlarmBuilder alarmBuilder = new AlarmBuilder();
 
+                // The public Incident.
                 IncidentPublic pub = new IncidentPublic();
 
+                // Gets the person that acknowledged this incident.
                 pub.setAcknowledgedByPublic(
                         userBuilder.setId(incident.getAcknowledgedBy()).getUser().findOne(userCollection, session));
+
+                // For each alarm id, get the alarm from the database and store in encapsulating object.
                 pub.setAlarmsPublic(new ArrayList<>());
                 incident.getAlarmIds().forEach((String id) -> {
                     try {
@@ -550,6 +611,8 @@ public class Incident extends StandardModel<Incident> {
                     } catch (Exception e) {
                     }
                 });
+
+                // For each call id, get the user from the database and store in encapsulating object.
                 pub.setCallsPublic(new ArrayList<>());
                 incident.getCallIds().forEach((String id) -> {
                     try {
@@ -557,7 +620,9 @@ public class Incident extends StandardModel<Incident> {
                     } catch (Exception e) {
                     }
                 });
+                
                 pub.setCaseNumber(incident.getCaseNumber());
+                // Get the company specified by companyId. 
                 pub.setCompanyPublic(
                         companyBuilder.setId(incident.getCompanyId()).getCompany().findOne(companyCollection, session));
                 pub.setCreationDate(incident.getCreationDate());
@@ -566,6 +631,8 @@ public class Incident extends StandardModel<Incident> {
                 pub.setIncidentNote(incident.getIncidentNote());
                 pub.setPriority(incident.getPriority());
                 pub.setResolved(incident.getResolved());
+
+                // For each user id, get the user from the database and store in encapsulating object.
                 pub.setUsersPublic(new ArrayList<>());
                 incident.getUserIds().forEach((String id) -> {
                     try {
@@ -591,6 +658,9 @@ public class Incident extends StandardModel<Incident> {
     }
 
     // ---------- Static Classes ---------- //
+    /**
+     * Class used to parse the put body with GSON.
+     */
     public static class PutBody extends Incident {
         private List<String> addUsers = null;
         private List<String> removeUsers = null;
@@ -633,6 +703,9 @@ public class Incident extends StandardModel<Incident> {
         public void setPriorityNote(String priorityNote) {this.priorityNote = priorityNote;}
     }
 
+    /**
+     * Class used to parse the merge body with GSON.
+     */
     public static class MergeBody {
         private String first;
         private String second;
@@ -654,6 +727,10 @@ public class Incident extends StandardModel<Incident> {
         }
     }
 
+    
+    /**
+     * Class used to be parsed by GSON to a response.
+     */
     public static class IncidentPublic extends Incident {
         private List<User> calls;
         private List<Alarm> alarms;

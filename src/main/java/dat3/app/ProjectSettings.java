@@ -7,6 +7,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 
+/**
+ * Project settings class. Used to read the projectsettings.json file. 
+ */
 public class ProjectSettings {
     private String hostname = "10.92.0.231";
     private int port = 80;
@@ -16,6 +19,10 @@ public class ProjectSettings {
 
     private ProjectSettings() {}; // Disable the default public() constructor.
 
+    /**
+     * Tries to find a projectsettings.json file and read it. All values not found in the file will be equal to the default values specified in the class.
+     * @return Returns the projectsettings.json represented by an object. 
+     */
     public static ProjectSettings getProjectSettings() {
         Gson gson = new Gson();
         try {

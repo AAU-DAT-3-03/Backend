@@ -68,6 +68,4 @@ public class Company extends StandardModel<Company> {
         if (!company1.name.equals(company2.name)) return false;
         return true;
     }
-
-    // ---------- Object Methods ---------- //
 }

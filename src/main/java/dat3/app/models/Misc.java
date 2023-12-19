@@ -9,6 +9,9 @@ import com.mongodb.client.MongoCollection;
 
 import dat3.app.utility.MongoUtility;
 
+/**
+ * This class exists such that incidents can have case numbers. There is a single record on the database containing a counting value, which is updated each time a new caseNumber is generated (by simply incrementing). 
+ */
 public class Misc extends StandardModel<Misc> {
     private String id = null;
     private Long caseNumber = null;
@@ -63,16 +66,22 @@ public class Misc extends StandardModel<Misc> {
         return builder.getMisc();
     }
 
-
+    /**
+     * Gets the caseNumber from the database, increments the number, and returns the previous number. If no record is found, it creates one (and wipes the collection beforehand to make sure).
+     * @return A brand new case number
+     */
     public static Long getCaseNumberAndIncrement() {
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> miscCollection = MongoUtility.getCollection(client, "misc");       
                 MiscBuilder miscBuilder = new MiscBuilder();
+                // Find the very first record available by using an empty filter (should be only one record available)
                 Misc misc = miscBuilder.getMisc().findOne(miscCollection, session);
 
+                // If there is no record, create one! Otherwise extract the number.
                 Long caseNumber = null;
                 if (misc == null || misc.getId() == null || misc.getCaseNumber() == null) {
+                    // Drop the collection for good measure.
                     miscCollection.drop();
                     misc = new Misc();
                     misc.setCaseNumber(1l);
@@ -83,6 +92,7 @@ public class Misc extends StandardModel<Misc> {
                     caseNumber = misc.getCaseNumber();
                 }
                 
+                // increment the case number by one, such that a unique number is generated each time around.  
                 miscBuilder.setCaseNumber(caseNumber + 1).getMisc().updateOne(miscCollection, session, null);
                 return caseNumber;
             }

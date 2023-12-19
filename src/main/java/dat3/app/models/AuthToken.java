@@ -1,9 +1,9 @@
 package dat3.app.models;
 
-import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.commons.codec.binary.Hex;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
@@ -108,31 +108,34 @@ public class AuthToken extends StandardModel<AuthToken> {
     }
 
     // ---------- Static Methods ---------- //
+    /**
+     * @return Returns a new random unix timestamp within 365 days.
+     */
     public static Long getNewExpirationDate() {
         return System.currentTimeMillis() + 1314000000;  // One year.
     }
 
+    /**
+     * Creates a unique name by using SHA-256 to hash the address of an exchange + the timestamp in ms. 
+     * @param exchange The exchange.
+     * @return Returns the hash represented as hex. 
+     * @throws NoSuchAlgorithmException
+     */
     public static String createUniqueName(HttpExchange exchange) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         String name = exchange.getRemoteAddress().getAddress().toString() + Long.toString(System.currentTimeMillis());
         byte[] hash = digest.digest(name.getBytes());
-        return bytesToHex(hash);
-    }
-
-    private static String bytesToHex(byte[] bytes) {
-        BigInteger bigInt = new BigInteger(1, bytes);
-        String hexString = bigInt.toString(16);
-        
-        // Ensure that the hex string has leading zeros
-        int paddingLength = (bytes.length * 2) - hexString.length();
-        if (paddingLength > 0) {
-            return "0".repeat(paddingLength) + hexString;
-        } else {
-            return hexString;
-        }
+        return Hex.encodeHexString(hash);
     }
 
     // ---------- Object Methods ---------- //
+    /**
+     * Updates the token with a new expiration date.
+     * @param collection The collection to use.
+     * @param session The session.
+     * @return Returns an UpdateResult, showing if the token was updated.
+     * @throws Exception Throws an exception if something went wrong underway.
+     */
     public UpdateResult updateToken(MongoCollection<Document> collection, ClientSession session) throws Exception {
         AuthTokenBuilder builder = new AuthTokenBuilder();
         AuthToken filter = builder.setId(this._id).getToken();
@@ -140,6 +143,10 @@ public class AuthToken extends StandardModel<AuthToken> {
         return values.updateOne(collection, session, filter);
     }
 
+    /**
+     * Simply tells if a token is expired. 
+     * @return Returns false if the token is valid, true if it is expired (invalid)
+     */
     public boolean isExpired() {
         return expiryDate < System.currentTimeMillis();
     }

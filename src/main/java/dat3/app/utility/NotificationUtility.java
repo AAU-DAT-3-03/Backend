@@ -20,11 +20,19 @@ import dat3.app.models.Incident.IncidentPublic;
 import dat3.app.testkit.TestData2;
 
 public class NotificationUtility {
+    /**
+     * Generates a completely new incident with no assigned users, calls, no acknowledgement and a default priority of 4. 
+     * Then sends a notification to all users with a registration token (used for notifications).
+     * @return Returns true if notifications were actually sent and false if none were sent. 
+     */
     public static boolean sendNotifications() {
+        // Get all registration tokens across all users
         List<String> registrationTokens = getAllRegistrationTokens();
 
+        // If there are no tokens, then quit. 
         if (registrationTokens == null || registrationTokens.size() == 0) return false;
 
+        // Generates a new incident for use in user test.
         Incident generatedIncident = TestData2.generateIncidents(1).get(0);
         generatedIncident.setResolved(false);
         generatedIncident.setCallIds(new ArrayList<>());
@@ -32,11 +40,13 @@ public class NotificationUtility {
         generatedIncident.setCreationDate(System.currentTimeMillis());
         generatedIncident.setAcknowledgedBy(null);
         generatedIncident.setPriority(4);
+        // Remove all alarms but the first one. Inverse for loop.
         for (int i = generatedIncident.getAlarmIds().size() - 1; 0 < i; i--) {
             if (i == 0) continue;
             generatedIncident.getAlarmIds().remove(i);
         }
         
+        // Insert the generated incident and retrieve it again (to generate an id as well as make it accessible)
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession session = client.startSession()) {
                 MongoCollection<Document> incidentCollection = MongoUtility.getCollection(client, "incidents");
@@ -51,8 +61,12 @@ public class NotificationUtility {
             return false;
         }
 
+        // Convert to public for display purposes. 
         IncidentPublic incidentPublic = generatedIncident.toPublic();
         
+        // Send the notifications! Ripped straight from the docs. The id of the incident is 
+        // also sent as body data, such that when opened on mobile it will instantly go to
+        // the actual incident screen.
         int count = 0;
         for (String token : registrationTokens) {
             Message message;
@@ -82,10 +96,15 @@ public class NotificationUtility {
             }
         };
 
+        // Debugging output
         System.out.println("Sent " + count + " messages.\n");
         return true;
     }
 
+    /**
+     * Retrieves all users by using an empty filter and then gets the registration token from them all.
+     * @return Returns a list of registration tokens.
+     */
     private static List<String> getAllRegistrationTokens() {
         List<String> registrationTokens = new ArrayList<>();
         List<User> users;
