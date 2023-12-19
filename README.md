@@ -1,5 +1,7 @@
 # Backend
 
+This project was developed as part of a semester project at AAU by group dat-3-03
+
 This backend is meant for use with the frontend found at https://github.com/AAU-DAT-3-03/Frontend
 
 Starting the backend:
@@ -21,5 +23,3 @@ The connnection string needs to look like this: mongodb://localhost:27017/
 The backend can then be built with `./build` to clean the current build, create new 
 build and copy dependencies into project directories.
 Then it can be run with `./start` to execute class dat3.app.App with necessary .jar files.
-
-This project was developed as part of a semester project at AAU by group dat-3-03
