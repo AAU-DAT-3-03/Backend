@@ -113,6 +113,7 @@ public abstract class IncidentRoutes {
 
         // Create an event log for the incoming changes. 
         String eventLogMessage = "Error";
+        // checks for what change was made, and then sets the message for the eventlog accordingly.
         if(change.containsKey("priority") && toUpdate.getPriorityNote() != null && incidentBeforeChange != null) eventLogMessage = "Priority changed from: " + incidentBeforeChange.getPriority().toString() + " to " + toUpdate.getPriority().toString() + ".\nReason for change: " + toUpdate.getPriorityNote();
         if(change.containsKey("resolved") && incidentBeforeChange != null) eventLogMessage = "Incident marked as resolved";
         if(change.containsKey("header") && incidentBeforeChange != null) eventLogMessage = "Header changed from: " + incidentBeforeChange.getHeader() + " to: " + toUpdate.getHeader();
@@ -166,8 +167,10 @@ public abstract class IncidentRoutes {
         }
         try {
             User user = Auth.auth(exchange);
+            // creates a new event for the eventlog
             Event event = new EventBuilder().setAffectedObjectId(filter.getId()).setMessage(eventLogMessage)
                     .setDate(new Date().getTime()).setUserId(user.getId()).setUserName(user.getName()).getEvent();
+            // puts the event into the eventlog
             ExchangeUtility.defaultPostOperation(event, "events");
         } catch (Exception e) {
             System.out.println("Couldnt log an event for incident" + toUpdate.getId());
@@ -237,7 +240,7 @@ public abstract class IncidentRoutes {
                 if (mergedIncident == null)
                     throw new Exception("New incident wasn't inserted correctly.");
                     
-                // Get all events from first incident and copy over to merged incident
+                // Get all events from first incident, copy them, and add them to the new merged incident
                 try {
                     Event eventFilter = new EventBuilder().setAffectedObjectId(first.getId()).getEvent();
                     List<Event> eventLog = ExchangeUtility.defaultGetOperation(eventFilter, "events");
@@ -249,7 +252,7 @@ public abstract class IncidentRoutes {
                 } catch (Exception ignored) {
                 }
                 
-                // Get all events from second incident and copy over to merged incident
+                // Get all events from second incident, copy them, and add them to the new merged incident
                 try {
                     Event eventFilter = new EventBuilder().setAffectedObjectId(second.getId()).getEvent();
                     List<Event> eventLog = ExchangeUtility.defaultGetOperation(eventFilter, "events");
@@ -260,6 +263,7 @@ public abstract class IncidentRoutes {
                     }
                 } catch (Exception e) {
                 }
+                // gets information from the previous incidents for the eventlog
                 String eventCompanyId = mergedIncident.getCompanyId();
                 String eventCompanyName = new CompanyBuilder().setId(eventCompanyId).getCompany().findOne(companyCollection, session).getName();
                 String firstCaseNumber = first.getCaseNumber().toString();
@@ -267,10 +271,12 @@ public abstract class IncidentRoutes {
                 String firstCaseMessage = "Incident merged with " + eventCompanyName + " #" + firstCaseNumber;
                 String secondCaseMessage = "Incident merged with " + eventCompanyName + " #" + secondCaseNumber;
                 Long time = new Date().getTime();
+                // creates the events for the first and second incident, which are being merged, and puts them in to database
                 Event newEventFirst = new EventBuilder().setAffectedObjectId(first.getId()).setUserId(user.getId()).setMessage(firstCaseMessage).setUserName(user.getName()).setDate(time).getEvent();
                 Event newEventSecond = new EventBuilder().setAffectedObjectId(second.getId()).setUserId(user.getId()).setMessage(secondCaseMessage).setUserName(user.getName()).setDate(time).getEvent();
                 newEventFirst.insertOne(eventCollection, session);
                 newEventSecond.insertOne(eventCollection, session);
+                // creates the message and the event for the merged incident and puts it into the database
                 String mergedMessage = "Incident created by merging " + firstCaseMessage + " and " + secondCaseMessage;
                 Event newEventMerged = new EventBuilder().setAffectedObjectId(mergedIncident.getId()).setUserId(user.getId()).setUserName(user.getName()).setMessage(mergedMessage).setDate(time).getEvent();
                 newEventMerged.insertOne(eventCollection, session);
