@@ -13,12 +13,17 @@ import dat3.app.server.Response;
 import dat3.app.utility.ExchangeUtility;
 
 public class UserRoutes {
+    /**
+     * GET /users
+     * @param exchange The HttpExchange that is tied to the current client communication
+     */
     public static void get(HttpExchange exchange) {
         if (Auth.auth(exchange) == null) {
             ExchangeUtility.sendUnauthorizedResponse(exchange);
             return;
         }
 
+        // Converts the query string to a document (basically hashmap) which is then converted to a filter used when querying the database.
         Document documentFilter = parseQueryString(exchange);
         User filter = new User().fromDocument(documentFilter);
         if (filter == null) {
@@ -26,6 +31,7 @@ public class UserRoutes {
             return;
         }
 
+        // Execute query
         List<User> result = ExchangeUtility.defaultGetOperation(filter, "users");
         if (result == null) {
             ExchangeUtility.queryExecutionErrorResponse(exchange);
@@ -40,6 +46,11 @@ public class UserRoutes {
         } catch (Exception e) {}
     }
 
+    /**
+     * Parses the query string to a document, which is basically a very dynamic hashmap for string to object. 
+     * @param exchange The HttpExchange that is tied to the current client communication
+     * @return Returns a document containing all the values of the query string. If an unexpected value shows up, it returns null. 
+     */
     private static Document parseQueryString(HttpExchange exchange) {
         try {
             Document document = new Document();

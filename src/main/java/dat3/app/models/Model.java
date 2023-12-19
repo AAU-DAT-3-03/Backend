@@ -9,6 +9,9 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 
+/**
+ * This class contains the methods deemed necessary for updating, deleting, reading and creating models in the database. 
+ */
 public abstract class Model <T> {
     // Insertion operation
     public abstract InsertOneResult insertOne(MongoCollection<Document> collection, ClientSession session) throws Exception;
@@ -19,11 +22,9 @@ public abstract class Model <T> {
 
     // Update operations
     public abstract <U extends Model<U>> UpdateResult updateOne(MongoCollection<Document> collection, ClientSession session, U filter) throws Exception;
-    public abstract <U extends Model<U>> UpdateResult updateMany(MongoCollection<Document> collection, ClientSession session, U filter) throws Exception;
 
     // Delete operations
     public abstract DeleteResult deleteOne(MongoCollection<Document> collection, ClientSession session) throws Exception;
-    public abstract DeleteResult deleteMany(MongoCollection<Document> collection, ClientSession session) throws Exception;
 
     // Parsing
     public abstract Document toDocument();

@@ -11,7 +11,7 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 
-import dat3.app.testkit.TestData;
+import dat3.app.testkit.TestData2;
 import dat3.app.utility.MongoUtility;
 
 public class UserTest {
@@ -47,7 +47,7 @@ public class UserTest {
 
     @Test
     void TestInsertionOfManyUsers() {
-        List<User> users = TestData.unshuffledValidUsers();
+        List<User> users = TestData2.generateUsers();
         
         try (MongoClient client = MongoUtility.getClient()) {
             try (ClientSession clientSession = client.startSession()) {

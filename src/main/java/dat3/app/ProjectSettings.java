@@ -8,7 +8,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 
 /**
- * 
+ * Project settings class. Used to read the projectsettings.json file. 
  */
 public class ProjectSettings {
     private String hostname = "10.92.0.231";

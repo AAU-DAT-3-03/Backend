@@ -45,7 +45,7 @@ public abstract class Auth {
                 }
                 
                 // Update the token in the database with a new expiration date.
-                tokenBuilder.setExpiryDate(AuthToken.getNewExpirationDate()).getToken().updateMany(tokenCollection, session, token);
+                tokenBuilder.setExpiryDate(AuthToken.getNewExpirationDate()).getToken().updateOne(tokenCollection, session, token);
 
                 // Return the user associated with the token.
                 return userBuilder.setId(token.getUserId()).getUser().findOne(userCollection, session);

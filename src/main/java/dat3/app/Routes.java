@@ -12,7 +12,7 @@ import dat3.app.server.Auth.ResponseCode;
 public abstract class Routes {
     /**
      * Useless index page. Simply displays the projectsettings for the sake of testing the ProjectSettings class when deployed on the server.  
-     * @param exchange
+     * @param exchange The HttpExchange that is tied to the current client communication
      */
     public static void index(HttpExchange exchange) {
         Response response = new Response();
@@ -28,19 +28,10 @@ public abstract class Routes {
         }
     }
     
-    public static void registerUser(HttpExchange exchange) {
-        AuthResponse result = Auth.registerUser(exchange);
-
-        Response response = new Response();
-        response.setMsg(result.getMessage());
-        response.setStatusCode(ResponseCode.OK == result.getCode() ? 0 : 1);
-
-        try {
-            response.sendResponse(exchange);
-        } catch (IOException e) {
-        }
-    }
-
+    /**
+     * POST /login. Creates/updates an auth token. 
+     * @param exchange The HttpExchange that is tied to the current client communication
+     */
     public static void loginUser(HttpExchange exchange) {
         AuthResponse result = Auth.login(exchange);
 
@@ -54,6 +45,10 @@ public abstract class Routes {
         }
     }
 
+    /**
+     * Endpoint for authentication. Returns the user that is authenticated. GET /auth.
+     * @param exchange The HttpExchange that is tied to the current client communication
+     */
     public static void authenticateRequest(HttpExchange exchange) {
         User user = Auth.auth(exchange);
 

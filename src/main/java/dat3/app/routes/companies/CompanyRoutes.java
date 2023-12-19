@@ -170,6 +170,11 @@ public abstract class CompanyRoutes {
         }
     }
 
+    /**
+     * Parses the query string to a Document (basically hashmap for string to object)
+     * @param exchange The HttpExchange that is tied to the current client communication
+     * @return Returns the Document containing ALL the query string key-value pairs. If an unexpected value shows up, returns null.
+     */
     private static Document parseQueryString(HttpExchange exchange) {
         try {
             Document document = new Document();

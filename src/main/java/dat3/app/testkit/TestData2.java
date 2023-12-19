@@ -22,6 +22,9 @@ import dat3.app.models.Service.ServiceBuilder;
 import dat3.app.models.User.UserBuilder;
 import dat3.app.utility.MongoUtility;
 
+/**
+ * Contains all the dummy data stuff for the project.  
+ */
 public abstract class TestData2 {
     private static Random random = new Random(System.currentTimeMillis());
 

@@ -12,7 +12,6 @@ import dat3.app.routes.incidents.IncidentRoutes;
 import dat3.app.routes.notifications.NotificationRoutes;
 import dat3.app.routes.services.ServiceRoutes;
 import dat3.app.routes.users.UserRoutes;
-import dat3.app.server.DBNotFound;
 import dat3.app.server.Server;
 import dat3.app.testkit.TestData2;
 
@@ -50,7 +49,6 @@ public class App {
         
         // Authentication
         server.addGetRoute("/auth", Routes::authenticateRequest);
-        server.addPostRoute("/register", Routes::registerUser);
         server.addPostRoute("/login", Routes::loginUser);
 
         // Company
@@ -79,9 +77,6 @@ public class App {
             server.startServer();
         } catch (IOException ioe) {
             ioe.printStackTrace();
-        } catch (DBNotFound dbe) {
-            dbe.printStackTrace();
-            System.out.println("Database wasn't found.");
         } catch (Exception e) {
             e.printStackTrace();
         }
