@@ -83,6 +83,7 @@ public class Event extends StandardModel<Event>{
     }
     @Override
     public Document toDocument() {
+        // turns the event into a document
         Document document = new Document();
         if (this._id != null) document.append("_id", new ObjectId(this._id));
         if (this.date != null) document.append("date", this.date);
@@ -94,6 +95,7 @@ public class Event extends StandardModel<Event>{
     }
     @Override
     public Event fromDocument(Document document) {
+        // turns a document into an event
         Event event = new Event();
         if (document.containsKey("_id")) event._id = document.getObjectId("_id").toHexString();
         if (document.containsKey("date")) event.date = document.getLong("date");
